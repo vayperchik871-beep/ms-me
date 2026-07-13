@@ -1,0 +1,13 @@
+Dist count: 6
+Assets path: D:\петка\android\app\src\main\assets\public
+Assets count: 8
+Only in dist (first 40):
+assets\index-C9DU1-VP.css
+assets\index-CMV8GegD.js
+PRIVACY.md
+Only in assets (first 40):
+assets\index-B-YDlvkm.js
+assets\index-CCauadkn.css
+assets\web-BV2y9SwJ.js
+cordova.js
+cordova_plugins.js

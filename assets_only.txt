@@ -1,0 +1,5 @@
+assets\index-B-YDlvkm.js
+assets\index-CCauadkn.css
+assets\web-BV2y9SwJ.js
+cordova.js
+cordova_plugins.js

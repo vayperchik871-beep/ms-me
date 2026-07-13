@@ -1,0 +1,226 @@
+/* ─── Onboarding — Dark Theme ─── */
+
+.onboarding {
+  position: fixed; inset: 0; z-index: 100;
+  background:
+    radial-gradient(circle at top, rgba(255, 255, 255, 0.12), transparent 28%),
+    linear-gradient(180deg, #090909, #000 42%);
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  padding: env(safe-area-inset-top, 20px) 24px env(safe-area-inset-bottom, 24px);
+  overflow: hidden;
+}
+
+.onboarding-back {
+  position: absolute;
+  top: calc(env(safe-area-inset-top, 0px) + 16px); left: 16px;
+  width: 44px; height: 44px;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--ms-green, #FFFFFF); z-index: 10;
+}
+
+.onboarding-step {
+  width: 100%; max-width: 380px; flex: 1;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  animation-duration: 0.35s; animation-fill-mode: both;
+  animation-timing-function: cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+.slide-in-right { animation-name: slideInRight; }
+.slide-in-left { animation-name: slideInLeft; }
+
+@keyframes slideInRight {
+  from { opacity: 0; transform: translateX(40px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+@keyframes slideInLeft {
+  from { opacity: 0; transform: translateX(-40px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+/* Welcome */
+
+.welcome-step { text-align: center; width: 100%; }
+
+.welcome-logo-wrap { margin-bottom: 28px; animation: logoFloat 3s ease-in-out infinite; }
+
+@keyframes logoFloat {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+
+.welcome-logo {
+  width: 100px; height: 100px; border-radius: 22px;
+  box-shadow: 0 8px 32px rgba(255, 255, 255, 0.18);
+  border: 1px solid rgba(255, 255, 255, 0.24);
+  background: #0B0B0B;
+}
+
+.welcome-title {
+  font-size: 34px; font-weight: 700; letter-spacing: -0.5px;
+  color: #fff; margin-bottom: 12px;
+}
+
+.welcome-subtitle {
+  font-size: 17px; line-height: 1.5; color: #8E8E93; margin-bottom: 36px;
+}
+
+.welcome-features {
+  display: flex; flex-direction: column; gap: 12px;
+  margin-bottom: 40px; text-align: left;
+}
+
+.feature {
+  display: flex; align-items: center; gap: 14px;
+  padding: 14px 18px; background: rgba(28, 28, 30, 0.86);
+  border-radius: 14px; font-size: 15px; font-weight: 500;
+  color: #fff; border: 1px solid rgba(255, 255, 255, 0.16);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.28);
+}
+
+.feature-icon { font-size: 22px; }
+
+.welcome-legal {
+  margin-top: 20px; font-size: 12px; color: #636366; line-height: 1.5;
+}
+
+.welcome-legal a { color: #FFFFFF; text-decoration: none; }
+
+/* Form */
+
+.form-step { text-align: center; width: 100%; }
+.form-step-icon { font-size: 48px; margin-bottom: 20px; }
+
+.form-step-title {
+  font-size: 28px; font-weight: 700; letter-spacing: -0.3px;
+  color: #fff; margin-bottom: 10px;
+}
+
+.form-step-desc { font-size: 15px; line-height: 1.5; color: #8E8E93; margin-bottom: 24px; }
+.form-step-desc strong { color: #fff; }
+
+.form-switch { margin-top: 20px; font-size: 15px; color: #8E8E93; }
+
+.profile-fields {
+  display: flex; flex-direction: column;
+  background: rgba(28, 28, 30, 0.92); border-radius: 18px;
+  overflow: hidden; margin-bottom: 24px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.28);
+}
+
+.profile-field {
+  display: flex; flex-direction: column;
+  padding: 12px 16px;
+  border-bottom: 1px solid #38383A;
+  transition: background 0.2s;
+}
+
+.profile-field:last-child { border-bottom: none; }
+.profile-field.focused { background: #2C2C2E; }
+
+.profile-field label {
+  font-size: 12px; color: #8E8E93;
+  margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.3px;
+}
+
+.profile-field input {
+  font-size: 17px; color: #fff; background: transparent;
+}
+
+.profile-field input::placeholder { color: #636366; }
+
+.id-input-row { display: flex; align-items: center; gap: 2px; }
+.id-input-row .id-prefix { font-size: 17px; color: #8E8E93; }
+.id-input-row input { flex: 1; }
+
+/* Code */
+
+.code-inputs { display: flex; gap: 10px; justify-content: center; margin-bottom: 24px; }
+
+.code-digit {
+  width: 48px; height: 56px; text-align: center;
+  font-size: 24px; font-weight: 600; color: #fff;
+  background: #1C1C1E; border: 2px solid #38383A;
+  border-radius: 12px; transition: all 0.2s ease;
+  caret-color: #FFFFFF;
+}
+
+.code-digit:focus {
+  background: #2C2C2E; border-color: #FFFFFF;
+  outline: none; box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.14);
+}
+
+.code-digit.filled { border-color: #FFFFFF; }
+
+.code-hint { font-size: 12px; color: #636366; margin-top: 16px; }
+
+.form-error {
+  background: rgba(255, 69, 58, 0.15); color: #FF453A;
+  padding: 10px 14px; border-radius: 10px; font-size: 14px;
+  margin-bottom: 16px;
+}
+
+/* ─── Multi-step Registration ─── */
+
+.register-step { width: 100%; }
+
+.register-progress {
+  display: flex; gap: 8px; justify-content: center;
+  margin-bottom: 32px;
+}
+
+.progress-dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: #38383A; transition: all 0.3s ease;
+}
+
+.progress-dot.active { background: #FFFFFF; }
+.progress-dot.current { width: 24px; border-radius: 4px; }
+
+.register-panel {
+  width: 100%;
+  animation-duration: 0.35s;
+  animation-fill-mode: both;
+}
+
+.register-avatar {
+  width: 80px; height: 80px; border-radius: 50%;
+  background: linear-gradient(135deg, #FFFFFF, #D9D9D9);
+  color: #000; font-size: 32px; font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+  margin: 0 auto 24px;
+  box-shadow: 0 8px 24px rgba(255, 255, 255, 0.16);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+}
+
+.register-avatar.small {
+  width: 48px; height: 48px; font-size: 20px;
+  margin: 0; flex-shrink: 0;
+}
+
+.id-preview-card {
+  display: flex; align-items: center; gap: 14px;
+  padding: 16px 18px; margin-bottom: 24px;
+  background: #1C1C1E; border-radius: 16px;
+  border: 1px solid #38383A;
+  text-align: left;
+}
+
+.id-preview-name { font-size: 17px; font-weight: 600; color: #fff; }
+.id-preview-handle { font-size: 14px; color: #FFFFFF; margin-top: 2px; }
+
+.profile-fields.single { margin-bottom: 20px; }
+
+.id-rules {
+  font-size: 12px; color: #636366;
+  margin: -12px 0 20px; text-align: center;
+}
+
+.register-nav {
+  display: flex; gap: 12px;
+}
+
+.register-nav .apple-btn { flex: 1; }
+.register-nav .apple-btn.secondary { flex: 0.6; }
