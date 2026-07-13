@@ -6,6 +6,9 @@ import jwt from 'jsonwebtoken'
 import { v4 as uuidv4 } from 'uuid'
 import { WebSocketServer } from 'ws'
 import http from 'http'
+import path from 'path'
+import fs from 'fs'
+import { fileURLToPath } from 'url'
 import { db, SYSTEM_BOT } from './db.js'
 import { encrypt, decrypt, generateCode, hashDevice } from './crypto.js'
 
@@ -13,9 +16,15 @@ const app = express()
 const PORT = process.env.PORT || 3001
 const HOST = process.env.HOST || '0.0.0.0'
 const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret-change-me'
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = path.dirname(__filename)
+const rootDir = path.resolve(__dirname, '..')
+const frontendDistDir = path.join(rootDir, 'dist')
+const indexHtmlPath = path.join(frontendDistDir, 'index.html')
 
 app.use(cors())
 app.use(express.json())
+app.use(express.static(frontendDistDir))
 
 const clients = new Map()
 
@@ -463,6 +472,18 @@ app.post('/api/messages/:id/favorite', authMiddleware, (req, res) => {
     req.user.id, req.params.id, Date.now()
   )
   res.json({ ok: true })
+})
+
+app.get('*', (req, res, next) => {
+  if (req.path.startsWith('/api') || req.path.startsWith('/ws') || req.path.startsWith('/health')) {
+    return next()
+  }
+
+  if (fs.existsSync(indexHtmlPath)) {
+    return res.sendFile(indexHtmlPath)
+  }
+
+  res.status(404).send('Frontend build not found. Run npm run build first.')
 })
 
 // ─── WebSocket ───
