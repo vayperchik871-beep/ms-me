@@ -326,6 +326,15 @@ app.get('/api/auth/me', authMiddleware, (req, res) => {
 
 // ─── Admin ───
 
+app.post('/api/admin/promote', authMiddleware, (req, res) => {
+  const { secret } = req.body
+  if (!secret || secret !== process.env.ADMIN_SECRET) {
+    return res.status(403).json({ error: 'Неверный секрет' })
+  }
+  db.prepare('UPDATE users SET is_admin = 1 WHERE id = ?').run(req.user.id)
+  res.json({ ok: true })
+})
+
 function adminMiddleware(req, res, next) {
   if (!req.user?.is_admin) {
     return res.status(403).json({ error: 'Только для администраторов' })
