@@ -4,10 +4,12 @@ def adminMode = System.getenv('ANDROID_ADMIN_MODE') == 'true'
 def appId = adminMode ? "com.ms.messenger.admin" : "com.ms.messenger"
 
 android {
-    namespace appId
+    namespace "com.ms.messenger"
     compileSdk rootProject.ext.compileSdkVersion
     defaultConfig {
         applicationId appId
+        resValue "string", "app_name", adminMode ? "MS Admin" : "MS Messenger"
+        resValue "string", "title_activity_main", adminMode ? "MS Admin" : "MS Messenger"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 3
