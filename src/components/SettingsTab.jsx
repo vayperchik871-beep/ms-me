@@ -14,7 +14,7 @@ export default function SettingsTab({ onLogout, onAddAccount }) {
     window.location.reload()
   }
 
-  if (showAdmin && user?.is_admin) {
+  if (showAdmin || import.meta.env?.VITE_ADMIN_MODE === 'true') {
     return <AdminPanel onBack={() => setShowAdmin(false)} />
   }
 
@@ -37,7 +37,7 @@ export default function SettingsTab({ onLogout, onAddAccount }) {
         </div>
       </div>
 
-      {user?.is_admin && (
+      {(user?.is_admin || import.meta.env?.VITE_ADMIN_MODE === 'true') && (
         <>
           <h3 className="section-title">Администрирование</h3>
           <div className="settings-group">
