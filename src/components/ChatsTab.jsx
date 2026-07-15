@@ -23,7 +23,7 @@ export default function ChatsTab({ activeChatId, onSelectChat, onWsEvent }) {
   useEffect(() => {
     if (!onWsEvent) return
     const handler = (data) => {
-      if (data.type === 'new_message' || data.type === 'message_updated' || data.type === 'message_deleted') {
+      if (data.type === 'new_message' || data.type === 'message_updated' || data.type === 'message_deleted' || data.type === 'read_receipt') {
         loadChats()
       }
     }

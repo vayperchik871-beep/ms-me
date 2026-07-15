@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { api } from '../api/client'
 import AppHeader from './AppHeader'
 import UserSearchModal from './UserSearchModal'
+import { resolveMediaUrl } from '../api/client'
 
 export default function ContactsTab({ onStartChat }) {
   const [contacts, setContacts] = useState([])
@@ -46,7 +47,7 @@ export default function ContactsTab({ onStartChat }) {
         {filtered.map((c) => (
           <button key={c.id} className="chat-item" onClick={() => onStartChat?.(null, c.userId)}>
             <div className="avatar" style={{ background: '#FFFFFF', color: '#000' }}>
-              {c.avatar ? <img src={c.avatar} alt="" className="avatar-img" /> : c.name[0]}
+              {c.avatar ? <img src={resolveMediaUrl(c.avatar)} alt="" className="avatar-img" /> : c.name[0]}
             </div>
             <div className="chat-item-content">
               <div className="chat-name">{c.name}</div>

@@ -26,7 +26,7 @@ function connectShared() {
       sharedWs = null
       if (reconnectTimer) clearTimeout(reconnectTimer)
       if (listeners.size > 0) {
-        reconnectTimer = setTimeout(connectShared, 3000)
+        reconnectTimer = setTimeout(connectShared, 1000)
       }
     }
 

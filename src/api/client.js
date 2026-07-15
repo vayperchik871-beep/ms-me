@@ -101,9 +101,18 @@ export const api = {
   pinMessage: (id) => request(`/messages/${id}/pin`, { method: 'POST' }),
   reactMessage: (id, emoji) => request(`/messages/${id}/react`, { method: 'POST', body: JSON.stringify({ emoji }) }),
   favoriteMessage: (id) => request(`/messages/${id}/favorite`, { method: 'POST' }),
+  readChat: (chatId) => request(`/chats/${chatId}/read`, { method: 'POST' }),
   uploadAvatar: (file) => upload('/upload/avatar', 'avatar', file),
   uploadAttachment: (file, duration) => upload('/upload/attachment', 'file', file, duration ? { duration } : {}),
   updateAvatar: (url) => request('/users/avatar', { method: 'PATCH', body: JSON.stringify({ avatar: url }) }),
+}
+
+export function resolveMediaUrl(url) {
+  if (!url) return null
+  if (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('data:')) return url
+  const base = getApiBase()
+  if (base === '/api') return url
+  return `${base}${url.startsWith('/') ? '' : '/'}${url}`
 }
 
 export function getWsUrl() {

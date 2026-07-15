@@ -28,7 +28,6 @@ export function AuthProvider({ children }) {
       const { user: u } = await api.me()
       setUser(u)
     } catch {
-      clearStoredAccount(acc.userId)
       setUser(null)
     } finally {
       setLoading(false)

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { api } from '../api/client'
 import ChatListItem from './ChatListItem'
+import { resolveMediaUrl } from '../api/client'
 
 export default function UserSearchModal({ onClose, onSelectUser }) {
   const [query, setQuery] = useState('')
@@ -62,7 +63,7 @@ export default function UserSearchModal({ onClose, onSelectUser }) {
           {results.map((u) => (
             <button key={u.id} className="search-result-item" onClick={() => handleAdd(u)}>
               <div className="avatar" style={{ background: '#FFFFFF', color: '#000' }}>
-                {u.avatar ? <img src={u.avatar} alt="" className="avatar-img" /> : u.name[0]}
+                {u.avatar ? <img src={resolveMediaUrl(u.avatar)} alt="" className="avatar-img" /> : u.name[0]}
               </div>
               <div>
                 <div className="chat-name">{u.name}</div>
@@ -85,8 +86,9 @@ export function ChatListItemSimple({ chat, isActive, onClick }) {
     <button className={`chat-item ${isActive ? 'active' : ''}`} onClick={onClick}>
       <div className="avatar-wrap">
         <div className={`avatar ${isBot ? 'avatar-bot' : ''}`} style={{ background: isBot ? '#2C2C2E' : '#FFFFFF', color: isBot ? '#fff' : '#000' }}>
-          {isBot ? <img src="/logo.png" alt="" className="avatar-logo" /> : avatarUrl ? <img src={avatarUrl} alt="" className="avatar-img" /> : peer?.name?.[0]}
+          {isBot ? <img src="/logo.png" alt="" className="avatar-logo" /> : avatarUrl ? <img src={resolveMediaUrl(avatarUrl)} alt="" className="avatar-img" /> : peer?.name?.[0]}
         </div>
+        {chat.peer?.online && <span className="online-dot" />}
       </div>
       <div className="chat-item-content">
         <div className="chat-item-top">

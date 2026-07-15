@@ -265,6 +265,7 @@ input, textarea { font-family: inherit; border: none; outline: none; background:
 }
 
 .bubble p { font-size: 15px; line-height: 1.45; }
+.bubble p img.emoji { width: 1.2em; height: 1.2em; vertical-align: -0.2em; display: inline; }
 .sender-name { display: block; font-size: 13px; font-weight: 600; color: var(--ms-green); margin-bottom: 2px; }
 
 .bubble-meta { display: flex; align-items: center; justify-content: flex-end; gap: 4px; margin-top: 2px; }
@@ -479,6 +480,13 @@ input, textarea { font-family: inherit; border: none; outline: none; background:
   width: 100%; height: 100%; border-radius: 50%; object-fit: cover; display: block;
 }
 .avatar-img { width: 100%; height: 100%; }
+
+.online-dot {
+  position: absolute; bottom: 1px; right: 1px;
+  width: 10px; height: 10px; border-radius: 50%;
+  background: #30D158; border: 2px solid var(--bg-primary);
+}
+
 .profile-avatar-large { position: relative; overflow: hidden; }
 .profile-avatar-large.clickable { cursor: pointer; }
 .avatar-overlay {

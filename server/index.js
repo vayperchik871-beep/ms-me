@@ -113,11 +113,11 @@ function sendBotMessage(userId, text) {
     VALUES (?, ?, ?, ?, ?, ?, ?)
   `).run(msgId, chatId, SYSTEM_BOT.id, enc.content_enc, enc.content_iv, enc.content_tag, now)
 
-  broadcastToUser(userId, { type: 'new_message', chatId, message: formatMessage(msgId) })
+  broadcastToUser(userId, { type: 'new_message', chatId, message: formatMessage(msgId, userId) })
   return { chatId, messageId: msgId }
 }
 
-function formatMessage(msgId) {
+function formatMessage(msgId, viewerId) {
   const m = db.prepare('SELECT * FROM messages WHERE id = ?').get(msgId)
   if (!m || m.deleted) return null
   const sender = db.prepare('SELECT id, user_id, name, is_system, avatar FROM users WHERE id = ?').get(m.sender_id)
@@ -125,6 +125,11 @@ function formatMessage(msgId) {
   let attachment = null
   if (m.attachment) {
     try { attachment = JSON.parse(m.attachment) } catch {}
+  }
+  let read = false
+  if (viewerId) {
+    const participants = db.prepare('SELECT user_id, last_read FROM chat_participants WHERE chat_id = ? AND user_id != ?').all(m.chat_id, viewerId)
+    read = participants.some((p) => p.last_read && p.last_read >= m.created_at)
   }
   return {
     id: m.id,
@@ -140,6 +145,7 @@ function formatMessage(msgId) {
     createdAt: m.created_at,
     reactions,
     attachment,
+    read,
   }
 }
 
@@ -154,6 +160,10 @@ function broadcastToUser(userId, data) {
       ws.send(JSON.stringify(data))
     }
   }
+}
+
+function isUserOnline(userId) {
+  return Array.from(clients.values()).some((c) => c.userId === userId)
 }
 
 function broadcastToChat(chatId, data, excludeUserId) {
@@ -364,16 +374,20 @@ app.post('/api/contacts', authMiddleware, (req, res) => {
 
 // ─── Uploads ───
 
+function fullUrl(req, path) {
+  return `${req.protocol}://${req.get('host')}${path}`
+}
+
 app.post('/api/upload/avatar', authMiddleware, upload.single('avatar'), (req, res) => {
   if (!req.file) return res.status(400).json({ error: 'Файл не загружен' })
-  const url = `/uploads/${req.file.filename}`
+  const url = fullUrl(req, `/uploads/${req.file.filename}`)
   db.prepare('UPDATE users SET avatar = ? WHERE id = ?').run(url, req.user.id)
   res.json({ avatar: url })
 })
 
 app.post('/api/upload/attachment', authMiddleware, upload.single('file'), (req, res) => {
   if (!req.file) return res.status(400).json({ error: 'Файл не загружен' })
-  const url = `/uploads/${req.file.filename}`
+  const url = fullUrl(req, `/uploads/${req.file.filename}`)
   const type = req.file.mimetype.startsWith('image/') ? 'image' : req.file.mimetype.startsWith('audio/') ? 'voice' : 'file'
   const duration = req.body.duration ? parseInt(req.body.duration, 10) : null
   res.json({ url, type, name: req.file.originalname, size: req.file.size, duration })
@@ -416,13 +430,13 @@ app.get('/api/chats', authMiddleware, (req, res) => {
     const unread = db.prepare(`
       SELECT COUNT(*) as c FROM messages
       WHERE chat_id = ? AND sender_id != ? AND created_at > COALESCE(
-        (SELECT last_seen FROM devices WHERE user_id = ? ORDER BY last_seen DESC LIMIT 1), 0
+        (SELECT last_read FROM chat_participants WHERE chat_id = ? AND user_id = ?), 0
       )
-    `).get(chat.id, req.user.id, req.user.id)
+    `).get(chat.id, req.user.id, chat.id, req.user.id)
 
     return {
       id: chat.id,
-      peer: peer ? { id: peer.id, userId: peer.user_id, name: peer.name, isSystem: !!peer.is_system, avatar: peer.avatar } : null,
+      peer: peer ? { id: peer.id, userId: peer.user_id, name: peer.name, isSystem: !!peer.is_system, avatar: peer.avatar, online: isUserOnline(peer.id) } : null,
       lastMessage,
       lastTime: chat.last_time ? formatTime(chat.last_time) : '',
       unread: unread?.c || 0,
@@ -444,7 +458,7 @@ app.get('/api/chats/:chatId/messages', authMiddleware, (req, res) => {
     SELECT id FROM messages WHERE chat_id = ? AND deleted = 0 ORDER BY created_at ASC
   `).all(req.params.chatId)
 
-  res.json({ messages: rows.map((r) => formatMessage(r.id)).filter(Boolean) })
+  res.json({ messages: rows.map((r) => formatMessage(r.id, req.user.id)).filter(Boolean) })
 })
 
 app.post('/api/chats/:chatId/messages', authMiddleware, (req, res) => {
@@ -467,7 +481,7 @@ app.post('/api/chats/:chatId/messages', authMiddleware, (req, res) => {
     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
   `).run(msgId, req.params.chatId, req.user.id, enc.content_enc, enc.content_iv, enc.content_tag, replyTo || null, attachment, now)
 
-  const message = formatMessage(msgId)
+  const message = formatMessage(msgId, req.user.id)
   broadcastToChat(req.params.chatId, { type: 'new_message', chatId: req.params.chatId, message }, req.user.id)
   res.json({ message })
 })
@@ -482,7 +496,7 @@ app.patch('/api/messages/:id', authMiddleware, (req, res) => {
     UPDATE messages SET content_enc = ?, content_iv = ?, content_tag = ?, edited_at = ? WHERE id = ?
   `).run(enc.content_enc, enc.content_iv, enc.content_tag, Date.now(), req.params.id)
 
-  const message = formatMessage(req.params.id)
+  const message = formatMessage(req.params.id, req.user.id)
   broadcastToChat(msg.chat_id, { type: 'message_updated', message })
   res.json({ message })
 })
@@ -520,6 +534,27 @@ app.post('/api/messages/:id/react', authMiddleware, (req, res) => {
 
   const reactions = db.prepare('SELECT emoji, user_id FROM message_reactions WHERE message_id = ?').all(req.params.id)
   res.json({ reactions })
+})
+
+app.post('/api/chats/:chatId/read', authMiddleware, (req, res) => {
+  const participant = db.prepare(
+    'SELECT 1 FROM chat_participants WHERE chat_id = ? AND user_id = ?'
+  ).get(req.params.chatId, req.user.id)
+  if (!participant) return res.status(403).json({ error: 'Нет доступа' })
+
+  const now = Date.now()
+  db.prepare('UPDATE chat_participants SET last_read = ? WHERE chat_id = ? AND user_id = ?').run(
+    now, req.params.chatId, req.user.id
+  )
+
+  broadcastToChat(req.params.chatId, {
+    type: 'read_receipt',
+    chatId: req.params.chatId,
+    userId: req.user.id,
+    lastRead: now,
+  }, req.user.id)
+
+  res.json({ ok: true })
 })
 
 app.post('/api/messages/:id/favorite', authMiddleware, (req, res) => {
@@ -560,7 +595,24 @@ wss.on('connection', (ws, req) => {
     ws.token = token
     clients.set(token, ws)
 
-    ws.on('close', () => clients.delete(token))
+    const contacts = db.prepare(`
+      SELECT DISTINCT cp2.user_id FROM chat_participants cp1
+      JOIN chat_participants cp2 ON cp2.chat_id = cp1.chat_id
+      WHERE cp1.user_id = ? AND cp2.user_id != ?
+    `).all(payload.userId, payload.userId)
+    for (const c of contacts) {
+      broadcastToUser(c.user_id, { type: 'user_online', userId: payload.userId })
+    }
+
+    ws.on('close', () => {
+      clients.delete(token)
+      const stillOnline = Array.from(clients.values()).some((c) => c.userId === payload.userId)
+      if (!stillOnline) {
+        for (const c of contacts) {
+          broadcastToUser(c.user_id, { type: 'user_offline', userId: payload.userId })
+        }
+      }
+    })
     ws.send(JSON.stringify({ type: 'connected' }))
   } catch {
     ws.close()

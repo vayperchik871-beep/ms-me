@@ -1,6 +1,6 @@
 import { useRef } from 'react'
 import { useAuth } from '../context/AuthContext'
-import { api } from '../api/client'
+import { api, resolveMediaUrl } from '../api/client'
 
 export default function ProfileTab() {
   const { user, accounts, switchToAccount, refreshUser } = useAuth()
@@ -20,7 +20,7 @@ export default function ProfileTab() {
       <div className="profile-header">
         <div className="profile-avatar-large clickable" onClick={() => fileInputRef.current?.click()}>
           {user?.avatar ? (
-            <img src={user.avatar} alt="" className="avatar-img" />
+            <img src={resolveMediaUrl(user.avatar)} alt="" className="avatar-img" />
           ) : (
             user?.name?.[0]?.toUpperCase()
           )}

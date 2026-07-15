@@ -30,7 +30,7 @@ function VoiceMessage({ url, duration }) {
       <span className="voice-dur">{duration ? `${Math.floor(duration / 60)}:${(duration % 60).toString().padStart(2, '0')}` : '0:00'}</span>
       <audio
         ref={audioRef}
-        src={url}
+        src={resolveMediaUrl(url)}
         onPlay={() => setPlaying(true)}
         onPause={() => setPlaying(false)}
         onEnded={() => { setPlaying(false); setProgress(0) }}
@@ -43,6 +43,8 @@ function VoiceMessage({ url, duration }) {
     </div>
   )
 }
+
+import { resolveMediaUrl } from '../api/client'
 
 export default function MessageBubble({ message, isMine, showName, selected, selectMode, onLongPress, onClick }) {
   const timerRef = useRef(null)
@@ -79,7 +81,7 @@ export default function MessageBubble({ message, isMine, showName, selected, sel
 
         {attach?.type === 'image' && (
           <div className="msg-image-wrap">
-            <img src={attach.url} alt="" className="msg-image" loading="lazy" />
+            <img src={resolveMediaUrl(attach.url)} alt="" className="msg-image" loading="lazy" />
           </div>
         )}
 
@@ -102,7 +104,7 @@ export default function MessageBubble({ message, isMine, showName, selected, sel
           {message.edited && <span className="edited-tag">изм.</span>}
           <span className="bubble-time">{message.time}</span>
           {isMine && (
-            <svg className="status-icon read" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <svg className={`status-icon ${message.read ? 'read' : ''}`} width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="M18 6L7 17l-5-5" /><path d="M22 6L11 17" />
             </svg>
           )}

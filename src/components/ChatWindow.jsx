@@ -5,6 +5,7 @@ import { useWebSocket } from '../hooks/useWebSocket'
 import MessageBubble from './MessageBubble'
 import InputBar from './InputBar'
 import MessageContextMenu from './MessageContextMenu'
+import { resolveMediaUrl } from '../api/client'
 
 export default function ChatWindow({ chatId, onBack }) {
   const { user } = useAuth()
@@ -29,18 +30,29 @@ export default function ChatWindow({ chatId, onBack }) {
 
   useEffect(() => { loadChat() }, [loadChat])
 
+  useEffect(() => {
+    api.readChat(chatId).catch(() => {})
+  }, [chatId])
+
   useWebSocket((data) => {
     if (data.type === 'new_message' && data.chatId === chatId) {
       setMessages((prev) => {
         if (prev.some((m) => m.id === data.message?.id)) return prev
         return data.message ? [...prev, data.message] : prev
       })
+      api.readChat(chatId).catch(() => {})
     }
     if (data.type === 'message_updated' && data.message?.chatId === chatId) {
       setMessages((prev) => prev.map((m) => (m.id === data.message.id ? data.message : m)))
     }
     if (data.type === 'message_deleted' && data.chatId === chatId) {
       setMessages((prev) => prev.filter((m) => m.id !== data.messageId))
+    }
+    if (data.type === 'read_receipt' && data.chatId === chatId) {
+      setMessages((prev) => prev.map((m) => m.senderId === user?.id ? { ...m, read: true } : m))
+    }
+    if (data.type === 'user_online' || data.type === 'user_offline') {
+      loadChat()
     }
   })
 
@@ -50,17 +62,34 @@ export default function ChatWindow({ chatId, onBack }) {
 
   const handleSend = async (text, attachment) => {
     if (!text.trim() && !attachment) return
-    try {
-      if (editId) {
+    if (editId) {
+      try {
         const { message } = await api.editMessage(editId, text)
         setMessages((prev) => prev.map((m) => (m.id === editId ? message : m)))
         setEditId(null)
-      } else {
-        const { message } = await api.sendMessage(chatId, text, replyTo?.id, attachment)
-        setMessages((prev) => [...prev, message])
-        setReplyTo(null)
-      }
-    } catch { /* ignore */ }
+      } catch { /* ignore */ }
+      return
+    }
+    const tempId = `temp_${Date.now()}`
+    const optimistic = {
+      id: tempId,
+      chatId,
+      senderId: user?.id,
+      text,
+      attachment,
+      createdAt: Date.now(),
+      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      reactions: [],
+      read: false,
+    }
+    setMessages((prev) => [...prev, optimistic])
+    setReplyTo(null)
+    try {
+      const { message } = await api.sendMessage(chatId, text, replyTo?.id, attachment)
+      setMessages((prev) => prev.map((m) => (m.id === tempId ? message : m)))
+    } catch {
+      setMessages((prev) => prev.filter((m) => m.id !== tempId))
+    }
   }
 
   const handleContextAction = async (action) => {
@@ -123,11 +152,11 @@ export default function ChatWindow({ chatId, onBack }) {
 
         <div className="chat-header-info">
           <div className={`avatar avatar-sm ${isBot ? 'avatar-bot' : ''}`} style={{ background: isBot ? '#2C2C2E' : '#FFFFFF', color: isBot ? '#fff' : '#000' }}>
-            {isBot ? <img src="/logo.png" alt="" className="avatar-logo" /> : peer?.avatar ? <img src={peer.avatar} alt="" className="avatar-img" /> : peer?.name?.[0]}
+            {isBot ? <img src="/logo.png" alt="" className="avatar-logo" /> : peer?.avatar ? <img src={resolveMediaUrl(peer.avatar)} alt="" className="avatar-img" /> : peer?.name?.[0]}
           </div>
           <div className="chat-header-text">
             <h2>{peer?.name}</h2>
-            <span className="status">{isBot ? 'бот' : `@${peer?.userId}`}</span>
+            <span className="status">{isBot ? 'бот' : chat?.peer?.online ? 'онлайн' : `@${peer?.userId}`}</span>
           </div>
           <svg className="header-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             <path d="M9 18l6-6-6-6" />

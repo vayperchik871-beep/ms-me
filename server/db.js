@@ -60,6 +60,7 @@ db.exec(`
   CREATE TABLE IF NOT EXISTS chat_participants (
     chat_id TEXT NOT NULL REFERENCES chats(id),
     user_id TEXT NOT NULL REFERENCES users(id),
+    last_read INTEGER DEFAULT NULL,
     PRIMARY KEY (chat_id, user_id)
   );
 
@@ -97,6 +98,7 @@ db.exec(`
 
 try { db.exec("ALTER TABLE users ADD COLUMN avatar TEXT DEFAULT NULL") } catch {}
 try { db.exec("ALTER TABLE messages ADD COLUMN attachment TEXT DEFAULT NULL") } catch {}
+try { db.exec("ALTER TABLE chat_participants ADD COLUMN last_read INTEGER DEFAULT NULL") } catch {}
 
 const SYSTEM_BOT = {
   id: 'system-ms-messenger',
