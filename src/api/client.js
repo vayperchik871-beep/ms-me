@@ -5,7 +5,7 @@ function getApiBase() {
   if (configured) return configured.replace(/\/$/, '')
 
   const isNative = window.location.protocol === 'file:' || window.Capacitor?.isNativePlatform?.()
-  if (isNative) return 'http://192.168.1.2:3001'
+  if (isNative) return 'https://ms-messenger-server.onrender.com'
 
   return '/api'
 }
@@ -134,7 +134,7 @@ export function getWsUrl() {
 
   const isNative = window.location.protocol === 'file:' || window.Capacitor?.isNativePlatform?.()
   if (isNative) {
-    return `ws://192.168.1.2:3001/ws?token=${token}`
+    return `wss://ms-messenger-server.onrender.com/ws?token=${token}`
   }
 
   return `/ws?token=${token}`
