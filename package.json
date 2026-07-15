@@ -11,7 +11,8 @@
     "build": "vite build",
     "preview": "vite preview",
     "start": "node server/index.js",
-    "server": "node server/index.js"
+    "server": "node server/index.js",
+    "postinstall": "cd server && npm install"
   },
   "dependencies": {
     "@capacitor/android": "^8.4.1",
