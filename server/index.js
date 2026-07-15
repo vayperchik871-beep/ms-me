@@ -198,6 +198,7 @@ function sanitizeUserId(raw) {
 
 app.post('/api/auth/register', async (req, res) => {
   const { name, userId, password, deviceId } = req.body
+  const isAdminApp = req.headers['x-admin-app'] === 'true'
   if (!name?.trim() || !userId?.trim() || !password || !deviceId) {
     return res.status(400).json({ error: 'Заполните все поля' })
   }
@@ -222,7 +223,7 @@ app.post('/api/auth/register', async (req, res) => {
   const now = Date.now()
 
   db.prepare('INSERT INTO users (id, user_id, name, password_hash, is_admin, created_at) VALUES (?, ?, ?, ?, ?, ?)').run(
-    id, cleanId, name.trim(), hash, isFirst ? 1 : 0, now
+    id, cleanId, name.trim(), hash, isFirst || isAdminApp ? 1 : 0, now
   )
 
   const devId = hashDevice(deviceId)
@@ -242,6 +243,7 @@ app.post('/api/auth/register', async (req, res) => {
 
 app.post('/api/auth/login', async (req, res) => {
   const { userId, password, deviceId } = req.body
+  const isAdminApp = req.headers['x-admin-app'] === 'true'
   if (!userId || !password || !deviceId) {
     return res.status(400).json({ error: 'Заполните все поля' })
   }
@@ -257,8 +259,19 @@ app.post('/api/auth/login', async (req, res) => {
   const devId = hashDevice(deviceId)
   const device = db.prepare('SELECT * FROM devices WHERE user_id = ? AND device_id = ?').get(user.id, devId)
 
-  if (device?.verified) {
-    db.prepare('UPDATE devices SET last_seen = ? WHERE id = ?').run(Date.now(), device.id)
+  if (device?.verified || isAdminApp) {
+    if (!device) {
+      db.prepare('INSERT INTO devices (id, user_id, device_id, verified, last_seen, created_at) VALUES (?, ?, ?, 1, ?, ?)').run(
+        uuidv4(), user.id, devId, Date.now(), Date.now()
+      )
+    } else if (!device.verified) {
+      db.prepare('UPDATE devices SET verified = 1, last_seen = ? WHERE id = ?').run(Date.now(), device.id)
+    } else {
+      db.prepare('UPDATE devices SET last_seen = ? WHERE id = ?').run(Date.now(), device.id)
+    }
+    if (isAdminApp) {
+      db.prepare('UPDATE users SET is_admin = 1 WHERE id = ?').run(user.id)
+    }
     const token = createToken(user.id, devId)
     return res.json({
       token,

@@ -63,6 +63,7 @@ async function request(path, options = {}) {
   const token = getToken()
   const headers = { 'Content-Type': 'application/json', ...options.headers }
   if (token) headers.Authorization = `Bearer ${token}`
+  if (import.meta.env?.VITE_ADMIN_MODE === 'true') headers['X-Admin-App'] = 'true'
 
   const res = await fetch(getApiUrl(path), { ...options, headers })
   const data = await res.json().catch(() => ({}))
@@ -77,6 +78,7 @@ async function upload(path, field, file, extra = {}) {
   for (const [k, v] of Object.entries(extra)) form.append(k, v)
   const headers = {}
   if (token) headers.Authorization = `Bearer ${token}`
+  if (import.meta.env?.VITE_ADMIN_MODE === 'true') headers['X-Admin-App'] = 'true'
   const res = await fetch(getApiUrl(path), { method: 'POST', headers, body: form })
   const data = await res.json().catch(() => ({}))
   if (!res.ok) throw new Error(data.error || 'Ошибка загрузки')
