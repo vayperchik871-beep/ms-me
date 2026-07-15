@@ -68,8 +68,10 @@ function authMiddleware(req, res, next) {
     if (!session || session.expires_at < Date.now()) {
       return res.status(401).json({ error: 'Сессия истекла' })
     }
-    const user = db.prepare('SELECT id, user_id, name, is_system, is_admin, banned FROM users WHERE id = ?').get(payload.userId)
-    if (!user) return res.status(401).json({ error: 'Пользователь не найден' })
+    const row = db.prepare('SELECT id, user_id, name, is_system FROM users WHERE id = ?').get(payload.userId)
+    if (!row) return res.status(401).json({ error: 'Пользователь не найден' })
+    const adminRow = db.prepare('SELECT is_admin, banned FROM users WHERE id = ?').get(payload.userId)
+    const user = { ...row, is_admin: adminRow?.is_admin || 0, banned: adminRow?.banned || 0 }
     if (user.banned) return res.status(403).json({ error: 'Аккаунт заблокирован' })
     req.user = user
     req.deviceId = payload.deviceId
@@ -305,8 +307,9 @@ app.post('/api/auth/verify-device', (req, res) => {
 })
 
 app.get('/api/auth/me', authMiddleware, (req, res) => {
-  const u = db.prepare('SELECT id, user_id, name, is_system, avatar, is_admin, banned FROM users WHERE id = ?').get(req.user.id)
-  res.json({ user: u || { ...req.user, is_admin: 0, banned: 0 } })
+  const u = db.prepare('SELECT id, user_id, name, is_system, avatar FROM users WHERE id = ?').get(req.user.id)
+  const extra = db.prepare('SELECT is_admin, banned FROM users WHERE id = ?').get(req.user.id)
+  res.json({ user: { ...u, ...extra } })
 })
 
 // ─── Admin ───
