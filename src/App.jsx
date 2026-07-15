@@ -2,6 +2,8 @@ import { useState, useRef, useCallback, useEffect } from 'react'
 import { useAuth } from './context/AuthContext'
 import { useWebSocket } from './hooks/useWebSocket'
 import { api } from './api/client'
+import { Capacitor } from '@capacitor/core'
+import { LocalNotifications } from '@capacitor/local-notifications'
 import Onboarding from './components/onboarding/Onboarding'
 import BottomNav from './components/BottomNav'
 import ChatsTab from './components/ChatsTab'
@@ -9,6 +11,46 @@ import ContactsTab from './components/ContactsTab'
 import ProfileTab from './components/ProfileTab'
 import SettingsTab from './components/SettingsTab'
 import ChatWindow from './components/ChatWindow'
+
+let notifId = 0
+
+async function requestNotifPermission() {
+  if (!Capacitor.isNativePlatform()) {
+    if ('Notification' in window && Notification.permission === 'default') {
+      Notification.requestPermission()
+    }
+    return
+  }
+  try {
+    let perm = await LocalNotifications.checkPermissions()
+    if (perm.display !== 'granted') {
+      perm = await LocalNotifications.requestPermissions()
+    }
+  } catch {}
+}
+
+async function showLocalNotification(title, body) {
+  if (!Capacitor.isNativePlatform()) {
+    if (document.visibilityState !== 'visible' && Notification.permission === 'granted') {
+      new Notification(title, { body, icon: '/logo.png' })
+    }
+    return
+  }
+  try {
+    const perm = await LocalNotifications.checkPermissions()
+    if (perm.display !== 'granted') return
+    await LocalNotifications.schedule({
+      notifications: [{
+        title,
+        body,
+        id: ++notifId,
+        smallIcon: 'ic_launcher',
+        largeIcon: 'ic_launcher',
+        channelId: 'messages',
+      }],
+    })
+  } catch {}
+}
 
 export default function App() {
   const { user, loading, logout, refreshUser } = useAuth()
@@ -18,20 +60,15 @@ export default function App() {
   const wsHandlers = useRef([])
 
   useEffect(() => {
-    if ('Notification' in window && Notification.permission === 'default') {
-      Notification.requestPermission()
-    }
+    requestNotifPermission()
   }, [])
 
   useWebSocket((data) => {
     wsHandlers.current.forEach((h) => h(data))
-    if (data.type === 'new_message') {
-      if (document.visibilityState !== 'visible' && Notification.permission === 'granted') {
-        new Notification(data.message?.senderName || 'Новое сообщение', {
-          body: data.message?.text || '📎',
-          icon: '/logo.png',
-        })
-      }
+    if (data.type === 'new_message' && data.message?.senderId !== user?.id) {
+      const senderName = data.message?.senderName || 'Новое сообщение'
+      const text = data.message?.text || '📎'
+      showLocalNotification(senderName, text)
     }
   })
 

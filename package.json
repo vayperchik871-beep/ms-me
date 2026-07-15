@@ -3,7 +3,9 @@
   "private": true,
   "version": "1.0.2",
   "type": "module",
-  "engines": { "node": ">=22" },
+  "engines": {
+    "node": ">=22"
+  },
   "scripts": {
     "dev": "concurrently \"npm run dev:client\" \"npm run dev:server\"",
     "dev:client": "vite",
@@ -18,14 +20,15 @@
     "@capacitor/android": "^8.4.1",
     "@capacitor/cli": "^8.4.1",
     "@capacitor/core": "^8.4.1",
+    "@capacitor/local-notifications": "^8.2.1",
     "@capacitor/splash-screen": "^8.0.1",
     "@capacitor/status-bar": "^8.0.2",
+    "@vitejs/plugin-react": "^4.3.4",
+    "concurrently": "^9.1.2",
+    "emoji-picker-react": "^4.4.8",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "twemoji": "^14.0.2",
-    "emoji-picker-react": "^4.4.8",
-    "@vitejs/plugin-react": "^4.3.4",
-    "concurrently": "^9.1.2",
     "vite": "^6.0.3"
   }
 }

@@ -173,29 +173,33 @@ export default function ChatWindow({ chatId, onBack }) {
     <main className="chat-window full">
       <header className="chat-header dark">
         <button className="back-btn" onClick={onBack} aria-label="Назад">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
             <path d="M15 18l-6-6 6-6" />
           </svg>
         </button>
 
-        <div className="chat-header-info">
-          <div className={`avatar avatar-sm ${isBot ? 'avatar-bot' : ''}`} style={{ background: isBot ? '#2C2C2E' : '#FFFFFF', color: isBot ? '#fff' : '#000' }}>
-            {isBot ? <img src="/logo.png" alt="" className="avatar-logo" /> : peer?.avatar ? <img src={resolveMediaUrl(peer.avatar)} alt="" className="avatar-img" /> : peer?.name?.[0]}
-          </div>
-          <div className="chat-header-text">
-            <h2>{peer?.name}</h2>
-            <span className={`status ${typingUserId ? 'typing' : ''}`}>{typingUserId ? 'печатает...' : (isBot ? 'бот' : peer?.online ? 'онлайн' : `@${peer?.userId}`)}</span>
-          </div>
-          <svg className="header-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <path d="M9 18l6-6-6-6" />
-          </svg>
+        <div className="chat-header-center">
+          <h2 className="chat-header-name">{peer?.name}</h2>
+          <span className={`chat-header-status ${typingUserId ? 'typing' : ''}`}>
+            {typingUserId ? 'печатает...' : (peer?.online ? 'в сети' : '')}
+          </span>
         </div>
 
-        <button className="icon-btn" aria-label="Ещё">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-            <circle cx="12" cy="5" r="2" /><circle cx="12" cy="12" r="2" /><circle cx="12" cy="19" r="2" />
-          </svg>
-        </button>
+        <div className="chat-header-avatar">
+          {isBot ? (
+            <div className="chat-avatar-circle bot">
+              <img src="/logo.png" alt="" className="avatar-logo" />
+            </div>
+          ) : peer?.avatar ? (
+            <div className="chat-avatar-circle">
+              <img src={resolveMediaUrl(peer.avatar)} alt="" className="avatar-img" />
+            </div>
+          ) : (
+            <div className="chat-avatar-circle">
+              {peer?.name?.[0]}
+            </div>
+          )}
+        </div>
       </header>
 
       <div className="messages-area dark">
