@@ -378,9 +378,12 @@ app.post('/api/contacts', authMiddleware, (req, res) => {
 
 function fullUrl(req, path) {
   if (PUBLIC_URL) return `${PUBLIC_URL.replace(/\/$/, '')}${path}`
-  const proto = req.headers['x-forwarded-proto'] || req.protocol
-  const host = req.headers['x-forwarded-host'] || req.get('host')
-  return `${proto}://${host}${path}`
+  const proto = req.headers['x-forwarded-proto'] || req.protocol || 'https'
+  const host = (req.headers['x-forwarded-host'] || req.get('host') || req.headers.host || '').replace(/:.*$/, '')
+  if (host && !host.includes('0.0.0.0') && !host.includes('localhost') && !host.includes('127.0.0.1')) {
+    return `${proto}://${host}${path}`
+  }
+  return `${path}`
 }
 
 app.post('/api/upload/avatar', authMiddleware, upload.single('avatar'), (req, res) => {
