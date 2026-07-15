@@ -408,7 +408,7 @@ app.post('/api/admin/command', authMiddleware, adminMiddleware, (req, res) => {
           '  say <id> <msg> — написать от имени бота в личный чат с пользователем',
           '  clear          — очистить терминал',
           '  help           — эта справка',
-        ].join('\n'))
+        ].join('\n')))
       }
       case 'stats': {
         const totalUsers = db.prepare('SELECT COUNT(*) as c FROM users WHERE is_system = 0').get()
