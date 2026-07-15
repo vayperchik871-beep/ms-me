@@ -1,10 +1,13 @@
 apply plugin: 'com.android.application'
 
+def adminMode = System.getenv('ANDROID_ADMIN_MODE') == 'true'
+def appId = adminMode ? "com.ms.messenger.admin" : "com.ms.messenger"
+
 android {
-    namespace "com.ms.messenger"
+    namespace appId
     compileSdk rootProject.ext.compileSdkVersion
     defaultConfig {
-        applicationId "com.ms.messenger"
+        applicationId appId
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 3

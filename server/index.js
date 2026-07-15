@@ -57,6 +57,18 @@ app.get('/health', (req, res) => {
   res.json({ ok: true, service: 'ms-messenger-server' })
 })
 
+app.get('/debug', (req, res) => {
+  res.json({
+    rootDir,
+    frontendDistDir,
+    indexHtmlPath,
+    distExists: fs.existsSync(frontendDistDir),
+    indexExists: fs.existsSync(indexHtmlPath),
+    cwd: process.cwd(),
+    dirname: __dirname,
+  })
+})
+
 function authMiddleware(req, res, next) {
   const header = req.headers.authorization
   if (!header?.startsWith('Bearer ')) {
