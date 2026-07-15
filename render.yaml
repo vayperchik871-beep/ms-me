@@ -3,7 +3,7 @@ services:
     name: ms-messenger-server
     env: node
     plan: free
-    buildCommand: npm install --ignore-scripts=true && npm install --prefix server && npm run build
+    buildCommand: cd server && npm install && cd .. && npm install --ignore-scripts=true && npm run build
     startCommand: npm start
     envVars:
       - key: NODE_ENV
