@@ -105,6 +105,12 @@ export const api = {
   uploadAvatar: (file) => upload('/upload/avatar', 'avatar', file),
   uploadAttachment: (file, duration) => upload('/upload/attachment', 'file', file, duration ? { duration } : {}),
   updateAvatar: (url) => request('/users/avatar', { method: 'PATCH', body: JSON.stringify({ avatar: url }) }),
+
+  // Admin
+  adminStats: () => request('/admin/stats'),
+  adminUsers: () => request('/admin/users'),
+  adminBan: (userId, value) => request('/admin/ban', { method: 'POST', body: JSON.stringify({ userId, value }) }),
+  adminScam: (userId, value) => request('/admin/scam', { method: 'POST', body: JSON.stringify({ userId, value }) }),
 }
 
 export function resolveMediaUrl(url) {

@@ -1,14 +1,21 @@
+import { useState } from 'react'
 import { useAuth } from '../context/AuthContext'
 import { getAccounts } from '../api/client'
+import AdminPanel from './AdminPanel'
 
 export default function SettingsTab({ onLogout, onAddAccount }) {
   const { user, accounts, canAddAccount } = useAuth()
+  const [showAdmin, setShowAdmin] = useState(false)
 
   const handleRemoveAccount = (userId) => {
     const accs = getAccounts().filter((a) => a.userId !== userId)
     localStorage.setItem('ms_accounts', JSON.stringify(accs))
     if (user?.userId === userId) onLogout()
     window.location.reload()
+  }
+
+  if (showAdmin && user?.is_admin) {
+    return <AdminPanel onBack={() => setShowAdmin(false)} />
   }
 
   return (
@@ -29,6 +36,18 @@ export default function SettingsTab({ onLogout, onAddAccount }) {
           <span className="settings-value">Тёмная</span>
         </div>
       </div>
+
+      {user?.is_admin && (
+        <>
+          <h3 className="section-title">Администрирование</h3>
+          <div className="settings-group">
+            <button className="settings-item clickable" onClick={() => setShowAdmin(true)}>
+              <span>🛡️ Админ-панель</span>
+              <span className="settings-arrow">›</span>
+            </button>
+          </div>
+        </>
+      )}
 
       <h3 className="section-title">Аккаунт</h3>
       <div className="settings-group">

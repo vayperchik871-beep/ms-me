@@ -1,5 +1,5 @@
 import { useRef, useMemo, useState, useCallback } from 'react'
-import twemoji from 'twemoji'
+import { parseEmoji } from '../utils/emoji'
 import { resolveMediaUrl } from '../api/client'
 
 function VoiceMessage({ url, duration }) {
@@ -89,13 +89,13 @@ export default function MessageBubble({ message, isMine, showName, selected, sel
         )}
 
         {message.text && message.text !== '📎' && (
-          <p dangerouslySetInnerHTML={useMemo(() => ({ __html: twemoji.parse(message.text || '', { folder: '72x72', ext: '.png' }) }), [message.text])} />
+          <p dangerouslySetInnerHTML={useMemo(() => ({ __html: parseEmoji(message.text) }), [message.text])} />
         )}
 
         {message.reactions?.length > 0 && (
           <div className="reactions-display">
             {message.reactions.map((r, i) => (
-              <span key={i} className="reaction-chip" dangerouslySetInnerHTML={{ __html: twemoji.parse(r.emoji || '') }} />
+              <span key={i} className="reaction-chip" dangerouslySetInnerHTML={{ __html: parseEmoji(r.emoji) }} />
             ))}
           </div>
         )}

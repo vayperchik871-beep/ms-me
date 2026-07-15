@@ -578,6 +578,21 @@ input, textarea { font-family: inherit; border: none; outline: none; background:
 }
 .voice-dur { font-size: 12px; color: var(--text-muted); flex-shrink: 0; min-width: 32px; }
 
+/* Admin */
+.admin-stats { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; padding: 0 16px 16px; }
+.admin-stat-card { background: var(--bg-secondary); border-radius: 12px; padding: 12px; text-align: center; font-size: 12px; color: var(--text-secondary); }
+.admin-stat-card .stat-num { display: block; font-size: 24px; font-weight: 700; color: var(--text-primary); }
+.admin-users-list { padding: 0 16px 80px; }
+.admin-user-row { display: flex; align-items: center; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid var(--border); }
+.admin-user-info { display: flex; flex-direction: column; gap: 2px; }
+.admin-user-info strong { font-size: 14px; }
+.admin-user-actions { display: flex; gap: 6px; }
+.admin-btn { padding: 4px 12px; border-radius: 8px; font-size: 12px; font-weight: 500; border: 1px solid var(--border); background: var(--bg-secondary); color: var(--text-secondary); cursor: pointer; }
+.admin-btn.active-ban { background: #ff3b30; color: #fff; border-color: #ff3b30; }
+.admin-btn.active-scam { background: #ff9500; color: #fff; border-color: #ff9500; }
+
+.settings-header { display: flex; align-items: center; gap: 12px; padding: 12px 16px; }
+
 @media (min-width: 481px) {
   .mobile-app { border-left: 1px solid var(--border); border-right: 1px solid var(--border); }
 }

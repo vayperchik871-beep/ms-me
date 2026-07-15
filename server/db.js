@@ -99,6 +99,10 @@ db.exec(`
 try { db.exec("ALTER TABLE users ADD COLUMN avatar TEXT DEFAULT NULL") } catch {}
 try { db.exec("ALTER TABLE messages ADD COLUMN attachment TEXT DEFAULT NULL") } catch {}
 try { db.exec("ALTER TABLE chat_participants ADD COLUMN last_read INTEGER DEFAULT NULL") } catch {}
+try { db.exec("ALTER TABLE users ADD COLUMN is_admin INTEGER DEFAULT 0") } catch {}
+try { db.exec("ALTER TABLE users ADD COLUMN banned INTEGER DEFAULT 0") } catch {}
+try { db.exec("ALTER TABLE users ADD COLUMN scam INTEGER DEFAULT 0") } catch {}
+try { db.exec("ALTER TABLE sessions ADD COLUMN user_name TEXT DEFAULT NULL") } catch {}
 
 try {
   db.exec(`

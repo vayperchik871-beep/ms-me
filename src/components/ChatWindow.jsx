@@ -5,8 +5,8 @@ import { useWebSocket } from '../hooks/useWebSocket'
 import MessageBubble from './MessageBubble'
 import InputBar from './InputBar'
 import MessageContextMenu from './MessageContextMenu'
+import { parseEmoji } from '../utils/emoji'
 import { resolveMediaUrl } from '../api/client'
-import twemoji from 'twemoji'
 
 export default function ChatWindow({ chatId, onBack }) {
   const { user } = useAuth()
@@ -51,6 +51,7 @@ export default function ChatWindow({ chatId, onBack }) {
         return data.message ? [...prev, data.message] : prev
       })
       api.readChat(chatId).catch(() => {})
+      if (data.message?.senderId !== user?.id) playNotify()
     }
     if (data.type === 'message_updated' && data.message?.chatId === chatId) {
       setMessages((prev) => prev.map((m) => (m.id === data.message.id ? data.message : m)))
@@ -204,7 +205,7 @@ export default function ChatWindow({ chatId, onBack }) {
             <p className="empty-hint">Отправьте сообщение, чтобы начать</p>
             <div className="quick-emojis">
               {['👋', '🤝', '✌️'].map((emoji) => (
-                <button key={emoji} onClick={() => handleSend(emoji)} dangerouslySetInnerHTML={{ __html: twemoji.parse(emoji, { folder: '72x72', ext: '.png' }) }} />
+                <button key={emoji} onClick={() => handleSend(emoji)} dangerouslySetInnerHTML={{ __html: parseEmoji(emoji) }} />
               ))}
             </div>
           </div>
@@ -238,7 +239,7 @@ export default function ChatWindow({ chatId, onBack }) {
       {replyTo && (
         <div className="reply-bar">
           <div>
-            <span className="reply-label">Ответ</span>
+            <span className="reply-label">Ответ {replyTo.senderName || 'пользователю'}</span>
             <span className="reply-text">{replyTo.text}</span>
           </div>
           <button onClick={() => setReplyTo(null)}>✕</button>
@@ -264,4 +265,20 @@ export default function ChatWindow({ chatId, onBack }) {
       )}
     </main>
   )
+}
+
+function playNotify() {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)()
+    const osc = ctx.createOscillator()
+    const gain = ctx.createGain()
+    osc.connect(gain)
+    gain.connect(ctx.destination)
+    osc.frequency.value = 800
+    osc.type = 'sine'
+    gain.gain.setValueAtTime(0.08, ctx.currentTime)
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.2)
+    osc.start(ctx.currentTime)
+    osc.stop(ctx.currentTime + 0.2)
+  } catch {}
 }

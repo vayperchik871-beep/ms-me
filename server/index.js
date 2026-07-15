@@ -68,8 +68,9 @@ function authMiddleware(req, res, next) {
     if (!session || session.expires_at < Date.now()) {
       return res.status(401).json({ error: 'Сессия истекла' })
     }
-    const user = db.prepare('SELECT id, user_id, name, is_system FROM users WHERE id = ?').get(payload.userId)
+    const user = db.prepare('SELECT id, user_id, name, is_system, is_admin, banned FROM users WHERE id = ?').get(payload.userId)
     if (!user) return res.status(401).json({ error: 'Пользователь не найден' })
+    if (user.banned) return res.status(403).json({ error: 'Аккаунт заблокирован' })
     req.user = user
     req.deviceId = payload.deviceId
     req.token = header.slice(7)
@@ -201,12 +202,13 @@ app.post('/api/auth/register', async (req, res) => {
   const existing = db.prepare('SELECT id FROM users WHERE user_id = ?').get(cleanId)
   if (existing) return res.status(409).json({ error: 'Этот ID уже занят' })
 
+  const isFirst = db.prepare('SELECT COUNT(*) as c FROM users WHERE is_system = 0').get().c === 0
   const id = uuidv4()
   const hash = await bcrypt.hash(password, 12)
   const now = Date.now()
 
-  db.prepare('INSERT INTO users (id, user_id, name, password_hash, created_at) VALUES (?, ?, ?, ?, ?)').run(
-    id, cleanId, name.trim(), hash, now
+  db.prepare('INSERT INTO users (id, user_id, name, password_hash, is_admin, created_at) VALUES (?, ?, ?, ?, ?, ?)').run(
+    id, cleanId, name.trim(), hash, isFirst ? 1 : 0, now
   )
 
   const devId = hashDevice(deviceId)
@@ -233,6 +235,7 @@ app.post('/api/auth/login', async (req, res) => {
   const cleanId = sanitizeUserId(userId)
   const user = db.prepare('SELECT * FROM users WHERE user_id = ? AND is_system = 0').get(cleanId)
   if (!user) return res.status(404).json({ error: 'Пользователь не найден' })
+  if (user.banned) return res.status(403).json({ error: 'Аккаунт заблокирован' })
 
   const valid = await bcrypt.compare(password, user.password_hash)
   if (!valid) return res.status(401).json({ error: 'Неверный пароль' })
@@ -302,8 +305,69 @@ app.post('/api/auth/verify-device', (req, res) => {
 })
 
 app.get('/api/auth/me', authMiddleware, (req, res) => {
-  const u = db.prepare('SELECT id, user_id, name, is_system, avatar FROM users WHERE id = ?').get(req.user.id)
-  res.json({ user: u || req.user })
+  const u = db.prepare('SELECT id, user_id, name, is_system, avatar, is_admin, banned FROM users WHERE id = ?').get(req.user.id)
+  res.json({ user: u || { ...req.user, is_admin: 0, banned: 0 } })
+})
+
+// ─── Admin ───
+
+function adminMiddleware(req, res, next) {
+  if (!req.user?.is_admin) {
+    return res.status(403).json({ error: 'Только для администраторов' })
+  }
+  next()
+}
+
+app.get('/api/admin/stats', authMiddleware, adminMiddleware, (req, res) => {
+  const totalUsers = db.prepare('SELECT COUNT(*) as c FROM users WHERE is_system = 0').get()
+  const onlineUsers = Array.from(clients.values()).filter((c) => c.readyState === 1).length
+  const bannedUsers = db.prepare('SELECT COUNT(*) as c FROM users WHERE banned = 1').get()
+  const scamUsers = db.prepare('SELECT COUNT(*) as c FROM users WHERE scam = 1').get()
+  const totalChats = db.prepare('SELECT COUNT(*) as c FROM chats').get()
+  const totalMessages = db.prepare('SELECT COUNT(*) as c FROM messages WHERE deleted = 0').get()
+  res.json({
+    totalUsers: totalUsers.c,
+    onlineUsers,
+    bannedUsers: bannedUsers.c,
+    scamUsers: scamUsers.c,
+    totalChats: totalChats.c,
+    totalMessages: totalMessages.c,
+  })
+})
+
+app.get('/api/admin/users', authMiddleware, adminMiddleware, (req, res) => {
+  const users = db.prepare(`
+    SELECT id, user_id, name, is_admin, banned, scam, created_at FROM users WHERE is_system = 0 ORDER BY created_at DESC LIMIT 100
+  `).all()
+  res.json({ users: users.map((u) => ({
+    id: u.id,
+    userId: u.user_id,
+    name: u.name,
+    isAdmin: !!u.is_admin,
+    banned: !!u.banned,
+    scam: !!u.scam,
+    createdAt: u.created_at,
+  })) })
+})
+
+app.post('/api/admin/ban', authMiddleware, adminMiddleware, (req, res) => {
+  const { userId, value } = req.body
+  const cleanId = sanitizeUserId(userId)
+  const user = db.prepare('SELECT id FROM users WHERE user_id = ?').get(cleanId)
+  if (!user) return res.status(404).json({ error: 'Пользователь не найден' })
+  db.prepare('UPDATE users SET banned = ? WHERE id = ?').run(value ? 1 : 0, user.id)
+  res.json({ ok: true, userId: cleanId, banned: !!value })
+})
+
+app.post('/api/admin/scam', authMiddleware, adminMiddleware, (req, res) => {
+  const { userId, value } = req.body
+  const cleanId = sanitizeUserId(userId)
+  const user = db.prepare('SELECT id, name FROM users WHERE user_id = ?').get(cleanId)
+  if (!user) return res.status(404).json({ error: 'Пользователь не найден' })
+  const oldName = user.name
+  const newName = value ? `[SCAM] ${oldName.replace(/^\[SCAM\]\s*/i, '')}` : oldName.replace(/^\[SCAM\]\s*/i, '')
+  db.prepare('UPDATE users SET scam = ?, name = ? WHERE id = ?').run(value ? 1 : 0, newName, user.id)
+  res.json({ ok: true, userId: cleanId, scam: !!value, name: newName })
 })
 
 // ─── Users ───

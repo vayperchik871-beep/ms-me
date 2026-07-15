@@ -17,10 +17,21 @@ export default function App() {
   const [showOnboarding, setShowOnboarding] = useState(false)
   const wsHandlers = useRef([])
 
+  useEffect(() => {
+    if ('Notification' in window && Notification.permission === 'default') {
+      Notification.requestPermission()
+    }
+  }, [])
+
   useWebSocket((data) => {
     wsHandlers.current.forEach((h) => h(data))
-    if (data.type === 'new_message' && data.chatId === activeChatId) {
-      // ChatWindow reloads on its own via loadChat
+    if (data.type === 'new_message') {
+      if (document.visibilityState !== 'visible' && Notification.permission === 'granted') {
+        new Notification(data.message?.senderName || 'Новое сообщение', {
+          body: data.message?.text || '📎',
+          icon: '/logo.png',
+        })
+      }
     }
   })
 
