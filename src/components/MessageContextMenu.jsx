@@ -1,3 +1,5 @@
+import twemoji from 'twemoji'
+
 const REACTIONS = ['❤️', '👍', '👎', '😂', '😮', '😢', '🔥']
 
 const MENU_ITEMS = [
@@ -23,11 +25,9 @@ export default function MessageContextMenu({ message, isMine, position, onAction
       >
         <div className="reactions-bar">
           {REACTIONS.map((emoji) => (
-            <button key={emoji} className="reaction-btn" onClick={() => { onReact(emoji); onClose() }}>
-              {emoji}
-            </button>
+            <button key={emoji} className="reaction-btn" onClick={() => { onReact(emoji); onClose() }} dangerouslySetInnerHTML={{ __html: twemoji.parse(emoji, { folder: '72x72', ext: '.png' }) }} />
           ))}
-          <button className="reaction-btn more">😊</button>
+          <button className="reaction-btn more" dangerouslySetInnerHTML={{ __html: twemoji.parse('😊', { folder: '72x72', ext: '.png' }) }} />
         </div>
 
         <div className="context-menu">

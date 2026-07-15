@@ -6,6 +6,7 @@ import MessageBubble from './MessageBubble'
 import InputBar from './InputBar'
 import MessageContextMenu from './MessageContextMenu'
 import { resolveMediaUrl } from '../api/client'
+import twemoji from 'twemoji'
 
 export default function ChatWindow({ chatId, onBack }) {
   const { user } = useAuth()
@@ -16,6 +17,8 @@ export default function ChatWindow({ chatId, onBack }) {
   const [contextMenu, setContextMenu] = useState(null)
   const [selectMode, setSelectMode] = useState(false)
   const [selected, setSelected] = useState(new Set())
+  const [typingUserId, setTypingUserId] = useState(null)
+  const typingTimeoutRef = useRef(null)
   const messagesEndRef = useRef(null)
 
   const loadChat = useCallback(async () => {
@@ -63,6 +66,15 @@ export default function ChatWindow({ chatId, onBack }) {
         if (!prev?.peer || prev.peer.userId !== data.userId) return prev
         return { ...prev, peer: { ...prev.peer, online: data.type === 'user_online' } }
       })
+    }
+    if (data.type === 'typing' && data.chatId === chatId && data.userId && data.userId !== user?.id) {
+      if (data.isTyping) {
+        setTypingUserId(data.userId)
+        if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current)
+        typingTimeoutRef.current = setTimeout(() => setTypingUserId(null), 3000)
+      } else {
+        setTypingUserId(null)
+      }
     }
   })
 
@@ -171,7 +183,7 @@ export default function ChatWindow({ chatId, onBack }) {
           </div>
           <div className="chat-header-text">
             <h2>{peer?.name}</h2>
-            <span className="status">{isBot ? 'бот' : peer?.online ? 'онлайн' : `@${peer?.userId}`}</span>
+            <span className={`status ${typingUserId ? 'typing' : ''}`}>{typingUserId ? 'печатает...' : (isBot ? 'бот' : peer?.online ? 'онлайн' : `@${peer?.userId}`)}</span>
           </div>
           <svg className="header-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             <path d="M9 18l6-6-6-6" />
@@ -191,9 +203,9 @@ export default function ChatWindow({ chatId, onBack }) {
             <p>Здесь пока нет сообщений</p>
             <p className="empty-hint">Отправьте сообщение, чтобы начать</p>
             <div className="quick-emojis">
-              <button onClick={() => handleSend('👋')}>👋</button>
-              <button onClick={() => handleSend('🤝')}>🤝</button>
-              <button onClick={() => handleSend('✌️')}>✌️</button>
+              {['👋', '🤝', '✌️'].map((emoji) => (
+                <button key={emoji} onClick={() => handleSend(emoji)} dangerouslySetInnerHTML={{ __html: twemoji.parse(emoji, { folder: '72x72', ext: '.png' }) }} />
+              ))}
             </div>
           </div>
         )}
@@ -237,6 +249,7 @@ export default function ChatWindow({ chatId, onBack }) {
         onSend={handleSend}
         editText={editId ? messages.find((m) => m.id === editId)?.text : ''}
         onCancelEdit={() => setEditId(null)}
+        chatId={chatId}
       />
 
       {contextMenu && (

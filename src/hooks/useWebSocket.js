@@ -75,6 +75,12 @@ export function useWebSocket(onMessage) {
   return { ready: sharedWs?.readyState === WebSocket.OPEN }
 }
 
+export function sendWsMessage(data) {
+  if (sharedWs?.readyState === WebSocket.OPEN) {
+    sharedWs.send(JSON.stringify(data))
+  }
+}
+
 export function reconnectWs() {
   if (reconnectTimer) clearTimeout(reconnectTimer)
   reconnectTimer = null

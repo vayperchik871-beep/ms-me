@@ -1,7 +1,8 @@
 import { useState, useRef, useEffect } from 'react'
 import { api } from '../api/client'
+import { sendWsMessage } from '../hooks/useWebSocket'
 
-export default function InputBar({ onSend, editText, onCancelEdit }) {
+export default function InputBar({ onSend, editText, onCancelEdit, chatId }) {
   const [text, setText] = useState('')
   const [attachPreview, setAttachPreview] = useState(null)
   const [attachFile, setAttachFile] = useState(null)
@@ -14,6 +15,7 @@ export default function InputBar({ onSend, editText, onCancelEdit }) {
   const timerRef = useRef(null)
   const recordingSecRef = useRef(0)
   const recordingLockRef = useRef(false)
+  const typingTimerRef = useRef(null)
 
   useEffect(() => {
     if (editText) setText(editText)
@@ -34,7 +36,19 @@ export default function InputBar({ onSend, editText, onCancelEdit }) {
     }
     onSend(text)
     setText('')
+    if (typingTimerRef.current) clearTimeout(typingTimerRef.current)
+    sendWsMessage({ type: 'typing', chatId, isTyping: false })
     inputRef.current?.focus()
+  }
+
+  const handleChange = (e) => {
+    setText(e.target.value)
+    if (!chatId) return
+    if (typingTimerRef.current) clearTimeout(typingTimerRef.current)
+    sendWsMessage({ type: 'typing', chatId, isTyping: true })
+    typingTimerRef.current = setTimeout(() => {
+      sendWsMessage({ type: 'typing', chatId, isTyping: false })
+    }, 1500)
   }
 
   const handleKeyDown = (e) => {
@@ -152,7 +166,7 @@ export default function InputBar({ onSend, editText, onCancelEdit }) {
               <textarea
                 ref={inputRef}
                 value={text}
-                onChange={(e) => setText(e.target.value)}
+                onChange={handleChange}
                 onKeyDown={handleKeyDown}
                 placeholder="Сообщение..."
                 rows={1}

@@ -612,6 +612,20 @@ wss.on('connection', (ws, req) => {
       broadcastToUser(c.user_id, { type: 'user_online', userId: payload.userId })
     }
 
+    ws.on('message', (raw) => {
+      try {
+        const data = JSON.parse(raw.toString())
+        if (data.type === 'typing') {
+          const participants = db.prepare('SELECT user_id FROM chat_participants WHERE chat_id = ?').all(data.chatId)
+          for (const p of participants) {
+            if (p.user_id !== payload.userId) {
+              broadcastToUser(p.user_id, { type: 'typing', chatId: data.chatId, userId: payload.userId, isTyping: data.isTyping })
+            }
+          }
+        }
+      } catch {}
+    })
+
     ws.on('close', () => {
       clients.delete(token)
       const stillOnline = Array.from(clients.values()).some((c) => c.userId === payload.userId)
