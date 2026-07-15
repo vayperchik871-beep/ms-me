@@ -100,6 +100,33 @@ try { db.exec("ALTER TABLE users ADD COLUMN avatar TEXT DEFAULT NULL") } catch {
 try { db.exec("ALTER TABLE messages ADD COLUMN attachment TEXT DEFAULT NULL") } catch {}
 try { db.exec("ALTER TABLE chat_participants ADD COLUMN last_read INTEGER DEFAULT NULL") } catch {}
 
+try {
+  db.exec(`
+    UPDATE users SET avatar = REPLACE(avatar, 'http://0.0.0.0', 'https://ms-messenger-server.onrender.com')
+    WHERE avatar LIKE 'http://0.0.0.0%'
+  `)
+  db.exec(`
+    UPDATE users SET avatar = REPLACE(avatar, 'http://localhost', 'https://ms-messenger-server.onrender.com')
+    WHERE avatar LIKE 'http://localhost%'
+  `)
+  db.exec(`
+    UPDATE users SET avatar = REPLACE(avatar, 'http://', 'https://')
+    WHERE avatar LIKE 'http://ms-messenger-server.onrender.com%'
+  `)
+  db.exec(`
+    UPDATE messages SET attachment = REPLACE(attachment, 'http://0.0.0.0', 'https://ms-messenger-server.onrender.com')
+    WHERE attachment LIKE '%http://0.0.0.0%'
+  `)
+  db.exec(`
+    UPDATE messages SET attachment = REPLACE(attachment, 'http://localhost', 'https://ms-messenger-server.onrender.com')
+    WHERE attachment LIKE '%http://localhost%'
+  `)
+  db.exec(`
+    UPDATE messages SET attachment = REPLACE(attachment, '"http://', '"https://')
+    WHERE attachment LIKE '%"http://ms-messenger-server.onrender.com%'
+  `)
+} catch {}
+
 const SYSTEM_BOT = {
   id: 'system-ms-messenger',
   user_id: 'ms-messenger',

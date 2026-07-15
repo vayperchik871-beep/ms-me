@@ -1,5 +1,6 @@
 import { useRef, useMemo, useState, useCallback } from 'react'
 import twemoji from 'twemoji'
+import { resolveMediaUrl } from '../api/client'
 
 function VoiceMessage({ url, duration }) {
   const [playing, setPlaying] = useState(false)
@@ -44,8 +45,6 @@ function VoiceMessage({ url, duration }) {
   )
 }
 
-import { resolveMediaUrl } from '../api/client'
-
 export default function MessageBubble({ message, isMine, showName, selected, selectMode, onLongPress, onClick }) {
   const timerRef = useRef(null)
   const attach = message.attachment
@@ -81,7 +80,7 @@ export default function MessageBubble({ message, isMine, showName, selected, sel
 
         {attach?.type === 'image' && (
           <div className="msg-image-wrap">
-            <img src={resolveMediaUrl(attach.url)} alt="" className="msg-image" loading="lazy" />
+            <img src={resolveMediaUrl(attach.url)} alt="" className="msg-image" />
           </div>
         )}
 
@@ -104,8 +103,9 @@ export default function MessageBubble({ message, isMine, showName, selected, sel
           {message.edited && <span className="edited-tag">изм.</span>}
           <span className="bubble-time">{message.time}</span>
           {isMine && (
-            <svg className={`status-icon ${message.read ? 'read' : ''}`} width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M18 6L7 17l-5-5" /><path d="M22 6L11 17" />
+            <svg className={`status-icon ${message.read ? 'read' : ''}`} width="16" height="12" viewBox="0 0 24 18" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M18 6L7 17l-5-5" />
+              {message.read && <path d="M22 6L11 17" />}
             </svg>
           )}
         </div>

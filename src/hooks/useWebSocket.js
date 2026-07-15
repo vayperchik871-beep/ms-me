@@ -7,12 +7,22 @@ let reconnectTimer = null
 
 function connectShared() {
   const token = getToken()
-  if (!token) return
+  if (!token) {
+    if (reconnectTimer) clearTimeout(reconnectTimer)
+    reconnectTimer = setTimeout(connectShared, 500)
+    return
+  }
 
   if (sharedWs?.readyState === WebSocket.OPEN) return
 
+  const url = getWsUrl()
+  if (!url) {
+    reconnectTimer = setTimeout(connectShared, 500)
+    return
+  }
+
   try {
-    const ws = new WebSocket(getWsUrl())
+    const ws = new WebSocket(url)
     sharedWs = ws
 
     ws.onmessage = (e) => {
@@ -23,7 +33,7 @@ function connectShared() {
     }
 
     ws.onclose = () => {
-      sharedWs = null
+      if (sharedWs === ws) sharedWs = null
       if (reconnectTimer) clearTimeout(reconnectTimer)
       if (listeners.size > 0) {
         reconnectTimer = setTimeout(connectShared, 1000)
@@ -53,9 +63,7 @@ export function useWebSocket(onMessage) {
   useEffect(() => {
     const handler = (data) => onMessageRef.current?.(data)
     listeners.add(handler)
-    if (listeners.size === 1) {
-      connectShared()
-    }
+    connectShared()
     return () => {
       listeners.delete(handler)
       if (listeners.size === 0) {
@@ -65,4 +73,15 @@ export function useWebSocket(onMessage) {
   }, [])
 
   return { ready: sharedWs?.readyState === WebSocket.OPEN }
+}
+
+export function reconnectWs() {
+  if (reconnectTimer) clearTimeout(reconnectTimer)
+  reconnectTimer = null
+  if (sharedWs) {
+    const old = sharedWs
+    sharedWs = null
+    old.close()
+  }
+  connectShared()
 }

@@ -34,6 +34,13 @@ export default function ChatWindow({ chatId, onBack }) {
     api.readChat(chatId).catch(() => {})
   }, [chatId])
 
+  useEffect(() => {
+    const interval = setInterval(() => {
+      api.readChat(chatId).catch(() => {})
+    }, 30000)
+    return () => clearInterval(interval)
+  }, [chatId])
+
   useWebSocket((data) => {
     if (data.type === 'new_message' && data.chatId === chatId) {
       setMessages((prev) => {
@@ -51,8 +58,11 @@ export default function ChatWindow({ chatId, onBack }) {
     if (data.type === 'read_receipt' && data.chatId === chatId) {
       setMessages((prev) => prev.map((m) => m.senderId === user?.id ? { ...m, read: true } : m))
     }
-    if (data.type === 'user_online' || data.type === 'user_offline') {
-      loadChat()
+    if ((data.type === 'user_online' || data.type === 'user_offline') && data.userId) {
+      setChat((prev) => {
+        if (!prev?.peer || prev.peer.userId !== data.userId) return prev
+        return { ...prev, peer: { ...prev.peer, online: data.type === 'user_online' } }
+      })
     }
   })
 
@@ -75,11 +85,16 @@ export default function ChatWindow({ chatId, onBack }) {
       id: tempId,
       chatId,
       senderId: user?.id,
+      senderUserId: user?.userId,
+      senderName: user?.name,
       text,
+      replyTo: replyTo?.id || null,
       attachment,
       createdAt: Date.now(),
       time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       reactions: [],
+      edited: false,
+      pinned: false,
       read: false,
     }
     setMessages((prev) => [...prev, optimistic])
@@ -156,7 +171,7 @@ export default function ChatWindow({ chatId, onBack }) {
           </div>
           <div className="chat-header-text">
             <h2>{peer?.name}</h2>
-            <span className="status">{isBot ? 'бот' : chat?.peer?.online ? 'онлайн' : `@${peer?.userId}`}</span>
+            <span className="status">{isBot ? 'бот' : peer?.online ? 'онлайн' : `@${peer?.userId}`}</span>
           </div>
           <svg className="header-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             <path d="M9 18l6-6-6-6" />

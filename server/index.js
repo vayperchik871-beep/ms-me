@@ -35,8 +35,10 @@ const upload = multer({
 })
 
 const app = express()
+app.set('trust proxy', 1)
 const PORT = process.env.PORT || 3001
 const HOST = process.env.HOST || '0.0.0.0'
+const PUBLIC_URL = process.env.PUBLIC_URL || ''
 const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret-change-me'
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
@@ -375,7 +377,10 @@ app.post('/api/contacts', authMiddleware, (req, res) => {
 // ─── Uploads ───
 
 function fullUrl(req, path) {
-  return `${req.protocol}://${req.get('host')}${path}`
+  if (PUBLIC_URL) return `${PUBLIC_URL.replace(/\/$/, '')}${path}`
+  const proto = req.headers['x-forwarded-proto'] || req.protocol
+  const host = req.headers['x-forwarded-host'] || req.get('host')
+  return `${proto}://${host}${path}`
 }
 
 app.post('/api/upload/avatar', authMiddleware, upload.single('avatar'), (req, res) => {

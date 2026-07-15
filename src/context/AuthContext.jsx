@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect, useCallback } from 'react'
 import { api, getActiveAccount, saveAccount, switchAccount, getAccounts, canAddAccount, getDeviceId } from '../api/client'
+import { reconnectWs } from '../hooks/useWebSocket'
 
 const AuthContext = createContext(null)
 
@@ -44,6 +45,7 @@ export function AuthProvider({ children }) {
     saveAccount(account)
     setAccounts(getAccounts())
     setUser(result.user)
+    reconnectWs()
     return result
   }
 
@@ -54,6 +56,7 @@ export function AuthProvider({ children }) {
     saveAccount(account)
     setAccounts(getAccounts())
     setUser(result.user)
+    reconnectWs()
     return result
   }
 
@@ -63,6 +66,7 @@ export function AuthProvider({ children }) {
     saveAccount(account)
     setAccounts(getAccounts())
     setUser(result.user)
+    reconnectWs()
     return result
   }
 
@@ -71,12 +75,14 @@ export function AuthProvider({ children }) {
       clearStoredAccount(user.userId)
     }
     setUser(null)
+    reconnectWs()
   }
 
   const switchToAccount = (userId) => {
     switchAccount(userId)
     setAccounts(getAccounts())
     refreshUser()
+    setTimeout(() => reconnectWs(), 100)
   }
 
   return (
