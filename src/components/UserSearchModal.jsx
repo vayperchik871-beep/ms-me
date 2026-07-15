@@ -61,7 +61,9 @@ export default function UserSearchModal({ onClose, onSelectUser }) {
           )}
           {results.map((u) => (
             <button key={u.id} className="search-result-item" onClick={() => handleAdd(u)}>
-              <div className="avatar" style={{ background: '#FFFFFF', color: '#000' }}>{u.name[0]}</div>
+              <div className="avatar" style={{ background: '#FFFFFF', color: '#000' }}>
+                {u.avatar ? <img src={u.avatar} alt="" className="avatar-img" /> : u.name[0]}
+              </div>
               <div>
                 <div className="chat-name">{u.name}</div>
                 <div className="chat-preview">@{u.userId}</div>
@@ -77,12 +79,13 @@ export default function UserSearchModal({ onClose, onSelectUser }) {
 export function ChatListItemSimple({ chat, isActive, onClick }) {
   const peer = chat.peer
   const isBot = peer?.isSystem
+  const avatarUrl = peer?.avatar
 
   return (
     <button className={`chat-item ${isActive ? 'active' : ''}`} onClick={onClick}>
       <div className="avatar-wrap">
         <div className={`avatar ${isBot ? 'avatar-bot' : ''}`} style={{ background: isBot ? '#2C2C2E' : '#FFFFFF', color: isBot ? '#fff' : '#000' }}>
-          {isBot ? <img src="/logo.png" alt="" className="avatar-logo" /> : peer?.name?.[0]}
+          {isBot ? <img src="/logo.png" alt="" className="avatar-logo" /> : avatarUrl ? <img src={avatarUrl} alt="" className="avatar-img" /> : peer?.name?.[0]}
         </div>
       </div>
       <div className="chat-item-content">

@@ -1,8 +1,52 @@
-import { useRef, useMemo } from 'react'
+import { useRef, useMemo, useState, useCallback } from 'react'
 import twemoji from 'twemoji'
+
+function VoiceMessage({ url, duration }) {
+  const [playing, setPlaying] = useState(false)
+  const [progress, setProgress] = useState(0)
+  const audioRef = useRef(null)
+
+  const toggle = useCallback(() => {
+    if (!audioRef.current) return
+    if (playing) {
+      audioRef.current.pause()
+    } else {
+      audioRef.current.play()
+    }
+  }, [playing])
+
+  return (
+    <div className="voice-msg" onClick={(e) => { e.stopPropagation(); toggle() }}>
+      <button className={`voice-play-btn ${playing ? 'paused' : ''}`} aria-label={playing ? 'Пауза' : 'Воспроизвести'}>
+        {playing ? (
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16" /><rect x="14" y="4" width="4" height="16" /></svg>
+        ) : (
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z" /></svg>
+        )}
+      </button>
+      <div className="voice-wave">
+        <div className="voice-progress" style={{ width: `${progress}%` }} />
+      </div>
+      <span className="voice-dur">{duration ? `${Math.floor(duration / 60)}:${(duration % 60).toString().padStart(2, '0')}` : '0:00'}</span>
+      <audio
+        ref={audioRef}
+        src={url}
+        onPlay={() => setPlaying(true)}
+        onPause={() => setPlaying(false)}
+        onEnded={() => { setPlaying(false); setProgress(0) }}
+        onTimeUpdate={() => {
+          if (audioRef.current) {
+            setProgress((audioRef.current.currentTime / (audioRef.current.duration || 1)) * 100)
+          }
+        }}
+      />
+    </div>
+  )
+}
 
 export default function MessageBubble({ message, isMine, showName, selected, selectMode, onLongPress, onClick }) {
   const timerRef = useRef(null)
+  const attach = message.attachment
 
   const handleTouchStart = (e) => {
     timerRef.current = setTimeout(() => onLongPress?.(message, e), 500)
@@ -28,11 +72,25 @@ export default function MessageBubble({ message, isMine, showName, selected, sel
           {selected && '✓'}
         </div>
       )}
-      <div className={`bubble ${isMine ? 'bubble-mine' : 'bubble-theirs'}`}>
+      <div className={`bubble ${isMine ? 'bubble-mine' : 'bubble-theirs'} ${attach?.type === 'image' ? 'bubble-img' : ''}`}>
         {showName && message.senderName && (
           <span className="sender-name">{message.senderName}</span>
         )}
-        <p dangerouslySetInnerHTML={useMemo(() => ({ __html: twemoji.parse(message.text || '', { folder: '72x72', ext: '.png' }) }), [message.text])} />
+
+        {attach?.type === 'image' && (
+          <div className="msg-image-wrap">
+            <img src={attach.url} alt="" className="msg-image" loading="lazy" />
+          </div>
+        )}
+
+        {attach?.type === 'voice' && (
+          <VoiceMessage url={attach.url} duration={attach.duration} />
+        )}
+
+        {message.text && message.text !== '📎' && (
+          <p dangerouslySetInnerHTML={useMemo(() => ({ __html: twemoji.parse(message.text || '', { folder: '72x72', ext: '.png' }) }), [message.text])} />
+        )}
+
         {message.reactions?.length > 0 && (
           <div className="reactions-display">
             {message.reactions.map((r, i) => (

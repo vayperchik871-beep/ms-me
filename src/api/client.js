@@ -70,6 +70,19 @@ async function request(path, options = {}) {
   return data
 }
 
+async function upload(path, field, file, extra = {}) {
+  const token = getToken()
+  const form = new FormData()
+  form.append(field, file)
+  for (const [k, v] of Object.entries(extra)) form.append(k, v)
+  const headers = {}
+  if (token) headers.Authorization = `Bearer ${token}`
+  const res = await fetch(getApiUrl(path), { method: 'POST', headers, body: form })
+  const data = await res.json().catch(() => ({}))
+  if (!res.ok) throw new Error(data.error || 'Ошибка загрузки')
+  return data
+}
+
 export const api = {
   register: (body) => request('/auth/register', { method: 'POST', body: JSON.stringify(body) }),
   login: (body) => request('/auth/login', { method: 'POST', body: JSON.stringify(body) }),
@@ -81,13 +94,16 @@ export const api = {
   addContact: (userId) => request('/contacts', { method: 'POST', body: JSON.stringify({ userId }) }),
   getChats: () => request('/chats'),
   getMessages: (chatId) => request(`/chats/${chatId}/messages`),
-  sendMessage: (chatId, text, replyTo) =>
-    request(`/chats/${chatId}/messages`, { method: 'POST', body: JSON.stringify({ text, replyTo }) }),
+  sendMessage: (chatId, text, replyTo, attachment) =>
+    request(`/chats/${chatId}/messages`, { method: 'POST', body: JSON.stringify({ text, replyTo, attachment }) }),
   editMessage: (id, text) => request(`/messages/${id}`, { method: 'PATCH', body: JSON.stringify({ text }) }),
   deleteMessage: (id) => request(`/messages/${id}`, { method: 'DELETE' }),
   pinMessage: (id) => request(`/messages/${id}/pin`, { method: 'POST' }),
   reactMessage: (id, emoji) => request(`/messages/${id}/react`, { method: 'POST', body: JSON.stringify({ emoji }) }),
   favoriteMessage: (id) => request(`/messages/${id}/favorite`, { method: 'POST' }),
+  uploadAvatar: (file) => upload('/upload/avatar', 'avatar', file),
+  uploadAttachment: (file, duration) => upload('/upload/attachment', 'file', file, duration ? { duration } : {}),
+  updateAvatar: (url) => request('/users/avatar', { method: 'PATCH', body: JSON.stringify({ avatar: url }) }),
 }
 
 export function getWsUrl() {

@@ -1,36 +1,68 @@
 import { useEffect, useRef, useCallback } from 'react'
 import { getWsUrl, getToken } from '../api/client'
 
-export function useWebSocket(onMessage) {
-  const wsRef = useRef(null)
-  const onMessageRef = useRef(onMessage)
-  onMessageRef.current = onMessage
+let sharedWs = null
+const listeners = new Set()
+let reconnectTimer = null
 
-  const connect = useCallback(() => {
-    const token = getToken()
-    if (!token) return
+function connectShared() {
+  const token = getToken()
+  if (!token) return
 
-    if (wsRef.current?.readyState === WebSocket.OPEN) return
+  if (sharedWs?.readyState === WebSocket.OPEN) return
 
+  try {
     const ws = new WebSocket(getWsUrl())
-    wsRef.current = ws
+    sharedWs = ws
 
     ws.onmessage = (e) => {
       try {
         const data = JSON.parse(e.data)
-        onMessageRef.current?.(data)
+        listeners.forEach((fn) => fn(data))
       } catch { /* ignore */ }
     }
 
     ws.onclose = () => {
-      setTimeout(connect, 3000)
+      sharedWs = null
+      if (reconnectTimer) clearTimeout(reconnectTimer)
+      if (listeners.size > 0) {
+        reconnectTimer = setTimeout(connectShared, 3000)
+      }
+    }
+
+    ws.onerror = () => {
+      ws.close()
+    }
+  } catch { /* ignore */ }
+}
+
+function disconnectShared() {
+  if (reconnectTimer) clearTimeout(reconnectTimer)
+  reconnectTimer = null
+  listeners.clear()
+  if (sharedWs) {
+    sharedWs.close()
+    sharedWs = null
+  }
+}
+
+export function useWebSocket(onMessage) {
+  const onMessageRef = useRef(onMessage)
+  onMessageRef.current = onMessage
+
+  useEffect(() => {
+    const handler = (data) => onMessageRef.current?.(data)
+    listeners.add(handler)
+    if (listeners.size === 1) {
+      connectShared()
+    }
+    return () => {
+      listeners.delete(handler)
+      if (listeners.size === 0) {
+        disconnectShared()
+      }
     }
   }, [])
 
-  useEffect(() => {
-    connect()
-    return () => wsRef.current?.close()
-  }, [connect])
-
-  return wsRef
+  return { ready: sharedWs?.readyState === WebSocket.OPEN }
 }

@@ -1,5 +1,6 @@
 import { useState, useRef } from 'react'
 import { useAuth } from '../../context/AuthContext'
+import { api } from '../../api/client'
 
 const STEPS = ['name', 'id', 'password']
 
@@ -13,9 +14,21 @@ export default function RegisterStep({ onComplete, onSwitchLogin }) {
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const [focused, setFocused] = useState('')
+  const [avatarFile, setAvatarFile] = useState(null)
+  const [avatarPreview, setAvatarPreview] = useState(null)
+  const fileInputRef = useRef(null)
 
   const cleanId = userId.toLowerCase().replace(/[^a-z0-9_]/g, '')
   const initial = name.trim()[0]?.toUpperCase() || '?'
+
+  const handleAvatarPick = (e) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setAvatarFile(file)
+    const reader = new FileReader()
+    reader.onload = () => setAvatarPreview(reader.result)
+    reader.readAsDataURL(file)
+  }
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -36,7 +49,10 @@ export default function RegisterStep({ onComplete, onSwitchLogin }) {
 
     setLoading(true)
     try {
-      await register(name.trim(), cleanId, password)
+      const result = await register(name.trim(), cleanId, password)
+      if (avatarFile) {
+        try { await api.uploadAvatar(avatarFile) } catch {}
+      }
       onComplete()
     } catch (err) {
       setError(err.message)
@@ -73,7 +89,17 @@ export default function RegisterStep({ onComplete, onSwitchLogin }) {
 
       {step === 0 && (
         <div className="register-panel slide-in-right" key="name">
-          <div className="register-avatar">{initial}</div>
+          <div className="register-avatar-wrap" onClick={() => fileInputRef.current?.click()}>
+            {avatarPreview ? (
+              <img src={avatarPreview} alt="" className="register-avatar-img" />
+            ) : (
+              <div className="register-avatar clickable">{initial}</div>
+            )}
+            <div className="avatar-add-badge">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 4v16M4 12h16"/></svg>
+            </div>
+          </div>
+          <input ref={fileInputRef} type="file" accept="image/*" hidden onChange={handleAvatarPick} />
           <h2 className="form-step-title">Как вас зовут?</h2>
           <p className="form-step-desc">Это имя увидят другие пользователи</p>
 

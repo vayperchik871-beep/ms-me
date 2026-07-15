@@ -48,15 +48,15 @@ export default function ChatWindow({ chatId, onBack }) {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
 
-  const handleSend = async (text) => {
-    if (!text.trim()) return
+  const handleSend = async (text, attachment) => {
+    if (!text.trim() && !attachment) return
     try {
       if (editId) {
         const { message } = await api.editMessage(editId, text)
         setMessages((prev) => prev.map((m) => (m.id === editId ? message : m)))
         setEditId(null)
       } else {
-        const { message } = await api.sendMessage(chatId, text, replyTo?.id)
+        const { message } = await api.sendMessage(chatId, text, replyTo?.id, attachment)
         setMessages((prev) => [...prev, message])
         setReplyTo(null)
       }
@@ -123,7 +123,7 @@ export default function ChatWindow({ chatId, onBack }) {
 
         <div className="chat-header-info">
           <div className={`avatar avatar-sm ${isBot ? 'avatar-bot' : ''}`} style={{ background: isBot ? '#2C2C2E' : '#FFFFFF', color: isBot ? '#fff' : '#000' }}>
-            {isBot ? <img src="/logo.png" alt="" className="avatar-logo" /> : peer?.name?.[0]}
+            {isBot ? <img src="/logo.png" alt="" className="avatar-logo" /> : peer?.avatar ? <img src={peer.avatar} alt="" className="avatar-img" /> : peer?.name?.[0]}
           </div>
           <div className="chat-header-text">
             <h2>{peer?.name}</h2>

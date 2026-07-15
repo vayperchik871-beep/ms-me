@@ -10,7 +10,29 @@ import path from 'path'
 import fs from 'fs'
 import { fileURLToPath } from 'url'
 import { db, SYSTEM_BOT } from './db.js'
+import multer from 'multer'
 import { encrypt, decrypt, generateCode, hashDevice } from './crypto.js'
+
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    const dir = path.join(rootDir, 'uploads')
+    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true })
+    cb(null, dir)
+  },
+  filename: (req, file, cb) => {
+    const ext = path.extname(file.originalname) || '.bin'
+    cb(null, `${uuidv4()}${ext}`)
+  },
+})
+const upload = multer({
+  storage,
+  limits: { fileSize: 20 * 1024 * 1024 },
+  fileFilter: (req, file, cb) => {
+    const allowed = /\.(jpg|jpeg|png|gif|webp|mp4|ogg|wav|mp3|webm|mov|heic)$/i
+    if (allowed.test(path.extname(file.originalname))) return cb(null, true)
+    cb(new Error('Недопустимый формат файла'))
+  },
+})
 
 const app = express()
 const PORT = process.env.PORT || 3001
@@ -25,6 +47,7 @@ const indexHtmlPath = path.join(frontendDistDir, 'index.html')
 app.use(cors())
 app.use(express.json())
 app.use(express.static(frontendDistDir))
+app.use('/uploads', express.static(path.join(rootDir, 'uploads')))
 
 const clients = new Map()
 
@@ -97,8 +120,12 @@ function sendBotMessage(userId, text) {
 function formatMessage(msgId) {
   const m = db.prepare('SELECT * FROM messages WHERE id = ?').get(msgId)
   if (!m || m.deleted) return null
-  const sender = db.prepare('SELECT id, user_id, name, is_system FROM users WHERE id = ?').get(m.sender_id)
+  const sender = db.prepare('SELECT id, user_id, name, is_system, avatar FROM users WHERE id = ?').get(m.sender_id)
   const reactions = db.prepare('SELECT emoji, user_id FROM message_reactions WHERE message_id = ?').all(m.id)
+  let attachment = null
+  if (m.attachment) {
+    try { attachment = JSON.parse(m.attachment) } catch {}
+  }
   return {
     id: m.id,
     chatId: m.chat_id,
@@ -112,6 +139,7 @@ function formatMessage(msgId) {
     time: formatTime(m.created_at),
     createdAt: m.created_at,
     reactions,
+    attachment,
   }
 }
 
@@ -262,7 +290,8 @@ app.post('/api/auth/verify-device', (req, res) => {
 })
 
 app.get('/api/auth/me', authMiddleware, (req, res) => {
-  res.json({ user: req.user })
+  const u = db.prepare('SELECT id, user_id, name, is_system, avatar FROM users WHERE id = ?').get(req.user.id)
+  res.json({ user: u || req.user })
 })
 
 // ─── Users ───
@@ -272,20 +301,20 @@ app.get('/api/users/search', authMiddleware, (req, res) => {
   if (q.length < 2) return res.json({ users: [] })
 
   const users = db.prepare(`
-    SELECT id, user_id, name FROM users
+    SELECT id, user_id, name, avatar FROM users
     WHERE user_id LIKE ? AND is_system = 0 AND id != ?
     LIMIT 20
   `).all(`${q}%`, req.user.id)
 
-  res.json({ users: users.map((u) => ({ id: u.id, userId: u.user_id, name: u.name })) })
+  res.json({ users: users.map((u) => ({ id: u.id, userId: u.user_id, name: u.name, avatar: u.avatar })) })
 })
 
 app.get('/api/users/:userId', authMiddleware, (req, res) => {
   const cleanId = sanitizeUserId(req.params.userId)
-  const user = db.prepare('SELECT id, user_id, name, is_system FROM users WHERE user_id = ?').get(cleanId)
+  const user = db.prepare('SELECT id, user_id, name, is_system, avatar FROM users WHERE user_id = ?').get(cleanId)
   if (!user) return res.status(404).json({ error: 'Не найден' })
   res.json({
-    user: { id: user.id, userId: user.user_id, name: user.name, isSystem: !!user.is_system },
+    user: { id: user.id, userId: user.user_id, name: user.name, isSystem: !!user.is_system, avatar: user.avatar },
   })
 })
 
@@ -293,7 +322,7 @@ app.get('/api/users/:userId', authMiddleware, (req, res) => {
 
 app.get('/api/contacts', authMiddleware, (req, res) => {
   const contacts = db.prepare(`
-    SELECT u.id, u.user_id, u.name, u.is_system, c.created_at
+    SELECT u.id, u.user_id, u.name, u.is_system, u.avatar, c.created_at
     FROM contacts c
     JOIN users u ON u.id = c.contact_id
     WHERE c.user_id = ?
@@ -306,6 +335,7 @@ app.get('/api/contacts', authMiddleware, (req, res) => {
       userId: c.user_id,
       name: c.name,
       isSystem: !!c.is_system,
+      avatar: c.avatar,
     })),
   })
 })
@@ -313,7 +343,7 @@ app.get('/api/contacts', authMiddleware, (req, res) => {
 app.post('/api/contacts', authMiddleware, (req, res) => {
   const { userId } = req.body
   const cleanId = sanitizeUserId(userId)
-  const contact = db.prepare('SELECT id, user_id, name, is_system FROM users WHERE user_id = ?').get(cleanId)
+  const contact = db.prepare('SELECT id, user_id, name, is_system, avatar FROM users WHERE user_id = ?').get(cleanId)
   if (!contact) return res.status(404).json({ error: 'Пользователь не найден' })
   if (contact.id === req.user.id) return res.status(400).json({ error: 'Нельзя добавить себя' })
   if (contact.is_system) return res.status(400).json({ error: 'Нельзя добавить системный аккаунт' })
@@ -327,9 +357,32 @@ app.post('/api/contacts', authMiddleware, (req, res) => {
 
   const chatId = getOrCreateDirectChat(req.user.id, contact.id)
   res.json({
-    contact: { id: contact.id, userId: contact.user_id, name: contact.name, isSystem: !!contact.is_system },
+    contact: { id: contact.id, userId: contact.user_id, name: contact.name, isSystem: !!contact.is_system, avatar: contact.avatar },
     chatId,
   })
+})
+
+// ─── Uploads ───
+
+app.post('/api/upload/avatar', authMiddleware, upload.single('avatar'), (req, res) => {
+  if (!req.file) return res.status(400).json({ error: 'Файл не загружен' })
+  const url = `/uploads/${req.file.filename}`
+  db.prepare('UPDATE users SET avatar = ? WHERE id = ?').run(url, req.user.id)
+  res.json({ avatar: url })
+})
+
+app.post('/api/upload/attachment', authMiddleware, upload.single('file'), (req, res) => {
+  if (!req.file) return res.status(400).json({ error: 'Файл не загружен' })
+  const url = `/uploads/${req.file.filename}`
+  const type = req.file.mimetype.startsWith('image/') ? 'image' : req.file.mimetype.startsWith('audio/') ? 'voice' : 'file'
+  const duration = req.body.duration ? parseInt(req.body.duration, 10) : null
+  res.json({ url, type, name: req.file.originalname, size: req.file.size, duration })
+})
+
+app.patch('/api/users/avatar', authMiddleware, (req, res) => {
+  const { avatar } = req.body
+  db.prepare('UPDATE users SET avatar = ? WHERE id = ?').run(avatar || null, req.user.id)
+  res.json({ avatar })
 })
 
 // ─── Chats ───
@@ -349,7 +402,7 @@ app.get('/api/chats', authMiddleware, (req, res) => {
 
   const result = chats.map((chat) => {
     const others = db.prepare(`
-      SELECT u.id, u.user_id, u.name, u.is_system FROM users u
+      SELECT u.id, u.user_id, u.name, u.is_system, u.avatar FROM users u
       JOIN chat_participants cp ON cp.user_id = u.id
       WHERE cp.chat_id = ? AND u.id != ?
     `).all(chat.id, req.user.id)
@@ -369,7 +422,7 @@ app.get('/api/chats', authMiddleware, (req, res) => {
 
     return {
       id: chat.id,
-      peer: peer ? { id: peer.id, userId: peer.user_id, name: peer.name, isSystem: !!peer.is_system } : null,
+      peer: peer ? { id: peer.id, userId: peer.user_id, name: peer.name, isSystem: !!peer.is_system, avatar: peer.avatar } : null,
       lastMessage,
       lastTime: chat.last_time ? formatTime(chat.last_time) : '',
       unread: unread?.c || 0,
@@ -395,8 +448,8 @@ app.get('/api/chats/:chatId/messages', authMiddleware, (req, res) => {
 })
 
 app.post('/api/chats/:chatId/messages', authMiddleware, (req, res) => {
-  const { text, replyTo } = req.body
-  if (!text?.trim()) return res.status(400).json({ error: 'Пустое сообщение' })
+  const { text, replyTo, attachment: attach } = req.body
+  if (!text?.trim() && !attach) return res.status(400).json({ error: 'Пустое сообщение' })
 
   const participant = db.prepare(
     'SELECT 1 FROM chat_participants WHERE chat_id = ? AND user_id = ?'
@@ -404,13 +457,15 @@ app.post('/api/chats/:chatId/messages', authMiddleware, (req, res) => {
   if (!participant) return res.status(403).json({ error: 'Нет доступа' })
 
   const msgId = uuidv4()
-  const enc = encrypt(text.trim())
+  const content = text?.trim() || '📎'
+  const enc = encrypt(content)
   const now = Date.now()
+  const attachment = attach ? JSON.stringify(attach) : null
 
   db.prepare(`
-    INSERT INTO messages (id, chat_id, sender_id, content_enc, content_iv, content_tag, reply_to, created_at)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-  `).run(msgId, req.params.chatId, req.user.id, enc.content_enc, enc.content_iv, enc.content_tag, replyTo || null, now)
+    INSERT INTO messages (id, chat_id, sender_id, content_enc, content_iv, content_tag, reply_to, attachment, created_at)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+  `).run(msgId, req.params.chatId, req.user.id, enc.content_enc, enc.content_iv, enc.content_tag, replyTo || null, attachment, now)
 
   const message = formatMessage(msgId)
   broadcastToChat(req.params.chatId, { type: 'new_message', chatId: req.params.chatId, message }, req.user.id)

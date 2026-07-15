@@ -149,7 +149,7 @@
 
 .code-digit:focus {
   background: #2C2C2E; border-color: #FFFFFF;
-  outline: none; box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.14);
+  box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.14);
 }
 
 .code-digit.filled { border-color: #FFFFFF; }
@@ -190,10 +190,10 @@
   background: linear-gradient(135deg, #FFFFFF, #D9D9D9);
   color: #000; font-size: 32px; font-weight: 700;
   display: flex; align-items: center; justify-content: center;
-  margin: 0 auto 24px;
   box-shadow: 0 8px 24px rgba(255, 255, 255, 0.16);
   border: 1px solid rgba(255, 255, 255, 0.16);
 }
+.register-avatar-wrap { margin: 0 auto 16px; }
 
 .register-avatar.small {
   width: 48px; height: 48px; font-size: 20px;

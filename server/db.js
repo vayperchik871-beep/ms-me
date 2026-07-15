@@ -95,6 +95,9 @@ db.exec(`
   CREATE INDEX IF NOT EXISTS idx_users_userid ON users(user_id);
 `)
 
+try { db.exec("ALTER TABLE users ADD COLUMN avatar TEXT DEFAULT NULL") } catch {}
+try { db.exec("ALTER TABLE messages ADD COLUMN attachment TEXT DEFAULT NULL") } catch {}
+
 const SYSTEM_BOT = {
   id: 'system-ms-messenger',
   user_id: 'ms-messenger',
