@@ -3,7 +3,7 @@
   "private": true,
   "version": "1.0.2",
   "type": "module",
-  "engines": { "node": "22.x || 23.x" },
+  "engines": { "node": ">=22" },
   "scripts": {
     "dev": "concurrently \"npm run dev:client\" \"npm run dev:server\"",
     "dev:client": "vite",
