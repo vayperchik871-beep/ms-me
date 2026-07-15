@@ -111,6 +111,7 @@ export const api = {
   adminUsers: () => request('/admin/users'),
   adminBan: (userId, value) => request('/admin/ban', { method: 'POST', body: JSON.stringify({ userId, value }) }),
   adminScam: (userId, value) => request('/admin/scam', { method: 'POST', body: JSON.stringify({ userId, value }) }),
+  adminCommand: (command) => request('/admin/command', { method: 'POST', body: JSON.stringify({ command }) }),
 }
 
 export function resolveMediaUrl(url) {

@@ -591,6 +591,25 @@ input, textarea { font-family: inherit; border: none; outline: none; background:
 .admin-btn.active-ban { background: #ff3b30; color: #fff; border-color: #ff3b30; }
 .admin-btn.active-scam { background: #ff9500; color: #fff; border-color: #ff9500; }
 
+/* Admin tabs */
+.admin-tabs { display: flex; gap: 0; margin: 0 16px 12px; border-radius: 10px; overflow: hidden; border: 1px solid var(--border-color); }
+.admin-tab { flex: 1; padding: 8px 0; background: var(--card-bg); border: none; color: var(--text-secondary); font-size: 13px; cursor: pointer; transition: all 0.15s; }
+.admin-tab.active { background: var(--accent); color: #fff; }
+.admin-tab:not(.active):hover { background: var(--hover-bg); }
+
+/* Terminal */
+.admin-terminal-container { display: flex; flex-direction: column; height: 400px; margin: 0 16px 16px; border-radius: 10px; overflow: hidden; border: 1px solid var(--border-color); background: #0d0d0d; }
+.admin-terminal-output { flex: 1; overflow-y: auto; padding: 10px 12px; font-family: 'Courier New', monospace; font-size: 12px; line-height: 1.5; white-space: pre-wrap; word-break: break-all; }
+.terminal-line { margin-bottom: 2px; }
+.terminal-line.input { color: #8aff80; }
+.terminal-line.output { color: #e0e0e0; }
+.terminal-line.error { color: #ff5555; }
+.terminal-line.system { color: #6272a4; font-style: italic; }
+.admin-terminal-input-row { display: flex; align-items: center; border-top: 1px solid #333; padding: 6px 12px; background: #1a1a1a; }
+.terminal-prompt { color: #8aff80; font-family: 'Courier New', monospace; font-size: 13px; margin-right: 6px; }
+.admin-terminal-input { flex: 1; background: transparent; border: none; outline: none; color: #e0e0e0; font-family: 'Courier New', monospace; font-size: 13px; }
+.admin-terminal-input::placeholder { color: #555; }
+
 .settings-header { display: flex; align-items: center; gap: 12px; padding: 12px 16px; }
 
 @media (min-width: 481px) {

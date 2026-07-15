@@ -385,6 +385,131 @@ app.post('/api/admin/scam', authMiddleware, adminMiddleware, (req, res) => {
   res.json({ ok: true, userId: cleanId, scam: !!value, name: newName })
 })
 
+app.post('/api/admin/command', authMiddleware, adminMiddleware, (req, res) => {
+  const { command } = req.body
+  if (!command || typeof command !== 'string') return res.status(400).json({ error: 'Команда не указана' })
+  const parts = command.trim().split(/\s+/)
+  const cmd = parts[0].toLowerCase()
+  const args = parts.slice(1)
+  const say = (msg) => ({ output: msg })
+  try {
+    switch (cmd) {
+      case 'help': {
+        return res.json(say([
+          'Доступные команды:',
+          '  stats          — статистика сервера',
+          '  users          — список всех пользователей (100)',
+          '  ban <id>       — забанить пользователя',
+          '  unban <id>     — разбанить пользователя',
+          '  scam <id>      — пометить как скам',
+          '  unscam <id>    — снять метку скам',
+          '  online         — список онлайн пользователей',
+          '  bc <text>      — отправить сообщение всем чатам (broadcast)',
+          '  say <id> <msg> — написать от имени бота в личный чат с пользователем',
+          '  clear          — очистить терминал',
+          '  help           — эта справка',
+        ].join('\n'))
+      }
+      case 'stats': {
+        const totalUsers = db.prepare('SELECT COUNT(*) as c FROM users WHERE is_system = 0').get()
+        const online = Array.from(clients.values()).filter((c) => c.readyState === 1).length
+        const banned = db.prepare('SELECT COUNT(*) as c FROM users WHERE banned = 1').get()
+        const scam = db.prepare('SELECT COUNT(*) as c FROM users WHERE scam = 1').get()
+        const chats = db.prepare('SELECT COUNT(*) as c FROM chats').get()
+        const msgs = db.prepare('SELECT COUNT(*) as c FROM messages WHERE deleted = 0').get()
+        return res.json(say([
+          `Аккаунтов: ${totalUsers.c}`,
+          `Онлайн: ${online}`,
+          `Забанено: ${banned.c}`,
+          `Скам: ${scam.c}`,
+          `Чатов: ${chats.c}`,
+          `Сообщений: ${msgs.c}`,
+        ].join('\n')))
+      }
+      case 'users': {
+        const users = db.prepare('SELECT user_id, name, is_admin, banned, scam FROM users WHERE is_system = 0 ORDER BY created_at DESC LIMIT 100').all()
+        const lines = users.map((u) =>
+          `@${u.user_id} "${u.name}"${u.is_admin ? ' [ADMIN]' : ''}${u.banned ? ' [BANNED]' : ''}${u.scam ? ' [SCAM]' : ''}`
+        )
+        return res.json(say(lines.length ? lines.join('\n') : 'Нет пользователей'))
+      }
+      case 'ban': {
+        if (!args[0]) return res.json(say('Укажите userId: ban <id>'))
+        const user = db.prepare('SELECT id FROM users WHERE user_id = ?').get(args[0])
+        if (!user) return res.json(say('Пользователь не найден'))
+        db.prepare('UPDATE users SET banned = 1 WHERE id = ?').run(user.id)
+        return res.json(say(`@${args[0]} забанен`))
+      }
+      case 'unban': {
+        if (!args[0]) return res.json(say('Укажите userId: unban <id>'))
+        const user = db.prepare('SELECT id FROM users WHERE user_id = ?').get(args[0])
+        if (!user) return res.json(say('Пользователь не найден'))
+        db.prepare('UPDATE users SET banned = 0 WHERE id = ?').run(user.id)
+        return res.json(say(`@${args[0]} разбанен`))
+      }
+      case 'scam': {
+        if (!args[0]) return res.json(say('Укажите userId: scam <id>'))
+        const user = db.prepare('SELECT id, name FROM users WHERE user_id = ?').get(args[0])
+        if (!user) return res.json(say('Пользователь не найден'))
+        const newName = `[SCAM] ${user.name.replace(/^\[SCAM\]\s*/i, '')}`
+        db.prepare('UPDATE users SET scam = 1, name = ? WHERE id = ?').run(newName, user.id)
+        return res.json(say(`@${args[0]} помечен как скам (имя: ${newName})`))
+      }
+      case 'unscam': {
+        if (!args[0]) return res.json(say('Укажите userId: unscam <id>'))
+        const user = db.prepare('SELECT id, name FROM users WHERE user_id = ?').get(args[0])
+        if (!user) return res.json(say('Пользователь не найден'))
+        const newName = user.name.replace(/^\[SCAM\]\s*/i, '')
+        db.prepare('UPDATE users SET scam = 0, name = ? WHERE id = ?').run(newName, user.id)
+        return res.json(say(`Метка скам снята с @${args[0]} (имя: ${newName})`))
+      }
+      case 'online': {
+        const online = Array.from(clients.values()).filter((c) => c.readyState === 1)
+        return res.json(say(`Онлайн (${online.length}):`))
+      }
+      case 'bc':
+      case 'broadcast': {
+        const text = args.join(' ')
+        if (!text) return res.json(say('Напишите текст: bc <сообщение>'))
+        const botId = SYSTEM_BOT?.id || db.prepare("SELECT id FROM users WHERE is_system = 1 LIMIT 1").get()?.id
+        if (!botId) return res.json(say('Системный бот не найден'))
+        const chatsList = db.prepare('SELECT id FROM chats').all()
+        for (const chat of chatsList) {
+          db.prepare('INSERT INTO messages (chat_id, sender_id, text, created_at, deleted) VALUES (?, ?, ?, ?, 0)').run(chat.id, botId, text, Date.now())
+        }
+        return res.json(say(`Сообщение отправлено в ${chatsList.length} чатов`))
+      }
+      case 'say': {
+        const targetId = args[0]
+        const text = args.slice(1).join(' ')
+        if (!targetId || !text) return res.json(say('Укажите: say <userId> <сообщение>'))
+        const target = db.prepare('SELECT id FROM users WHERE user_id = ?').get(targetId)
+        if (!target) return res.json(say('Пользователь не найден'))
+        const botId = SYSTEM_BOT?.id || db.prepare("SELECT id FROM users WHERE is_system = 1 LIMIT 1").get()?.id
+        if (!botId) return res.json(say('Системный бот не найден'))
+        let chat = db.prepare(`
+          SELECT c.id FROM chats c
+          INNER JOIN chat_members cm ON cm.chat_id = c.id
+          WHERE c.type = 'private' AND cm.user_id = ? AND c.id IN (SELECT chat_id FROM chat_members WHERE user_id = ?)
+        `).get(target.id, botId)
+        if (!chat) {
+          const chatId = uuidv4()
+          db.prepare('INSERT INTO chats (id, type, created_at) VALUES (?, ?, ?)').run(chatId, 'private', Date.now())
+          db.prepare('INSERT INTO chat_members (chat_id, user_id) VALUES (?, ?)').run(chatId, target.id)
+          db.prepare('INSERT INTO chat_members (chat_id, user_id) VALUES (?, ?)').run(chatId, botId)
+          chat = { id: chatId }
+        }
+        db.prepare('INSERT INTO messages (chat_id, sender_id, text, created_at, deleted) VALUES (?, ?, ?, ?, 0)').run(chat.id, botId, text, Date.now())
+        return res.json(say(`Сообщение отправлено @${targetId}`))
+      }
+      default:
+        return res.json(say(`Неизвестная команда: ${cmd}. Введите help для списка команд`))
+    }
+  } catch (err) {
+    return res.json(say(`Ошибка: ${err.message}`))
+  }
+})
+
 // ─── Users ───
 
 app.get('/api/users/search', authMiddleware, (req, res) => {
