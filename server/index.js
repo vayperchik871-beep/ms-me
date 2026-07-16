@@ -669,9 +669,15 @@ app.get('/api/chats', authMiddleware, (req, res) => {
       )
     `).get(chat.id, req.user.id, chat.id, req.user.id)
 
+    let lastSeen = null
+    if (peer && !isUserOnline(peer.id)) {
+      const device = db.prepare('SELECT last_seen FROM devices WHERE user_id = ? ORDER BY last_seen DESC LIMIT 1').get(peer.id)
+      lastSeen = device?.last_seen || null
+    }
+
     return {
       id: chat.id,
-      peer: peer ? { id: peer.id, userId: peer.user_id, name: peer.name, isSystem: !!peer.is_system, avatar: peer.avatar, online: isUserOnline(peer.id) } : null,
+      peer: peer ? { id: peer.id, userId: peer.user_id, name: peer.name, isSystem: !!peer.is_system, avatar: peer.avatar, online: isUserOnline(peer.id), lastSeen } : null,
       lastMessage,
       lastTime: chat.last_time ? formatTime(chat.last_time) : '',
       unread: unread?.c || 0,
