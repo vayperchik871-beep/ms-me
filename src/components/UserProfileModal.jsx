@@ -21,70 +21,63 @@ export default function UserProfileModal({ userId, onClose, onStartChat }) {
 
   const handleClose = () => {
     setClosing(true)
-    setTimeout(onClose, 250)
+    setTimeout(onClose, 280)
   }
 
   if (!user) return (
     <div className="pm-overlay pm-enter" onClick={onClose}>
       <div className="pm-sheet" onClick={e => e.stopPropagation()}>
-        <div className="pm-loading">
-          <div className="pm-spinner" />
-        </div>
+        <div className="pm-loading"><div className="pm-spinner" /></div>
       </div>
     </div>
   )
 
-  const color = user.profileColor || '#007AFF'
+  const color = user.profileColor || '#2dd4a8'
   const initials = user.name?.[0]?.toUpperCase() || '?'
 
   return (
     <div className={`pm-overlay ${closing ? 'pm-exit' : 'pm-enter'}`} onClick={handleClose}>
-      <div className={`pm-sheet ${closing ? 'pm-sheet-exit' : 'pm-sheet-enter'}`}
-        onClick={e => e.stopPropagation()}
-        style={{ '--accent': color }}
-      >
-        <div className="pm-header" style={{ background: `linear-gradient(160deg, ${color}, ${color}88 60%, var(--bg-primary) 100%)` }}>
-          <button className="pm-close" onClick={handleClose}>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
-          </button>
+      <div className={`pm-sheet ${closing ? 'pm-sheet-exit' : 'pm-sheet-enter'}`} onClick={e => e.stopPropagation()}>
+
+        <div className="pm-header" style={{ background: `linear-gradient(160deg, ${color} 0%, ${color}cc 45%, ${color}33 80%, transparent 100%)` }}>
+          <button className="pm-close-pill" onClick={handleClose}>{t('Закрыть')}</button>
 
           <div className="pm-avatar-wrap">
-            <div className="pm-avatar">
+            <div className="pm-avatar" style={{ borderColor: color }}>
               {user.avatar ? (
                 <img src={resolveMediaUrl(user.avatar)} alt="" className="pm-avatar-img"
-                  onError={e => { e.target.style.display = 'none'; e.target.parentElement.querySelector('.pm-avatar-fallback').style.display = 'flex' }} />
+                  onError={e => { e.target.style.display = 'none'; e.target.parentElement.querySelector('.pm-avatar-fb').style.display = 'flex' }} />
               ) : null}
-              <div className="pm-avatar-fallback" style={user.avatar ? { display: 'none' } : {}}>
-                {initials}
-              </div>
+              <div className="pm-avatar-fb" style={user.avatar ? { display: 'none' } : {}}>{initials}</div>
             </div>
           </div>
 
           <h1 className="pm-name">{user.name}</h1>
           <p className="pm-id">@{user.userId}</p>
+          <p className="pm-status"><span className="pm-status-dot" />{t('в сети')}</p>
 
           <div className="pm-actions">
             <button className="pm-action" onClick={() => { onStartChat?.(null, user.userId); handleClose() }}>
               <div className="pm-action-icon">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"/></svg>
               </div>
               <span>{t('Сообщение')}</span>
             </button>
             <button className="pm-action">
               <div className="pm-action-icon">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6 19.79 19.79 0 01-3.07-8.67A2 2 0 014.11 2h3a2 2 0 012 1.72 12.84 12.84 0 00.7 2.81 2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45 12.84 12.84 0 002.81.7A2 2 0 0122 16.92z"/></svg>
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M6.62 10.79a15.05 15.05 0 006.59 6.59l2.2-2.2a1 1 0 011.01-.24c1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1C10.07 21 3 13.93 3 4c0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z"/></svg>
               </div>
               <span>{t('Звонок')}</span>
             </button>
             <button className="pm-action">
               <div className="pm-action-icon">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M23 7l-7 5 7 5V7z"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z"/></svg>
               </div>
               <span>{t('Видео')}</span>
             </button>
             <button className="pm-action" onClick={() => setShowGiftShop(true)}>
               <div className="pm-action-icon">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 014-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 01-4 4H3"/></svg>
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M18 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-1 15H7V9h10v8zM9 4h6v5H9V4z"/></svg>
               </div>
               <span>{t('Подарок')}</span>
             </button>
@@ -96,21 +89,35 @@ export default function UserProfileModal({ userId, onClose, onStartChat }) {
             <h3 className="pm-section-title">{t('Информация')}</h3>
             <div className="pm-card-group">
               <div className="pm-card">
-                <div className="pm-card-icon">@</div>
+                <div className="pm-card-icon">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="7" r="4"/><path d="M5.5 21c0-3.5 3-6.5 6.5-6.5s6.5 3 6.5 6.5"/></svg>
+                </div>
                 <div className="pm-card-text">
                   <span className="pm-card-label">{t('Имя')}</span>
                   <span className="pm-card-value">{user.name}</span>
                 </div>
+                <span className="pm-chevron">›</span>
+              </div>
+              <div className="pm-card">
+                <div className="pm-card-icon">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+                </div>
+                <div className="pm-card-text">
+                  <span className="pm-card-label">{t('Имя')} {t('пользователю')}</span>
+                  <span className="pm-card-value">@{user.userId}</span>
+                </div>
+                <span className="pm-chevron">›</span>
               </div>
               {user.birthday && (
                 <div className="pm-card">
                   <div className="pm-card-icon">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
                   </div>
                   <div className="pm-card-text">
                     <span className="pm-card-label">{t('День рождения')}</span>
                     <span className="pm-card-value">{user.birthday}</span>
                   </div>
+                  <span className="pm-chevron">›</span>
                 </div>
               )}
               {user.gender && (
@@ -122,15 +129,26 @@ export default function UserProfileModal({ userId, onClose, onStartChat }) {
                     <span className="pm-card-label">{t('Пол')}</span>
                     <span className="pm-card-value">{user.gender === 'male' ? t('Мужской') : user.gender === 'female' ? t('Женский') : user.gender === 'other' ? t('Другой') : user.gender}</span>
                   </div>
+                  <span className="pm-chevron">›</span>
                 </div>
               )}
+              <div className="pm-card">
+                <div className="pm-card-icon">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+                </div>
+                <div className="pm-card-text">
+                  <span className="pm-card-label">{t('Медиа')}</span>
+                  <span className="pm-card-value">{t('Ссылки и документы')}</span>
+                </div>
+                <span className="pm-chevron">›</span>
+              </div>
               <div className="pm-card" onClick={() => setShowGiftShop(true)}>
                 <div className="pm-card-icon">🎁</div>
                 <div className="pm-card-text">
                   <span className="pm-card-label">{t('Подарки')}</span>
-                  <span className="pm-card-value">{gifts.length > 0 ? `${gifts.length} ${t('подарков')}` : t('Нет подарков')}</span>
+                  <span className="pm-card-value">{gifts.length > 0 ? gifts.length : t('Нет подарков')}</span>
                 </div>
-                <span className="pm-card-chevron">›</span>
+                <span className="pm-chevron">›</span>
               </div>
             </div>
           </div>
@@ -139,7 +157,7 @@ export default function UserProfileModal({ userId, onClose, onStartChat }) {
             <h3 className="pm-section-title">{t('Общие группы')}</h3>
             <div className="pm-card-group">
               <div className="pm-card pm-card-static">
-                <div className="pm-card-text">
+                <div className="pm-card-text" style={{ textAlign: 'center', width: '100%' }}>
                   <span className="pm-card-value" style={{ fontSize: 14, fontWeight: 400, color: 'var(--text-secondary)' }}>
                     {mutualChats.length > 0 ? `${t('Общих групп')}: ${mutualChats.length}` : t('Общих групп нет')}
                   </span>
@@ -148,7 +166,7 @@ export default function UserProfileModal({ userId, onClose, onStartChat }) {
             </div>
           </div>
 
-          <div style={{ height: 24 }} />
+          <div style={{ height: 32 }} />
         </div>
       </div>
 
