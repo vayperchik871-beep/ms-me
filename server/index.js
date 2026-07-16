@@ -333,7 +333,7 @@ app.post('/api/auth/verify-device', async (req, res) => {
 })
 
 app.get('/api/auth/me', authMiddleware, async (req, res) => {
-  const u = await dbGet('SELECT id, user_id, name, is_system, avatar FROM users WHERE id = ?', req.user.id)
+  const u = await dbGet('SELECT id, user_id, name, is_system, avatar, birthday, gender, profile_color, mcoins FROM users WHERE id = ?', req.user.id)
   const extra = await dbGet('SELECT is_admin, banned FROM users WHERE id = ?', req.user.id)
   res.json({ user: { ...u, ...extra } })
 })
@@ -558,11 +558,27 @@ app.get('/api/users/search', authMiddleware, async (req, res) => {
 
 app.get('/api/users/:userId', authMiddleware, async (req, res) => {
   const cleanId = sanitizeUserId(req.params.userId)
-  const user = await dbGet('SELECT id, user_id, name, is_system, avatar FROM users WHERE user_id = ?', cleanId)
+  const user = await dbGet('SELECT id, user_id, name, is_system, avatar, birthday, gender, profile_color FROM users WHERE user_id = ?', cleanId)
   if (!user) return res.status(404).json({ error: 'Не найден' })
+  const mutual = await dbAll(`
+    SELECT cp.chat_id FROM chat_participants cp
+    WHERE cp.user_id = ? AND cp.chat_id IN (
+      SELECT chat_id FROM chat_participants WHERE user_id = ?
+    )
+  `, user.id, req.user.id)
   res.json({
-    user: { id: user.id, userId: user.user_id, name: user.name, isSystem: !!user.is_system, avatar: user.avatar },
+    user: { id: user.id, userId: user.user_id, name: user.name, isSystem: !!user.is_system, avatar: user.avatar, birthday: user.birthday, gender: user.gender, profileColor: user.profile_color },
+    mutualChats: mutual.map(r => r.chat_id),
   })
+})
+
+app.patch('/api/user/profile', authMiddleware, async (req, res) => {
+  const { birthday, gender, profileColor } = req.body
+  if (birthday !== undefined) await dbRun('UPDATE users SET birthday = ? WHERE id = ?', birthday || null, req.user.id)
+  if (gender !== undefined) await dbRun('UPDATE users SET gender = ? WHERE id = ?', gender || null, req.user.id)
+  if (profileColor !== undefined) await dbRun('UPDATE users SET profile_color = ? WHERE id = ?', profileColor || null, req.user.id)
+  const u = await dbGet('SELECT id, user_id, name, avatar, birthday, gender, profile_color FROM users WHERE id = ?', req.user.id)
+  res.json({ user: { ...u } })
 })
 
 // ─── Contacts ───
@@ -848,12 +864,19 @@ app.post('/api/gifts/send', authMiddleware, async (req, res) => {
   if (recipient.id === req.user.id) return res.status(400).json({ error: 'Нельзя подарить себе' })
   const gift = await dbGet('SELECT * FROM gifts WHERE id = ?', giftId)
   if (!gift) return res.status(404).json({ error: 'Подарок не найден' })
+  
+  // Check and deduct mcoins
+  const sender = await dbGet('SELECT id, user_id, name, mcoins FROM users WHERE id = ?', req.user.id)
+  if ((sender.mcoins || 0) < gift.price) {
+    return res.status(400).json({ error: 'Недостаточно McoinS' })
+  }
+  await dbRun('UPDATE users SET mcoins = mcoins - ? WHERE id = ?', gift.price, sender.id)
+  
   const id = uuidv4()
   await dbRun('INSERT INTO user_gifts (id, user_id, gift_id, sender_id, message, created_at) VALUES (?, ?, ?, ?, ?, ?)',
     id, recipient.id, giftId, req.user.id, message || null, Date.now()
   )
-  const sender = await dbGet('SELECT id, user_id, name FROM users WHERE id = ?', req.user.id)
-  res.json({ gift: { id, gift, sender: { userId: sender.user_id, name: sender.name }, message, createdAt: Date.now() } })
+  res.json({ gift: { id, gift, sender: { userId: sender.user_id, name: sender.name }, message, createdAt: Date.now() }, mcoins: (sender.mcoins || 0) - gift.price })
 })
 
 app.get('/api/users/:userId/gifts', authMiddleware, async (req, res) => {
@@ -879,6 +902,23 @@ app.get('/api/users/:userId/gifts', authMiddleware, async (req, res) => {
       createdAt: r.created_at,
     })),
   })
+})
+
+// ─── McoinS ───
+
+app.get('/api/user/mcoins', authMiddleware, async (req, res) => {
+  const row = await dbGet('SELECT mcoins FROM users WHERE id = ?', req.user.id)
+  res.json({ mcoins: row?.mcoins || 0 })
+})
+
+app.post('/api/mcoins/earn', authMiddleware, async (req, res) => {
+  const { clicks } = req.body
+  if (!clicks || clicks < 1 || clicks > 10000) return res.status(400).json({ error: 'Неверное количество' })
+  const earned = Math.floor(clicks / 100) * 10
+  if (earned < 1) return res.status(400).json({ error: 'Минимум 100 кликов' })
+  await dbRun('UPDATE users SET mcoins = mcoins + ? WHERE id = ?', earned, req.user.id)
+  const row = await dbGet('SELECT mcoins FROM users WHERE id = ?', req.user.id)
+  res.json({ earned, mcoins: row?.mcoins || 0 })
 })
 
 // ─── WebSocket ───

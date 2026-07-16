@@ -178,26 +178,31 @@ try { await dbExec('ALTER TABLE users ADD COLUMN banned INTEGER DEFAULT 0') } ca
 try { await dbExec('ALTER TABLE users ADD COLUMN scam INTEGER DEFAULT 0') } catch {}
 try { await dbExec('ALTER TABLE sessions ADD COLUMN user_name TEXT DEFAULT NULL') } catch {}
 
-try { await dbExec('CREATE TABLE IF NOT EXISTS gifts (id TEXT PRIMARY KEY, emoji TEXT NOT NULL, title TEXT NOT NULL, price INTEGER DEFAULT 0)') } catch {}
+try { await dbExec('ALTER TABLE users ADD COLUMN mcoins INTEGER DEFAULT 0') } catch {}
+try { await dbExec('ALTER TABLE users ADD COLUMN birthday TEXT DEFAULT NULL') } catch {}
+try { await dbExec('ALTER TABLE users ADD COLUMN gender TEXT DEFAULT NULL') } catch {}
+try { await dbExec('ALTER TABLE users ADD COLUMN profile_color TEXT DEFAULT NULL') } catch {}
+
+try { await dbExec('CREATE TABLE IF NOT EXISTS gifts (id TEXT PRIMARY KEY, emoji TEXT NOT NULL, title TEXT NOT NULL, price INTEGER DEFAULT 10)') } catch {}
 try { await dbExec('CREATE TABLE IF NOT EXISTS user_gifts (id TEXT PRIMARY KEY, user_id TEXT NOT NULL REFERENCES users(id), gift_id TEXT NOT NULL REFERENCES gifts(id), sender_id TEXT REFERENCES users(id), message TEXT, created_at INTEGER NOT NULL)') } catch {}
 
-// Predefined gifts
+// Predefined gifts with prices
 const GIFTS = [
-  { id: 'rose', emoji: '🌹', title: 'Роза', price: 0 },
-  { id: 'cake', emoji: '🎂', title: 'Торт', price: 0 },
-  { id: 'chocolate', emoji: '🍫', title: 'Шоколад', price: 0 },
-  { id: 'teddy', emoji: '🧸', title: 'Мишка', price: 0 },
-  { id: 'bouquet', emoji: '💐', title: 'Букет', price: 0 },
-  { id: 'giftbox', emoji: '🎁', title: 'Подарок', price: 0 },
-  { id: 'ring', emoji: '💍', title: 'Кольцо', price: 0 },
-  { id: 'balloons', emoji: '🎈', title: 'Шары', price: 0 },
-  { id: 'champagne', emoji: '🍾', title: 'Шампанское', price: 0 },
-  { id: 'candle', emoji: '🕯️', title: 'Свеча', price: 0 },
-  { id: 'hibiscus', emoji: '🌺', title: 'Гибискус', price: 0 },
-  { id: 'ribbon', emoji: '🎀', title: 'Лента', price: 0 },
+  { id: 'rose', emoji: '🌹', title: 'Роза', price: 10 },
+  { id: 'cake', emoji: '🎂', title: 'Торт', price: 20 },
+  { id: 'chocolate', emoji: '🍫', title: 'Шоколад', price: 10 },
+  { id: 'teddy', emoji: '🧸', title: 'Мишка', price: 25 },
+  { id: 'bouquet', emoji: '💐', title: 'Букет', price: 30 },
+  { id: 'giftbox', emoji: '🎁', title: 'Подарок', price: 15 },
+  { id: 'ring', emoji: '💍', title: 'Кольцо', price: 50 },
+  { id: 'balloons', emoji: '🎈', title: 'Шары', price: 10 },
+  { id: 'champagne', emoji: '🍾', title: 'Шампанское', price: 35 },
+  { id: 'candle', emoji: '🕯️', title: 'Свеча', price: 5 },
+  { id: 'hibiscus', emoji: '🌺', title: 'Гибискус', price: 10 },
+  { id: 'ribbon', emoji: '🎀', title: 'Лента', price: 5 },
 ]
 for (const g of GIFTS) {
-  try { await dbRun('INSERT OR IGNORE INTO gifts (id, emoji, title, price) VALUES (?, ?, ?, ?)', g.id, g.emoji, g.title, g.price) } catch {}
+  try { await dbRun('INSERT OR REPLACE INTO gifts (id, emoji, title, price) VALUES (?, ?, ?, ?)', g.id, g.emoji, g.title, g.price) } catch {}
 }
 
 await dbExec('CREATE INDEX IF NOT EXISTS idx_user_gifts_user ON user_gifts(user_id)')
