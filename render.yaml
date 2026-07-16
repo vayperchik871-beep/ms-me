@@ -5,10 +5,6 @@ services:
     plan: free
     buildCommand: npm install && npm run build
     startCommand: npm start
-    disk:
-      name: ms-messenger-data
-      mountPath: /data
-      sizeGB: 1
     envVars:
       - key: NODE_ENV
         value: production
@@ -20,4 +16,8 @@ services:
         generateValue: true
       - key: ADMIN_SECRET
         value: "admin123"
+      - key: TURSO_DATABASE_URL
+        sync: false
+      - key: TURSO_AUTH_TOKEN
+        sync: false
     nodeVersion: "22"

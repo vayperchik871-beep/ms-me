@@ -23,6 +23,7 @@
     "@capacitor/local-notifications": "^8.2.1",
     "@capacitor/splash-screen": "^8.0.1",
     "@capacitor/status-bar": "^8.0.2",
+    "@libsql/client": "^0.17.4",
     "@vitejs/plugin-react": "^4.3.4",
     "concurrently": "^9.1.2",
     "emoji-picker-react": "^4.4.8",

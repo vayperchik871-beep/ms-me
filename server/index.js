@@ -9,7 +9,7 @@ import http from 'http'
 import path from 'path'
 import fs from 'fs'
 import { fileURLToPath } from 'url'
-import { db, SYSTEM_BOT } from './db.js'
+import { dbGet, dbAll, dbRun, dbExec, SYSTEM_BOT } from './db.js'
 import multer from 'multer'
 import { encrypt, decrypt, generateCode, hashDevice } from './crypto.js'
 
@@ -69,20 +69,20 @@ app.get('/debug', (req, res) => {
   })
 })
 
-function authMiddleware(req, res, next) {
+async function authMiddleware(req, res, next) {
   const header = req.headers.authorization
   if (!header?.startsWith('Bearer ')) {
     return res.status(401).json({ error: 'Не авторизован' })
   }
   try {
     const payload = jwt.verify(header.slice(7), JWT_SECRET)
-    const session = db.prepare('SELECT * FROM sessions WHERE token = ?').get(header.slice(7))
+    const session = await dbGet('SELECT * FROM sessions WHERE token = ?', header.slice(7))
     if (!session || session.expires_at < Date.now()) {
       return res.status(401).json({ error: 'Сессия истекла' })
     }
-    const row = db.prepare('SELECT id, user_id, name, is_system FROM users WHERE id = ?').get(payload.userId)
+    const row = await dbGet('SELECT id, user_id, name, is_system FROM users WHERE id = ?', payload.userId)
     if (!row) return res.status(401).json({ error: 'Пользователь не найден' })
-    const adminRow = db.prepare('SELECT is_admin, banned FROM users WHERE id = ?').get(payload.userId)
+    const adminRow = await dbGet('SELECT is_admin, banned FROM users WHERE id = ?', payload.userId)
     const user = { ...row, is_admin: adminRow?.is_admin || 0, banned: adminRow?.banned || 0 }
     if (user.banned) return res.status(403).json({ error: 'Аккаунт заблокирован' })
     req.user = user
@@ -94,58 +94,58 @@ function authMiddleware(req, res, next) {
   }
 }
 
-function createToken(userId, deviceId) {
+async function createToken(userId, deviceId) {
   const token = jwt.sign({ userId, deviceId }, JWT_SECRET, { expiresIn: '30d' })
   const expiresAt = Date.now() + 30 * 24 * 60 * 60 * 1000
-  db.prepare('INSERT OR REPLACE INTO sessions (token, user_id, device_id, expires_at) VALUES (?, ?, ?, ?)').run(
+  await dbRun('INSERT OR REPLACE INTO sessions (token, user_id, device_id, expires_at) VALUES (?, ?, ?, ?)',
     token, userId, deviceId, expiresAt
   )
   return token
 }
 
-function getOrCreateDirectChat(userA, userB) {
-  const rows = db.prepare(`
+async function getOrCreateDirectChat(userA, userB) {
+  const rows = await dbAll(`
     SELECT c.id FROM chats c
     JOIN chat_participants cp1 ON cp1.chat_id = c.id AND cp1.user_id = ?
     JOIN chat_participants cp2 ON cp2.chat_id = c.id AND cp2.user_id = ?
     WHERE c.type = 'direct'
-  `).all(userA, userB)
+  `, userA, userB)
   if (rows.length > 0) return rows[0].id
 
   const chatId = uuidv4()
   const now = Date.now()
-  db.prepare('INSERT INTO chats (id, type, created_at) VALUES (?, ?, ?)').run(chatId, 'direct', now)
-  db.prepare('INSERT INTO chat_participants (chat_id, user_id) VALUES (?, ?)').run(chatId, userA)
-  db.prepare('INSERT INTO chat_participants (chat_id, user_id) VALUES (?, ?)').run(chatId, userB)
+  await dbRun('INSERT INTO chats (id, type, created_at) VALUES (?, ?, ?)', chatId, 'direct', now)
+  await dbRun('INSERT INTO chat_participants (chat_id, user_id) VALUES (?, ?)', chatId, userA)
+  await dbRun('INSERT INTO chat_participants (chat_id, user_id) VALUES (?, ?)', chatId, userB)
   return chatId
 }
 
-function sendBotMessage(userId, text) {
-  const chatId = getOrCreateDirectChat(userId, SYSTEM_BOT.id)
+async function sendBotMessage(userId, text) {
+  const chatId = await getOrCreateDirectChat(userId, SYSTEM_BOT.id)
   const msgId = uuidv4()
   const enc = encrypt(text)
   const now = Date.now()
-  db.prepare(`
+  await dbRun(`
     INSERT INTO messages (id, chat_id, sender_id, content_enc, content_iv, content_tag, created_at)
     VALUES (?, ?, ?, ?, ?, ?, ?)
-  `).run(msgId, chatId, SYSTEM_BOT.id, enc.content_enc, enc.content_iv, enc.content_tag, now)
+  `, msgId, chatId, SYSTEM_BOT.id, enc.content_enc, enc.content_iv, enc.content_tag, now)
 
-  broadcastToUser(userId, { type: 'new_message', chatId, message: formatMessage(msgId, userId) })
+  broadcastToUser(userId, { type: 'new_message', chatId, message: await formatMessage(msgId, userId) })
   return { chatId, messageId: msgId }
 }
 
-function formatMessage(msgId, viewerId) {
-  const m = db.prepare('SELECT * FROM messages WHERE id = ?').get(msgId)
+async function formatMessage(msgId, viewerId) {
+  const m = await dbGet('SELECT * FROM messages WHERE id = ?', msgId)
   if (!m || m.deleted) return null
-  const sender = db.prepare('SELECT id, user_id, name, is_system, avatar FROM users WHERE id = ?').get(m.sender_id)
-  const reactions = db.prepare('SELECT emoji, user_id FROM message_reactions WHERE message_id = ?').all(m.id)
+  const sender = await dbGet('SELECT id, user_id, name, is_system, avatar FROM users WHERE id = ?', m.sender_id)
+  const reactions = await dbAll('SELECT emoji, user_id FROM message_reactions WHERE message_id = ?', m.id)
   let attachment = null
   if (m.attachment) {
     try { attachment = JSON.parse(m.attachment) } catch {}
   }
   let read = false
   if (viewerId) {
-    const participants = db.prepare('SELECT user_id, last_read FROM chat_participants WHERE chat_id = ? AND user_id != ?').all(m.chat_id, viewerId)
+    const participants = await dbAll('SELECT user_id, last_read FROM chat_participants WHERE chat_id = ? AND user_id != ?', m.chat_id, viewerId)
     read = participants.some((p) => p.last_read && p.last_read >= m.created_at)
   }
   return {
@@ -183,8 +183,8 @@ function isUserOnline(userId) {
   return Array.from(clients.values()).some((c) => c.userId === userId)
 }
 
-function broadcastToChat(chatId, data, excludeUserId) {
-  const participants = db.prepare('SELECT user_id FROM chat_participants WHERE chat_id = ?').all(chatId)
+async function broadcastToChat(chatId, data, excludeUserId) {
+  const participants = await dbAll('SELECT user_id FROM chat_participants WHERE chat_id = ?', chatId)
   for (const p of participants) {
     if (p.user_id !== excludeUserId) broadcastToUser(p.user_id, data)
   }
@@ -214,26 +214,27 @@ app.post('/api/auth/register', async (req, res) => {
     return res.status(400).json({ error: 'Этот ID зарезервирован' })
   }
 
-  const existing = db.prepare('SELECT id FROM users WHERE user_id = ?').get(cleanId)
+  const existing = await dbGet('SELECT id FROM users WHERE user_id = ?', cleanId)
   if (existing) return res.status(409).json({ error: 'Этот ID уже занят' })
 
-  const isFirst = db.prepare('SELECT COUNT(*) as c FROM users WHERE is_system = 0').get().c === 0
+  const countRow = await dbGet('SELECT COUNT(*) as c FROM users WHERE is_system = 0')
+  const isFirst = countRow.c === 0
   const id = uuidv4()
   const hash = await bcrypt.hash(password, 12)
   const now = Date.now()
 
-  db.prepare('INSERT INTO users (id, user_id, name, password_hash, is_admin, created_at) VALUES (?, ?, ?, ?, ?, ?)').run(
+  await dbRun('INSERT INTO users (id, user_id, name, password_hash, is_admin, created_at) VALUES (?, ?, ?, ?, ?, ?)',
     id, cleanId, name.trim(), hash, isFirst || isAdminApp ? 1 : 0, now
   )
 
   const devId = hashDevice(deviceId)
-  db.prepare('INSERT INTO devices (id, user_id, device_id, verified, last_seen, created_at) VALUES (?, ?, ?, 1, ?, ?)').run(
+  await dbRun('INSERT INTO devices (id, user_id, device_id, verified, last_seen, created_at) VALUES (?, ?, ?, 1, ?, ?)',
     uuidv4(), id, devId, now, now
   )
 
-  const token = createToken(id, devId)
-  getOrCreateDirectChat(id, SYSTEM_BOT.id)
-  sendBotMessage(id, `Добро пожаловать в MS Messenger, ${name.trim()}!\n\nВаш ID: @${cleanId}\n\nДругие пользователи могут найти вас по этому ID. Этот чат используется для кодов подтверждения при входе с нового устройства.`)
+  const token = await createToken(id, devId)
+  await getOrCreateDirectChat(id, SYSTEM_BOT.id)
+  await sendBotMessage(id, `Добро пожаловать в MS Messenger, ${name.trim()}!\n\nВаш ID: @${cleanId}\n\nДругие пользователи могут найти вас по этому ID. Этот чат используется для кодов подтверждения при входе с нового устройства.`)
 
   res.json({
     token,
@@ -249,7 +250,7 @@ app.post('/api/auth/login', async (req, res) => {
   }
 
   const cleanId = sanitizeUserId(userId)
-  const user = db.prepare('SELECT * FROM users WHERE user_id = ? AND is_system = 0').get(cleanId)
+  const user = await dbGet('SELECT * FROM users WHERE user_id = ? AND is_system = 0', cleanId)
   if (!user) return res.status(404).json({ error: 'Пользователь не найден' })
   if (user.banned) return res.status(403).json({ error: 'Аккаунт заблокирован' })
 
@@ -257,22 +258,22 @@ app.post('/api/auth/login', async (req, res) => {
   if (!valid) return res.status(401).json({ error: 'Неверный пароль' })
 
   const devId = hashDevice(deviceId)
-  const device = db.prepare('SELECT * FROM devices WHERE user_id = ? AND device_id = ?').get(user.id, devId)
+  const device = await dbGet('SELECT * FROM devices WHERE user_id = ? AND device_id = ?', user.id, devId)
 
   if (device?.verified || isAdminApp) {
     if (!device) {
-      db.prepare('INSERT INTO devices (id, user_id, device_id, verified, last_seen, created_at) VALUES (?, ?, ?, 1, ?, ?)').run(
+      await dbRun('INSERT INTO devices (id, user_id, device_id, verified, last_seen, created_at) VALUES (?, ?, ?, 1, ?, ?)',
         uuidv4(), user.id, devId, Date.now(), Date.now()
       )
     } else if (!device.verified) {
-      db.prepare('UPDATE devices SET verified = 1, last_seen = ? WHERE id = ?').run(Date.now(), device.id)
+      await dbRun('UPDATE devices SET verified = 1, last_seen = ? WHERE id = ?', Date.now(), device.id)
     } else {
-      db.prepare('UPDATE devices SET last_seen = ? WHERE id = ?').run(Date.now(), device.id)
+      await dbRun('UPDATE devices SET last_seen = ? WHERE id = ?', Date.now(), device.id)
     }
     if (isAdminApp) {
-      db.prepare('UPDATE users SET is_admin = 1 WHERE id = ?').run(user.id)
+      await dbRun('UPDATE users SET is_admin = 1 WHERE id = ?', user.id)
     }
-    const token = createToken(user.id, devId)
+    const token = await createToken(user.id, devId)
     return res.json({
       token,
       user: { id: user.id, userId: user.user_id, name: user.name },
@@ -284,18 +285,18 @@ app.post('/api/auth/login', async (req, res) => {
   const codeId = uuidv4()
   const expires = Date.now() + 10 * 60 * 1000
 
-  db.prepare(`
+  await dbRun(`
     INSERT INTO verification_codes (id, user_id, code, device_id, expires_at)
     VALUES (?, ?, ?, ?, ?)
-  `).run(codeId, user.id, code, devId, expires)
+  `, codeId, user.id, code, devId, expires)
 
   if (!device) {
-    db.prepare('INSERT INTO devices (id, user_id, device_id, verified, created_at) VALUES (?, ?, ?, 0, ?)').run(
+    await dbRun('INSERT INTO devices (id, user_id, device_id, verified, created_at) VALUES (?, ?, ?, 0, ?)',
       uuidv4(), user.id, devId, Date.now()
     )
   }
 
-  sendBotMessage(user.id, `🔐 Код подтверждения для нового устройства:\n\n${code}\n\nКод действителен 10 минут. Никому не сообщайте его.`)
+  await sendBotMessage(user.id, `🔐 Код подтверждения для нового устройства:\n\n${code}\n\nКод действителен 10 минут. Никому не сообщайте его.`)
 
   res.json({
     needsVerification: true,
@@ -304,48 +305,48 @@ app.post('/api/auth/login', async (req, res) => {
   })
 })
 
-app.post('/api/auth/verify-device', (req, res) => {
+app.post('/api/auth/verify-device', async (req, res) => {
   const { userId, code, deviceId } = req.body
   const cleanId = sanitizeUserId(userId)
-  const user = db.prepare('SELECT * FROM users WHERE user_id = ?').get(cleanId)
+  const user = await dbGet('SELECT * FROM users WHERE user_id = ?', cleanId)
   if (!user) return res.status(404).json({ error: 'Пользователь не найден' })
 
   const devId = hashDevice(deviceId)
-  const record = db.prepare(`
+  const record = await dbGet(`
     SELECT * FROM verification_codes
     WHERE user_id = ? AND code = ? AND device_id = ? AND used = 0 AND expires_at > ?
     ORDER BY expires_at DESC LIMIT 1
-  `).get(user.id, code, devId, Date.now())
+  `, user.id, code, devId, Date.now())
 
   if (!record) return res.status(400).json({ error: 'Неверный или просроченный код' })
 
-  db.prepare('UPDATE verification_codes SET used = 1 WHERE id = ?').run(record.id)
-  db.prepare('UPDATE devices SET verified = 1, last_seen = ? WHERE user_id = ? AND device_id = ?').run(
+  await dbRun('UPDATE verification_codes SET used = 1 WHERE id = ?', record.id)
+  await dbRun('UPDATE devices SET verified = 1, last_seen = ? WHERE user_id = ? AND device_id = ?',
     Date.now(), user.id, devId
   )
 
-  const token = createToken(user.id, devId)
+  const token = await createToken(user.id, devId)
   res.json({
     token,
     user: { id: user.id, userId: user.user_id, name: user.name },
   })
 })
 
-app.get('/api/auth/me', authMiddleware, (req, res) => {
-  const u = db.prepare('SELECT id, user_id, name, is_system, avatar FROM users WHERE id = ?').get(req.user.id)
-  const extra = db.prepare('SELECT is_admin, banned FROM users WHERE id = ?').get(req.user.id)
+app.get('/api/auth/me', authMiddleware, async (req, res) => {
+  const u = await dbGet('SELECT id, user_id, name, is_system, avatar FROM users WHERE id = ?', req.user.id)
+  const extra = await dbGet('SELECT is_admin, banned FROM users WHERE id = ?', req.user.id)
   res.json({ user: { ...u, ...extra } })
 })
 
 // ─── Admin ───
 
-app.post('/api/admin/promote', authMiddleware, (req, res) => {
+app.post('/api/admin/promote', authMiddleware, async (req, res) => {
   const { secret } = req.body
   const adminSecret = process.env.ADMIN_SECRET || 'admin123'
   if (!secret || secret !== adminSecret) {
     return res.status(403).json({ error: 'Неверный секрет' })
   }
-  db.prepare('UPDATE users SET is_admin = 1 WHERE id = ?').run(req.user.id)
+  await dbRun('UPDATE users SET is_admin = 1 WHERE id = ?', req.user.id)
   res.json({ ok: true })
 })
 
@@ -356,13 +357,13 @@ function adminMiddleware(req, res, next) {
   next()
 }
 
-app.get('/api/admin/stats', authMiddleware, adminMiddleware, (req, res) => {
-  const totalUsers = db.prepare('SELECT COUNT(*) as c FROM users WHERE is_system = 0').get()
+app.get('/api/admin/stats', authMiddleware, adminMiddleware, async (req, res) => {
+  const totalUsers = await dbGet('SELECT COUNT(*) as c FROM users WHERE is_system = 0')
   const onlineUsers = Array.from(clients.values()).filter((c) => c.readyState === 1).length
-  const bannedUsers = db.prepare('SELECT COUNT(*) as c FROM users WHERE banned = 1').get()
-  const scamUsers = db.prepare('SELECT COUNT(*) as c FROM users WHERE scam = 1').get()
-  const totalChats = db.prepare('SELECT COUNT(*) as c FROM chats').get()
-  const totalMessages = db.prepare('SELECT COUNT(*) as c FROM messages WHERE deleted = 0').get()
+  const bannedUsers = await dbGet('SELECT COUNT(*) as c FROM users WHERE banned = 1')
+  const scamUsers = await dbGet('SELECT COUNT(*) as c FROM users WHERE scam = 1')
+  const totalChats = await dbGet('SELECT COUNT(*) as c FROM chats')
+  const totalMessages = await dbGet('SELECT COUNT(*) as c FROM messages WHERE deleted = 0')
   res.json({
     totalUsers: totalUsers.c,
     onlineUsers,
@@ -373,10 +374,10 @@ app.get('/api/admin/stats', authMiddleware, adminMiddleware, (req, res) => {
   })
 })
 
-app.get('/api/admin/users', authMiddleware, adminMiddleware, (req, res) => {
-  const users = db.prepare(`
+app.get('/api/admin/users', authMiddleware, adminMiddleware, async (req, res) => {
+  const users = await dbAll(`
     SELECT id, user_id, name, is_admin, banned, scam, created_at FROM users WHERE is_system = 0 ORDER BY created_at DESC LIMIT 100
-  `).all()
+  `)
   res.json({ users: users.map((u) => ({
     id: u.id,
     userId: u.user_id,
@@ -388,27 +389,27 @@ app.get('/api/admin/users', authMiddleware, adminMiddleware, (req, res) => {
   })) })
 })
 
-app.post('/api/admin/ban', authMiddleware, adminMiddleware, (req, res) => {
+app.post('/api/admin/ban', authMiddleware, adminMiddleware, async (req, res) => {
   const { userId, value } = req.body
   const cleanId = sanitizeUserId(userId)
-  const user = db.prepare('SELECT id FROM users WHERE user_id = ?').get(cleanId)
+  const user = await dbGet('SELECT id FROM users WHERE user_id = ?', cleanId)
   if (!user) return res.status(404).json({ error: 'Пользователь не найден' })
-  db.prepare('UPDATE users SET banned = ? WHERE id = ?').run(value ? 1 : 0, user.id)
+  await dbRun('UPDATE users SET banned = ? WHERE id = ?', value ? 1 : 0, user.id)
   res.json({ ok: true, userId: cleanId, banned: !!value })
 })
 
-app.post('/api/admin/scam', authMiddleware, adminMiddleware, (req, res) => {
+app.post('/api/admin/scam', authMiddleware, adminMiddleware, async (req, res) => {
   const { userId, value } = req.body
   const cleanId = sanitizeUserId(userId)
-  const user = db.prepare('SELECT id, name FROM users WHERE user_id = ?').get(cleanId)
+  const user = await dbGet('SELECT id, name FROM users WHERE user_id = ?', cleanId)
   if (!user) return res.status(404).json({ error: 'Пользователь не найден' })
   const oldName = user.name
   const newName = value ? `[SCAM] ${oldName.replace(/^\[SCAM\]\s*/i, '')}` : oldName.replace(/^\[SCAM\]\s*/i, '')
-  db.prepare('UPDATE users SET scam = ?, name = ? WHERE id = ?').run(value ? 1 : 0, newName, user.id)
+  await dbRun('UPDATE users SET scam = ?, name = ? WHERE id = ?', value ? 1 : 0, newName, user.id)
   res.json({ ok: true, userId: cleanId, scam: !!value, name: newName })
 })
 
-app.post('/api/admin/command', authMiddleware, adminMiddleware, (req, res) => {
+app.post('/api/admin/command', authMiddleware, adminMiddleware, async (req, res) => {
   const { command } = req.body
   if (!command || typeof command !== 'string') return res.status(400).json({ error: 'Команда не указана' })
   const parts = command.trim().split(/\s+/)
@@ -434,12 +435,12 @@ app.post('/api/admin/command', authMiddleware, adminMiddleware, (req, res) => {
         ].join('\n')))
       }
       case 'stats': {
-        const totalUsers = db.prepare('SELECT COUNT(*) as c FROM users WHERE is_system = 0').get()
+        const totalUsers = await dbGet('SELECT COUNT(*) as c FROM users WHERE is_system = 0')
         const online = Array.from(clients.values()).filter((c) => c.readyState === 1).length
-        const banned = db.prepare('SELECT COUNT(*) as c FROM users WHERE banned = 1').get()
-        const scam = db.prepare('SELECT COUNT(*) as c FROM users WHERE scam = 1').get()
-        const chats = db.prepare('SELECT COUNT(*) as c FROM chats').get()
-        const msgs = db.prepare('SELECT COUNT(*) as c FROM messages WHERE deleted = 0').get()
+        const banned = await dbGet('SELECT COUNT(*) as c FROM users WHERE banned = 1')
+        const scam = await dbGet('SELECT COUNT(*) as c FROM users WHERE scam = 1')
+        const chats = await dbGet('SELECT COUNT(*) as c FROM chats')
+        const msgs = await dbGet('SELECT COUNT(*) as c FROM messages WHERE deleted = 0')
         return res.json(say([
           `Аккаунтов: ${totalUsers.c}`,
           `Онлайн: ${online}`,
@@ -450,7 +451,7 @@ app.post('/api/admin/command', authMiddleware, adminMiddleware, (req, res) => {
         ].join('\n')))
       }
       case 'users': {
-        const users = db.prepare('SELECT user_id, name, is_admin, banned, scam FROM users WHERE is_system = 0 ORDER BY created_at DESC LIMIT 100').all()
+        const users = await dbAll('SELECT user_id, name, is_admin, banned, scam FROM users WHERE is_system = 0 ORDER BY created_at DESC LIMIT 100')
         const lines = users.map((u) =>
           `@${u.user_id} "${u.name}"${u.is_admin ? ' [ADMIN]' : ''}${u.banned ? ' [BANNED]' : ''}${u.scam ? ' [SCAM]' : ''}`
         )
@@ -458,32 +459,32 @@ app.post('/api/admin/command', authMiddleware, adminMiddleware, (req, res) => {
       }
       case 'ban': {
         if (!args[0]) return res.json(say('Укажите userId: ban <id>'))
-        const user = db.prepare('SELECT id FROM users WHERE user_id = ?').get(args[0])
+        const user = await dbGet('SELECT id FROM users WHERE user_id = ?', args[0])
         if (!user) return res.json(say('Пользователь не найден'))
-        db.prepare('UPDATE users SET banned = 1 WHERE id = ?').run(user.id)
+        await dbRun('UPDATE users SET banned = 1 WHERE id = ?', user.id)
         return res.json(say(`@${args[0]} забанен`))
       }
       case 'unban': {
         if (!args[0]) return res.json(say('Укажите userId: unban <id>'))
-        const user = db.prepare('SELECT id FROM users WHERE user_id = ?').get(args[0])
+        const user = await dbGet('SELECT id FROM users WHERE user_id = ?', args[0])
         if (!user) return res.json(say('Пользователь не найден'))
-        db.prepare('UPDATE users SET banned = 0 WHERE id = ?').run(user.id)
+        await dbRun('UPDATE users SET banned = 0 WHERE id = ?', user.id)
         return res.json(say(`@${args[0]} разбанен`))
       }
       case 'scam': {
         if (!args[0]) return res.json(say('Укажите userId: scam <id>'))
-        const user = db.prepare('SELECT id, name FROM users WHERE user_id = ?').get(args[0])
+        const user = await dbGet('SELECT id, name FROM users WHERE user_id = ?', args[0])
         if (!user) return res.json(say('Пользователь не найден'))
         const newName = `[SCAM] ${user.name.replace(/^\[SCAM\]\s*/i, '')}`
-        db.prepare('UPDATE users SET scam = 1, name = ? WHERE id = ?').run(newName, user.id)
+        await dbRun('UPDATE users SET scam = 1, name = ? WHERE id = ?', newName, user.id)
         return res.json(say(`@${args[0]} помечен как скам (имя: ${newName})`))
       }
       case 'unscam': {
         if (!args[0]) return res.json(say('Укажите userId: unscam <id>'))
-        const user = db.prepare('SELECT id, name FROM users WHERE user_id = ?').get(args[0])
+        const user = await dbGet('SELECT id, name FROM users WHERE user_id = ?', args[0])
         if (!user) return res.json(say('Пользователь не найден'))
         const newName = user.name.replace(/^\[SCAM\]\s*/i, '')
-        db.prepare('UPDATE users SET scam = 0, name = ? WHERE id = ?').run(newName, user.id)
+        await dbRun('UPDATE users SET scam = 0, name = ? WHERE id = ?', newName, user.id)
         return res.json(say(`Метка скам снята с @${args[0]} (имя: ${newName})`))
       }
       case 'online': {
@@ -494,11 +495,14 @@ app.post('/api/admin/command', authMiddleware, adminMiddleware, (req, res) => {
       case 'broadcast': {
         const text = args.join(' ')
         if (!text) return res.json(say('Напишите текст: bc <сообщение>'))
-        const botId = SYSTEM_BOT?.id || db.prepare("SELECT id FROM users WHERE is_system = 1 LIMIT 1").get()?.id
+        const botRow = await dbGet('SELECT id FROM users WHERE is_system = 1 LIMIT 1')
+        const botId = SYSTEM_BOT?.id || botRow?.id
         if (!botId) return res.json(say('Системный бот не найден'))
-        const chatsList = db.prepare('SELECT id FROM chats').all()
+        const chatsList = await dbAll('SELECT id FROM chats')
         for (const chat of chatsList) {
-          db.prepare('INSERT INTO messages (chat_id, sender_id, text, created_at, deleted) VALUES (?, ?, ?, ?, 0)').run(chat.id, botId, text, Date.now())
+          await dbRun('INSERT INTO messages (chat_id, sender_id, content_enc, content_iv, content_tag, created_at) VALUES (?, ?, ?, ?, ?, ?)',
+            chat.id, botId, encrypt(text).content_enc, encrypt(text).content_iv, encrypt(text).content_tag, Date.now()
+          )
         }
         return res.json(say(`Сообщение отправлено в ${chatsList.length} чатов`))
       }
@@ -506,23 +510,27 @@ app.post('/api/admin/command', authMiddleware, adminMiddleware, (req, res) => {
         const targetId = args[0]
         const text = args.slice(1).join(' ')
         if (!targetId || !text) return res.json(say('Укажите: say <userId> <сообщение>'))
-        const target = db.prepare('SELECT id FROM users WHERE user_id = ?').get(targetId)
+        const target = await dbGet('SELECT id FROM users WHERE user_id = ?', targetId)
         if (!target) return res.json(say('Пользователь не найден'))
-        const botId = SYSTEM_BOT?.id || db.prepare("SELECT id FROM users WHERE is_system = 1 LIMIT 1").get()?.id
+        const botRow = await dbGet('SELECT id FROM users WHERE is_system = 1 LIMIT 1')
+        const botId = SYSTEM_BOT?.id || botRow?.id
         if (!botId) return res.json(say('Системный бот не найден'))
-        let chat = db.prepare(`
+        let chat = await dbGet(`
           SELECT c.id FROM chats c
-          INNER JOIN chat_members cm ON cm.chat_id = c.id
-          WHERE c.type = 'private' AND cm.user_id = ? AND c.id IN (SELECT chat_id FROM chat_members WHERE user_id = ?)
-        `).get(target.id, botId)
+          INNER JOIN chat_participants cm ON cm.chat_id = c.id
+          WHERE c.type = 'direct' AND cm.user_id = ? AND c.id IN (SELECT chat_id FROM chat_participants WHERE user_id = ?)
+        `, target.id, botId)
         if (!chat) {
           const chatId = uuidv4()
-          db.prepare('INSERT INTO chats (id, type, created_at) VALUES (?, ?, ?)').run(chatId, 'private', Date.now())
-          db.prepare('INSERT INTO chat_members (chat_id, user_id) VALUES (?, ?)').run(chatId, target.id)
-          db.prepare('INSERT INTO chat_members (chat_id, user_id) VALUES (?, ?)').run(chatId, botId)
+          await dbRun('INSERT INTO chats (id, type, created_at) VALUES (?, ?, ?)', chatId, 'direct', Date.now())
+          await dbRun('INSERT INTO chat_participants (chat_id, user_id) VALUES (?, ?)', chatId, target.id)
+          await dbRun('INSERT INTO chat_participants (chat_id, user_id) VALUES (?, ?)', chatId, botId)
           chat = { id: chatId }
         }
-        db.prepare('INSERT INTO messages (chat_id, sender_id, text, created_at, deleted) VALUES (?, ?, ?, ?, 0)').run(chat.id, botId, text, Date.now())
+        const enc = encrypt(text)
+        await dbRun('INSERT INTO messages (chat_id, sender_id, content_enc, content_iv, content_tag, created_at) VALUES (?, ?, ?, ?, ?, ?)',
+          chat.id, botId, enc.content_enc, enc.content_iv, enc.content_tag, Date.now()
+        )
         return res.json(say(`Сообщение отправлено @${targetId}`))
       }
       default:
@@ -535,22 +543,22 @@ app.post('/api/admin/command', authMiddleware, adminMiddleware, (req, res) => {
 
 // ─── Users ───
 
-app.get('/api/users/search', authMiddleware, (req, res) => {
+app.get('/api/users/search', authMiddleware, async (req, res) => {
   const q = sanitizeUserId(req.query.q || '')
   if (q.length < 2) return res.json({ users: [] })
 
-  const users = db.prepare(`
+  const users = await dbAll(`
     SELECT id, user_id, name, avatar FROM users
     WHERE user_id LIKE ? AND is_system = 0 AND id != ?
     LIMIT 20
-  `).all(`${q}%`, req.user.id)
+  `, `${q}%`, req.user.id)
 
   res.json({ users: users.map((u) => ({ id: u.id, userId: u.user_id, name: u.name, avatar: u.avatar })) })
 })
 
-app.get('/api/users/:userId', authMiddleware, (req, res) => {
+app.get('/api/users/:userId', authMiddleware, async (req, res) => {
   const cleanId = sanitizeUserId(req.params.userId)
-  const user = db.prepare('SELECT id, user_id, name, is_system, avatar FROM users WHERE user_id = ?').get(cleanId)
+  const user = await dbGet('SELECT id, user_id, name, is_system, avatar FROM users WHERE user_id = ?', cleanId)
   if (!user) return res.status(404).json({ error: 'Не найден' })
   res.json({
     user: { id: user.id, userId: user.user_id, name: user.name, isSystem: !!user.is_system, avatar: user.avatar },
@@ -559,14 +567,14 @@ app.get('/api/users/:userId', authMiddleware, (req, res) => {
 
 // ─── Contacts ───
 
-app.get('/api/contacts', authMiddleware, (req, res) => {
-  const contacts = db.prepare(`
+app.get('/api/contacts', authMiddleware, async (req, res) => {
+  const contacts = await dbAll(`
     SELECT u.id, u.user_id, u.name, u.is_system, u.avatar, c.created_at
     FROM contacts c
     JOIN users u ON u.id = c.contact_id
     WHERE c.user_id = ?
     ORDER BY u.name
-  `).all(req.user.id)
+  `, req.user.id)
 
   res.json({
     contacts: contacts.map((c) => ({
@@ -579,22 +587,22 @@ app.get('/api/contacts', authMiddleware, (req, res) => {
   })
 })
 
-app.post('/api/contacts', authMiddleware, (req, res) => {
+app.post('/api/contacts', authMiddleware, async (req, res) => {
   const { userId } = req.body
   const cleanId = sanitizeUserId(userId)
-  const contact = db.prepare('SELECT id, user_id, name, is_system, avatar FROM users WHERE user_id = ?').get(cleanId)
+  const contact = await dbGet('SELECT id, user_id, name, is_system, avatar FROM users WHERE user_id = ?', cleanId)
   if (!contact) return res.status(404).json({ error: 'Пользователь не найден' })
   if (contact.id === req.user.id) return res.status(400).json({ error: 'Нельзя добавить себя' })
   if (contact.is_system) return res.status(400).json({ error: 'Нельзя добавить системный аккаунт' })
 
-  db.prepare('INSERT OR IGNORE INTO contacts (user_id, contact_id, created_at) VALUES (?, ?, ?)').run(
+  await dbRun('INSERT OR IGNORE INTO contacts (user_id, contact_id, created_at) VALUES (?, ?, ?)',
     req.user.id, contact.id, Date.now()
   )
-  db.prepare('INSERT OR IGNORE INTO contacts (user_id, contact_id, created_at) VALUES (?, ?, ?)').run(
+  await dbRun('INSERT OR IGNORE INTO contacts (user_id, contact_id, created_at) VALUES (?, ?, ?)',
     contact.id, req.user.id, Date.now()
   )
 
-  const chatId = getOrCreateDirectChat(req.user.id, contact.id)
+  const chatId = await getOrCreateDirectChat(req.user.id, contact.id)
   res.json({
     contact: { id: contact.id, userId: contact.user_id, name: contact.name, isSystem: !!contact.is_system, avatar: contact.avatar },
     chatId,
@@ -613,10 +621,10 @@ function fullUrl(req, path) {
   return `${path}`
 }
 
-app.post('/api/upload/avatar', authMiddleware, upload.single('avatar'), (req, res) => {
+app.post('/api/upload/avatar', authMiddleware, upload.single('avatar'), async (req, res) => {
   if (!req.file) return res.status(400).json({ error: 'Файл не загружен' })
   const url = fullUrl(req, `/uploads/${req.file.filename}`)
-  db.prepare('UPDATE users SET avatar = ? WHERE id = ?').run(url, req.user.id)
+  await dbRun('UPDATE users SET avatar = ? WHERE id = ?', url, req.user.id)
   res.json({ avatar: url })
 })
 
@@ -628,16 +636,16 @@ app.post('/api/upload/attachment', authMiddleware, upload.single('file'), (req, 
   res.json({ url, type, name: req.file.originalname, size: req.file.size, duration })
 })
 
-app.patch('/api/users/avatar', authMiddleware, (req, res) => {
+app.patch('/api/users/avatar', authMiddleware, async (req, res) => {
   const { avatar } = req.body
-  db.prepare('UPDATE users SET avatar = ? WHERE id = ?').run(avatar || null, req.user.id)
+  await dbRun('UPDATE users SET avatar = ? WHERE id = ?', avatar || null, req.user.id)
   res.json({ avatar })
 })
 
 // ─── Chats ───
 
-app.get('/api/chats', authMiddleware, (req, res) => {
-  const chats = db.prepare(`
+app.get('/api/chats', authMiddleware, async (req, res) => {
+  const chats = await dbAll(`
     SELECT c.id, c.type,
       (SELECT content_enc FROM messages m WHERE m.chat_id = c.id AND m.deleted = 0 ORDER BY m.created_at DESC LIMIT 1) as last_enc,
       (SELECT content_iv FROM messages m WHERE m.chat_id = c.id AND m.deleted = 0 ORDER BY m.created_at DESC LIMIT 1) as last_iv,
@@ -647,14 +655,14 @@ app.get('/api/chats', authMiddleware, (req, res) => {
     JOIN chat_participants cp ON cp.chat_id = c.id
     WHERE cp.user_id = ?
     ORDER BY last_time DESC NULLS LAST
-  `).all(req.user.id)
+  `, req.user.id)
 
-  const result = chats.map((chat) => {
-    const others = db.prepare(`
+  const result = await Promise.all(chats.map(async (chat) => {
+    const others = await dbAll(`
       SELECT u.id, u.user_id, u.name, u.is_system, u.avatar FROM users u
       JOIN chat_participants cp ON cp.user_id = u.id
       WHERE cp.chat_id = ? AND u.id != ?
-    `).all(chat.id, req.user.id)
+    `, chat.id, req.user.id)
 
     const peer = others[0]
     let lastMessage = ''
@@ -662,16 +670,16 @@ app.get('/api/chats', authMiddleware, (req, res) => {
       try { lastMessage = decrypt(chat.last_enc, chat.last_iv, chat.last_tag) } catch { lastMessage = '🔒' }
     }
 
-    const unread = db.prepare(`
+    const unread = await dbGet(`
       SELECT COUNT(*) as c FROM messages
       WHERE chat_id = ? AND sender_id != ? AND created_at > COALESCE(
         (SELECT last_read FROM chat_participants WHERE chat_id = ? AND user_id = ?), 0
       )
-    `).get(chat.id, req.user.id, chat.id, req.user.id)
+    `, chat.id, req.user.id, chat.id, req.user.id)
 
     let lastSeen = null
     if (peer && !isUserOnline(peer.id)) {
-      const device = db.prepare('SELECT last_seen FROM devices WHERE user_id = ? ORDER BY last_seen DESC LIMIT 1').get(peer.id)
+      const device = await dbGet('SELECT last_seen FROM devices WHERE user_id = ? ORDER BY last_seen DESC LIMIT 1', peer.id)
       lastSeen = device?.last_seen || null
     }
 
@@ -682,33 +690,40 @@ app.get('/api/chats', authMiddleware, (req, res) => {
       lastTime: chat.last_time ? formatTime(chat.last_time) : '',
       unread: unread?.c || 0,
     }
-  })
+  }))
 
   res.json({ chats: result })
 })
 
 // ─── Messages ───
 
-app.get('/api/chats/:chatId/messages', authMiddleware, (req, res) => {
-  const participant = db.prepare(
-    'SELECT 1 FROM chat_participants WHERE chat_id = ? AND user_id = ?'
-  ).get(req.params.chatId, req.user.id)
+app.get('/api/chats/:chatId/messages', authMiddleware, async (req, res) => {
+  const participant = await dbGet(
+    'SELECT 1 FROM chat_participants WHERE chat_id = ? AND user_id = ?',
+    req.params.chatId, req.user.id
+  )
   if (!participant) return res.status(403).json({ error: 'Нет доступа' })
 
-  const rows = db.prepare(`
+  const rows = await dbAll(`
     SELECT id FROM messages WHERE chat_id = ? AND deleted = 0 ORDER BY created_at ASC
-  `).all(req.params.chatId)
+  `, req.params.chatId)
 
-  res.json({ messages: rows.map((r) => formatMessage(r.id, req.user.id)).filter(Boolean) })
+  const messages = []
+  for (const r of rows) {
+    const msg = await formatMessage(r.id, req.user.id)
+    if (msg) messages.push(msg)
+  }
+  res.json({ messages })
 })
 
-app.post('/api/chats/:chatId/messages', authMiddleware, (req, res) => {
+app.post('/api/chats/:chatId/messages', authMiddleware, async (req, res) => {
   const { text, replyTo, attachment: attach } = req.body
   if (!text?.trim() && !attach) return res.status(400).json({ error: 'Пустое сообщение' })
 
-  const participant = db.prepare(
-    'SELECT 1 FROM chat_participants WHERE chat_id = ? AND user_id = ?'
-  ).get(req.params.chatId, req.user.id)
+  const participant = await dbGet(
+    'SELECT 1 FROM chat_participants WHERE chat_id = ? AND user_id = ?',
+    req.params.chatId, req.user.id
+  )
   if (!participant) return res.status(403).json({ error: 'Нет доступа' })
 
   const msgId = uuidv4()
@@ -717,78 +732,79 @@ app.post('/api/chats/:chatId/messages', authMiddleware, (req, res) => {
   const now = Date.now()
   const attachment = attach ? JSON.stringify(attach) : null
 
-  db.prepare(`
+  await dbRun(`
     INSERT INTO messages (id, chat_id, sender_id, content_enc, content_iv, content_tag, reply_to, attachment, created_at)
     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-  `).run(msgId, req.params.chatId, req.user.id, enc.content_enc, enc.content_iv, enc.content_tag, replyTo || null, attachment, now)
+  `, msgId, req.params.chatId, req.user.id, enc.content_enc, enc.content_iv, enc.content_tag, replyTo || null, attachment, now)
 
-  const message = formatMessage(msgId, req.user.id)
-  broadcastToChat(req.params.chatId, { type: 'new_message', chatId: req.params.chatId, message }, req.user.id)
+  const message = await formatMessage(msgId, req.user.id)
+  await broadcastToChat(req.params.chatId, { type: 'new_message', chatId: req.params.chatId, message }, req.user.id)
   res.json({ message })
 })
 
-app.patch('/api/messages/:id', authMiddleware, (req, res) => {
+app.patch('/api/messages/:id', authMiddleware, async (req, res) => {
   const { text } = req.body
-  const msg = db.prepare('SELECT * FROM messages WHERE id = ?').get(req.params.id)
+  const msg = await dbGet('SELECT * FROM messages WHERE id = ?', req.params.id)
   if (!msg || msg.sender_id !== req.user.id) return res.status(403).json({ error: 'Нельзя редактировать' })
 
   const enc = encrypt(text.trim())
-  db.prepare(`
+  await dbRun(`
     UPDATE messages SET content_enc = ?, content_iv = ?, content_tag = ?, edited_at = ? WHERE id = ?
-  `).run(enc.content_enc, enc.content_iv, enc.content_tag, Date.now(), req.params.id)
+  `, enc.content_enc, enc.content_iv, enc.content_tag, Date.now(), req.params.id)
 
-  const message = formatMessage(req.params.id, req.user.id)
-  broadcastToChat(msg.chat_id, { type: 'message_updated', message })
+  const message = await formatMessage(req.params.id, req.user.id)
+  await broadcastToChat(msg.chat_id, { type: 'message_updated', message })
   res.json({ message })
 })
 
-app.delete('/api/messages/:id', authMiddleware, (req, res) => {
-  const msg = db.prepare('SELECT * FROM messages WHERE id = ?').get(req.params.id)
+app.delete('/api/messages/:id', authMiddleware, async (req, res) => {
+  const msg = await dbGet('SELECT * FROM messages WHERE id = ?', req.params.id)
   if (!msg || msg.sender_id !== req.user.id) return res.status(403).json({ error: 'Нельзя удалить' })
 
-  db.prepare('UPDATE messages SET deleted = 1 WHERE id = ?').run(req.params.id)
-  broadcastToChat(msg.chat_id, { type: 'message_deleted', messageId: req.params.id, chatId: msg.chat_id })
+  await dbRun('UPDATE messages SET deleted = 1 WHERE id = ?', req.params.id)
+  await broadcastToChat(msg.chat_id, { type: 'message_deleted', messageId: req.params.id, chatId: msg.chat_id })
   res.json({ ok: true })
 })
 
-app.post('/api/messages/:id/pin', authMiddleware, (req, res) => {
-  const msg = db.prepare('SELECT * FROM messages WHERE id = ?').get(req.params.id)
+app.post('/api/messages/:id/pin', authMiddleware, async (req, res) => {
+  const msg = await dbGet('SELECT * FROM messages WHERE id = ?', req.params.id)
   if (!msg) return res.status(404).json({ error: 'Не найдено' })
 
-  db.prepare('UPDATE messages SET pinned = ? WHERE id = ?').run(msg.pinned ? 0 : 1, req.params.id)
+  await dbRun('UPDATE messages SET pinned = ? WHERE id = ?', msg.pinned ? 0 : 1, req.params.id)
   res.json({ pinned: !msg.pinned })
 })
 
-app.post('/api/messages/:id/react', authMiddleware, (req, res) => {
+app.post('/api/messages/:id/react', authMiddleware, async (req, res) => {
   const { emoji } = req.body
-  const msg = db.prepare('SELECT id FROM messages WHERE id = ?').get(req.params.id)
+  const msg = await dbGet('SELECT id FROM messages WHERE id = ?', req.params.id)
   if (!msg) return res.status(404).json({ error: 'Не найдено' })
 
-  const existing = db.prepare('SELECT emoji FROM message_reactions WHERE message_id = ? AND user_id = ?').get(req.params.id, req.user.id)
+  const existing = await dbGet('SELECT emoji FROM message_reactions WHERE message_id = ? AND user_id = ?', req.params.id, req.user.id)
   if (existing?.emoji === emoji) {
-    db.prepare('DELETE FROM message_reactions WHERE message_id = ? AND user_id = ?').run(req.params.id, req.user.id)
+    await dbRun('DELETE FROM message_reactions WHERE message_id = ? AND user_id = ?', req.params.id, req.user.id)
   } else {
-    db.prepare('INSERT OR REPLACE INTO message_reactions (message_id, user_id, emoji) VALUES (?, ?, ?)').run(
+    await dbRun('INSERT OR REPLACE INTO message_reactions (message_id, user_id, emoji) VALUES (?, ?, ?)',
       req.params.id, req.user.id, emoji
     )
   }
 
-  const reactions = db.prepare('SELECT emoji, user_id FROM message_reactions WHERE message_id = ?').all(req.params.id)
+  const reactions = await dbAll('SELECT emoji, user_id FROM message_reactions WHERE message_id = ?', req.params.id)
   res.json({ reactions })
 })
 
-app.post('/api/chats/:chatId/read', authMiddleware, (req, res) => {
-  const participant = db.prepare(
-    'SELECT 1 FROM chat_participants WHERE chat_id = ? AND user_id = ?'
-  ).get(req.params.chatId, req.user.id)
+app.post('/api/chats/:chatId/read', authMiddleware, async (req, res) => {
+  const participant = await dbGet(
+    'SELECT 1 FROM chat_participants WHERE chat_id = ? AND user_id = ?',
+    req.params.chatId, req.user.id
+  )
   if (!participant) return res.status(403).json({ error: 'Нет доступа' })
 
   const now = Date.now()
-  db.prepare('UPDATE chat_participants SET last_read = ? WHERE chat_id = ? AND user_id = ?').run(
+  await dbRun('UPDATE chat_participants SET last_read = ? WHERE chat_id = ? AND user_id = ?',
     now, req.params.chatId, req.user.id
   )
 
-  broadcastToChat(req.params.chatId, {
+  await broadcastToChat(req.params.chatId, {
     type: 'read_receipt',
     chatId: req.params.chatId,
     userId: req.user.id,
@@ -798,8 +814,8 @@ app.post('/api/chats/:chatId/read', authMiddleware, (req, res) => {
   res.json({ ok: true })
 })
 
-app.post('/api/messages/:id/favorite', authMiddleware, (req, res) => {
-  db.prepare('INSERT OR IGNORE INTO favorites (user_id, message_id, created_at) VALUES (?, ?, ?)').run(
+app.post('/api/messages/:id/favorite', authMiddleware, async (req, res) => {
+  await dbRun('INSERT OR IGNORE INTO favorites (user_id, message_id, created_at) VALUES (?, ?, ?)',
     req.user.id, req.params.id, Date.now()
   )
   res.json({ ok: true })
@@ -829,46 +845,51 @@ wss.on('connection', (ws, req) => {
 
   try {
     const payload = jwt.verify(token, JWT_SECRET)
-    const session = db.prepare('SELECT * FROM sessions WHERE token = ?').get(token)
-    if (!session || session.expires_at < Date.now()) { ws.close(); return }
 
-    ws.userId = payload.userId
-    ws.token = token
-    clients.set(token, ws)
+    dbGet('SELECT * FROM sessions WHERE token = ?', token).then(async (session) => {
+      if (!session || session.expires_at < Date.now()) { ws.close(); return }
 
-    const contacts = db.prepare(`
-      SELECT DISTINCT cp2.user_id FROM chat_participants cp1
-      JOIN chat_participants cp2 ON cp2.chat_id = cp1.chat_id
-      WHERE cp1.user_id = ? AND cp2.user_id != ?
-    `).all(payload.userId, payload.userId)
-    for (const c of contacts) {
-      broadcastToUser(c.user_id, { type: 'user_online', userId: payload.userId })
-    }
+      ws.userId = payload.userId
+      ws.token = token
+      clients.set(token, ws)
 
-    ws.on('message', (raw) => {
-      try {
-        const data = JSON.parse(raw.toString())
-        if (data.type === 'typing') {
-          const participants = db.prepare('SELECT user_id FROM chat_participants WHERE chat_id = ?').all(data.chatId)
-          for (const p of participants) {
-            if (p.user_id !== payload.userId) {
-              broadcastToUser(p.user_id, { type: 'typing', chatId: data.chatId, userId: payload.userId, isTyping: data.isTyping })
-            }
+      const contacts = await dbAll(`
+        SELECT DISTINCT cp2.user_id FROM chat_participants cp1
+        JOIN chat_participants cp2 ON cp2.chat_id = cp1.chat_id
+        WHERE cp1.user_id = ? AND cp2.user_id != ?
+      `, payload.userId, payload.userId)
+      for (const c of contacts) {
+        broadcastToUser(c.user_id, { type: 'user_online', userId: payload.userId })
+      }
+
+      ws.on('message', (raw) => {
+        try {
+          const data = JSON.parse(raw.toString())
+          if (data.type === 'typing') {
+            dbAll('SELECT user_id FROM chat_participants WHERE chat_id = ?', data.chatId).then((participants) => {
+              for (const p of participants) {
+                if (p.user_id !== payload.userId) {
+                  broadcastToUser(p.user_id, { type: 'typing', chatId: data.chatId, userId: payload.userId, isTyping: data.isTyping })
+                }
+              }
+            }).catch(() => {})
+          }
+        } catch {}
+      })
+
+      ws.on('close', () => {
+        clients.delete(token)
+        const stillOnline = Array.from(clients.values()).some((c) => c.userId === payload.userId)
+        if (!stillOnline) {
+          for (const c of contacts) {
+            broadcastToUser(c.user_id, { type: 'user_offline', userId: payload.userId })
           }
         }
-      } catch {}
+      })
+      ws.send(JSON.stringify({ type: 'connected' }))
+    }).catch(() => {
+      ws.close()
     })
-
-    ws.on('close', () => {
-      clients.delete(token)
-      const stillOnline = Array.from(clients.values()).some((c) => c.userId === payload.userId)
-      if (!stillOnline) {
-        for (const c of contacts) {
-          broadcastToUser(c.user_id, { type: 'user_offline', userId: payload.userId })
-        }
-      }
-    })
-    ws.send(JSON.stringify({ type: 'connected' }))
   } catch {
     ws.close()
   }
