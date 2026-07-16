@@ -10,6 +10,11 @@
     "StatusBar": {
       "style": "DARK",
       "backgroundColor": "#1a1d23"
+    },
+    "SplashScreen": {
+      "backgroundColor": "#1a1d23",
+      "androidScaleType": "CENTER_CROP",
+      "showSpinner": false
     }
   }
 }
