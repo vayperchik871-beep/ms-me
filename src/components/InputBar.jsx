@@ -126,7 +126,7 @@ export default function InputBar({ onSend, editText, onCancelEdit, chatId }) {
   }
 
   return (
-    <form className="input-bar dark" onSubmit={handleSubmit}>
+    <form className="input-bar" onSubmit={handleSubmit}>
       <input ref={fileInputRef} type="file" accept="image/*,video/*" hidden onChange={handleAttach} />
 
       {recording ? (
@@ -149,7 +149,7 @@ export default function InputBar({ onSend, editText, onCancelEdit, chatId }) {
             </button>
           )}
 
-          <div className="input-wrap dark">
+          <div className="input-wrap">
             {editText && (
               <button type="button" className="cancel-edit" onClick={onCancelEdit}>✕</button>
             )}

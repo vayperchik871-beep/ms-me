@@ -215,7 +215,7 @@ export default function ChatWindow({ chatId, onBack }) {
         </div>
 
         <button className="ch-avatar-btn" onClick={() => peer?.userId && setProfileUserId(peer.userId)}>
-          <div className="ch-avatar">
+          <div className="ch-avatar" style={{ background: peer?.profileColor ? `linear-gradient(135deg, ${peer.profileColor}, ${peer.profileColor}cc)` : 'var(--bg-tertiary)' }}>
             {peer?.avatar ? (
               <img src={resolveMediaUrl(peer.avatar)} alt="" className="ch-avatar-img"
                 onError={(e) => { e.target.style.display = 'none'; e.target.parentElement.querySelector('.ch-avatar-fb').style.display = 'flex' }} />

@@ -686,11 +686,11 @@ app.get('/api/chats', authMiddleware, async (req, res) => {
   `, req.user.id)
 
   const result = await Promise.all(chats.map(async (chat) => {
-    const others = await dbAll(`
-      SELECT u.id, u.user_id, u.name, u.is_system, u.avatar FROM users u
+const others = await dbAll(`
+      SELECT u.id, u.user_id, u.name, u.is_system, u.avatar, u.profile_color FROM users u
       JOIN chat_participants cp ON cp.user_id = u.id
       WHERE cp.chat_id = ? AND u.id != ?
-    `, chat.id, req.user.id)
+      `, chat.id, req.user.id)
 
     const peer = others[0]
     let lastMessage = ''
@@ -713,7 +713,7 @@ app.get('/api/chats', authMiddleware, async (req, res) => {
 
     return {
       id: chat.id,
-      peer: peer ? { id: peer.id, userId: peer.user_id, name: peer.name, isSystem: !!peer.is_system, avatar: peer.avatar, online: isUserOnline(peer.id), lastSeen } : null,
+      peer: peer ? { id: peer.id, userId: peer.user_id, name: peer.name, isSystem: !!peer.is_system, avatar: peer.avatar, profileColor: peer.profile_color, online: isUserOnline(peer.id), lastSeen } : null,
       lastMessage,
       lastTime: chat.last_time ? formatTime(chat.last_time) : '',
       unread: unread?.c || 0,

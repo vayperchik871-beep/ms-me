@@ -77,7 +77,7 @@ export default function UserProfileModal({ userId, onClose, onStartChat }) {
             </button>
             <button className="pm-action" onClick={() => setShowGiftShop(true)}>
               <div className="pm-action-icon">
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M18 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-1 15H7V9h10v8zM9 4h6v5H9V4z"/></svg>
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92s2.92-1.31 2.92-2.92-1.31-2.92-2.92-2.92z"/></svg>
               </div>
               <span>{t('Подарок')}</span>
             </button>
@@ -103,7 +103,7 @@ export default function UserProfileModal({ userId, onClose, onStartChat }) {
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
                 </div>
                 <div className="pm-card-text">
-                  <span className="pm-card-label">{t('Имя')} {t('пользователю')}</span>
+                  <span className="pm-card-label">{t('Имя пользователя')}</span>
                   <span className="pm-card-value">@{user.userId}</span>
                 </div>
                 <span className="pm-chevron">›</span>
