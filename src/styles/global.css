@@ -185,6 +185,7 @@ input, textarea { font-family: inherit; border: none; outline: none; background:
   padding: 8px 12px; height: var(--header-height);
   background: var(--bg-primary);
   border-bottom: 1px solid var(--border);
+  border-radius: 0 0 16px 16px;
 }
 
 .chat-header.dark { background: var(--bg-primary); }

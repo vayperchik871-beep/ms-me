@@ -1,9 +1,13 @@
 import { DatabaseSync } from 'node:sqlite'
 import { fileURLToPath } from 'url'
 import { dirname, join } from 'path'
+import { existsSync, mkdirSync } from 'fs'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
-const db = new DatabaseSync(join(__dirname, 'ms-messenger.db'))
+const dataDir = existsSync('/data') ? '/data' : join(__dirname, 'data')
+if (!existsSync(dataDir)) mkdirSync(dataDir, { recursive: true })
+const dbPath = join(dataDir, 'ms-messenger.db')
+const db = new DatabaseSync(dbPath)
 
 db.exec('PRAGMA journal_mode = WAL')
 db.exec('PRAGMA foreign_keys = ON')
