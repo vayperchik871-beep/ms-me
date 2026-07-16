@@ -3,7 +3,6 @@ import { useAuth } from './context/AuthContext'
 import { useWebSocket } from './hooks/useWebSocket'
 import { api } from './api/client'
 import { Capacitor } from '@capacitor/core'
-import { StatusBar } from '@capacitor/status-bar'
 import { LocalNotifications } from '@capacitor/local-notifications'
 import Onboarding from './components/onboarding/Onboarding'
 import BottomNav from './components/BottomNav'
@@ -40,13 +39,19 @@ async function showLocalNotification(title, body) {
   try {
     const perm = await LocalNotifications.checkPermissions()
     if (perm.display !== 'granted') return
+    await LocalNotifications.createChannel({
+      id: 'messages',
+      name: 'Messages',
+      importance: 4, // HIGH
+      visibility: 1, // PUBLIC
+      vibration: true,
+      sound: 'default',
+    })
     await LocalNotifications.schedule({
       notifications: [{
         title,
         body,
         id: ++notifId,
-        smallIcon: 'ic_launcher',
-        largeIcon: 'ic_launcher',
         channelId: 'messages',
       }],
     })
@@ -62,10 +67,6 @@ export default function App() {
 
   useEffect(() => {
     requestNotifPermission()
-    if (Capacitor.isNativePlatform()) {
-      StatusBar.setStyle({ style: 'DARK' })
-      StatusBar.setBackgroundColor({ color: '#1a1d23' })
-    }
   }, [])
 
   useWebSocket((data) => {

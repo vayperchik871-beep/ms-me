@@ -7,6 +7,7 @@ import InputBar from './InputBar'
 import MessageContextMenu from './MessageContextMenu'
 import { parseEmoji } from '../utils/emoji'
 import { resolveMediaUrl } from '../api/client'
+import { t } from '../i18n'
 
 export default function ChatWindow({ chatId, onBack }) {
   const { user } = useAuth()
@@ -180,26 +181,26 @@ export default function ChatWindow({ chatId, onBack }) {
     if (!ts) return ''
     const diff = Date.now() - ts
     const mins = Math.floor(diff / 60000)
-    if (mins < 1) return 'только что'
-    if (mins < 60) return `${mins} мин. назад`
+    if (mins < 1) return t('только что')
+    if (mins < 60) return `${mins} ${t('мин. назад')}`
     const hours = Math.floor(mins / 60)
-    if (hours < 24) return `${hours} ч. назад`
+    if (hours < 24) return `${hours} ${t('ч. назад')}`
     const days = Math.floor(hours / 24)
-    return `${days} дн. назад`
+    return `${days} ${t('дн. назад')}`
   }
 
   const statusText = typingUserId
-    ? 'печатает...'
+    ? t('печатает...')
     : peer?.online
-      ? 'в сети'
+      ? t('в сети')
       : peer?.lastSeen
-        ? `был(а) ${formatLastSeen(peer.lastSeen)}`
+        ? `${t('был(а)')} ${formatLastSeen(peer.lastSeen)}`
         : ''
 
   return (
     <main className="chat-window full">
       <header className="chat-header dark">
-        <button className="back-btn" onClick={onBack} aria-label="Назад">
+        <button className="back-btn" onClick={onBack} aria-label={t('Назад')}>
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
             <path d="M15 18l-6-6 6-6" />
           </svg>
@@ -217,13 +218,15 @@ export default function ChatWindow({ chatId, onBack }) {
             <div className="chat-avatar-circle bot">
               <img src="/logo.png" alt="" className="avatar-logo" />
             </div>
-          ) : peer?.avatar ? (
-            <div className="chat-avatar-circle">
-              <img src={resolveMediaUrl(peer.avatar)} alt="" className="avatar-img" />
-            </div>
           ) : (
             <div className="chat-avatar-circle">
-              {peer?.name?.[0]}
+              {peer?.avatar ? (
+                <img src={resolveMediaUrl(peer.avatar)} alt="" className="avatar-img"
+                  onError={(e) => { e.target.style.display = 'none'; e.target.parentElement.textContent = peer?.name?.[0] || '?' }}
+                />
+              ) : (
+                peer?.name?.[0]
+              )}
             </div>
           )}
         </div>
@@ -232,8 +235,8 @@ export default function ChatWindow({ chatId, onBack }) {
       <div className="messages-area dark">
         {messages.length === 0 && (
           <div className="chat-empty">
-            <p>Здесь пока нет сообщений</p>
-            <p className="empty-hint">Отправьте сообщение, чтобы начать</p>
+            <p>{t('Здесь пока нет сообщений')}</p>
+            <p className="empty-hint">{t('Отправьте сообщение, чтобы начать')}</p>
             <div className="quick-emojis">
               {['👋', '🤝', '✌️'].map((emoji) => (
                 <button key={emoji} onClick={() => handleSend(emoji)} dangerouslySetInnerHTML={{ __html: parseEmoji(emoji) }} />

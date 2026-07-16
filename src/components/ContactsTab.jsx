@@ -47,7 +47,7 @@ export default function ContactsTab({ onStartChat }) {
         {filtered.map((c) => (
           <button key={c.id} className="chat-item" onClick={() => onStartChat?.(null, c.userId)}>
             <div className="avatar" style={{ background: '#FFFFFF', color: '#000' }}>
-              {c.avatar ? <img src={resolveMediaUrl(c.avatar)} alt="" className="avatar-img" /> : c.name[0]}
+              {c.avatar ? <img src={resolveMediaUrl(c.avatar)} alt="" className="avatar-img" onError={(e) => { e.target.style.display = 'none'; e.target.parentElement.textContent = c.name[0] }} /> : c.name[0]}
             </div>
             <div className="chat-item-content">
               <div className="chat-name">{c.name}</div>

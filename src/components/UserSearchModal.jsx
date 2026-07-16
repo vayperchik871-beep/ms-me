@@ -86,7 +86,7 @@ export function ChatListItemSimple({ chat, isActive, onClick }) {
     <button className={`chat-item ${isActive ? 'active' : ''}`} onClick={onClick}>
       <div className="avatar-wrap">
         <div className={`avatar ${isBot ? 'avatar-bot' : ''}`} style={{ background: isBot ? '#2C2C2E' : '#FFFFFF', color: isBot ? '#fff' : '#000' }}>
-          {isBot ? <img src="/logo.png" alt="" className="avatar-logo" /> : avatarUrl ? <img src={resolveMediaUrl(avatarUrl)} alt="" className="avatar-img" /> : peer?.name?.[0]}
+          {isBot ? <img src="/logo.png" alt="" className="avatar-logo" /> : avatarUrl ? <img src={resolveMediaUrl(avatarUrl)} alt="" className="avatar-img" onError={(e) => { e.target.style.display = 'none'; e.target.parentElement.textContent = peer?.name?.[0] || '?' }} /> : peer?.name?.[0]}
         </div>
         {chat.peer?.online && <span className="online-dot" />}
       </div>

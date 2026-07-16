@@ -20,7 +20,7 @@ export default function ProfileTab() {
       <div className="profile-header">
         <div className="profile-avatar-large clickable" onClick={() => fileInputRef.current?.click()}>
           {user?.avatar ? (
-            <img src={resolveMediaUrl(user.avatar)} alt="" className="avatar-img" />
+            <img src={resolveMediaUrl(user.avatar)} alt="" className="avatar-img" onError={(e) => { e.target.style.display = 'none'; e.target.parentElement.textContent = user.name?.[0] || '?' }} />
           ) : (
             user?.name?.[0]?.toUpperCase()
           )}
