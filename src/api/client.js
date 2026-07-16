@@ -114,6 +114,11 @@ export const api = {
   adminBan: (userId, value) => request('/admin/ban', { method: 'POST', body: JSON.stringify({ userId, value }) }),
   adminScam: (userId, value) => request('/admin/scam', { method: 'POST', body: JSON.stringify({ userId, value }) }),
   adminCommand: (command) => request('/admin/command', { method: 'POST', body: JSON.stringify({ command }) }),
+
+  // Gifts
+  getGifts: () => request('/gifts'),
+  sendGift: (userId, giftId, message) => request('/gifts/send', { method: 'POST', body: JSON.stringify({ userId, giftId, message }) }),
+  getUserGifts: (userId) => request(`/users/${userId}/gifts`),
 }
 
 export function resolveMediaUrl(url) {

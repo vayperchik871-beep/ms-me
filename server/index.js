@@ -833,6 +833,54 @@ app.get('*', (req, res, next) => {
   res.status(404).send('Frontend build not found. Run npm run build first.')
 })
 
+// ─── Gifts ───
+
+app.get('/api/gifts', async (req, res) => {
+  const gifts = await dbAll('SELECT * FROM gifts ORDER BY id')
+  res.json({ gifts })
+})
+
+app.post('/api/gifts/send', authMiddleware, async (req, res) => {
+  const { userId, giftId, message } = req.body
+  const cleanId = sanitizeUserId(userId)
+  const recipient = await dbGet('SELECT id FROM users WHERE user_id = ?', cleanId)
+  if (!recipient) return res.status(404).json({ error: 'Пользователь не найден' })
+  if (recipient.id === req.user.id) return res.status(400).json({ error: 'Нельзя подарить себе' })
+  const gift = await dbGet('SELECT * FROM gifts WHERE id = ?', giftId)
+  if (!gift) return res.status(404).json({ error: 'Подарок не найден' })
+  const id = uuidv4()
+  await dbRun('INSERT INTO user_gifts (id, user_id, gift_id, sender_id, message, created_at) VALUES (?, ?, ?, ?, ?, ?)',
+    id, recipient.id, giftId, req.user.id, message || null, Date.now()
+  )
+  const sender = await dbGet('SELECT id, user_id, name FROM users WHERE id = ?', req.user.id)
+  res.json({ gift: { id, gift, sender: { userId: sender.user_id, name: sender.name }, message, createdAt: Date.now() } })
+})
+
+app.get('/api/users/:userId/gifts', authMiddleware, async (req, res) => {
+  const cleanId = sanitizeUserId(req.params.userId)
+  const user = await dbGet('SELECT id FROM users WHERE user_id = ?', cleanId)
+  if (!user) return res.status(404).json({ error: 'Не найден' })
+  const rows = await dbAll(`
+    SELECT ug.id, ug.gift_id, ug.message, ug.created_at,
+      g.emoji, g.title,
+      s.user_id as sender_user_id, s.name as sender_name
+    FROM user_gifts ug
+    JOIN gifts g ON g.id = ug.gift_id
+    LEFT JOIN users s ON s.id = ug.sender_id
+    WHERE ug.user_id = ?
+    ORDER BY ug.created_at DESC
+  `, user.id)
+  res.json({
+    gifts: rows.map((r) => ({
+      id: r.id,
+      gift: { id: r.gift_id, emoji: r.emoji, title: r.title },
+      sender: r.sender_user_id ? { userId: r.sender_user_id, name: r.sender_name } : null,
+      message: r.message,
+      createdAt: r.created_at,
+    })),
+  })
+})
+
 // ─── WebSocket ───
 
 const server = http.createServer(app)

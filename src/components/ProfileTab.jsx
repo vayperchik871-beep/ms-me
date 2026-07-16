@@ -1,10 +1,20 @@
-import { useRef } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useAuth } from '../context/AuthContext'
 import { api, resolveMediaUrl } from '../api/client'
+import GiftShop from './GiftShop'
 
 export default function ProfileTab() {
   const { user, accounts, switchToAccount, refreshUser } = useAuth()
   const fileInputRef = useRef(null)
+  const [gifts, setGifts] = useState([])
+  const [showGiftShop, setShowGiftShop] = useState(false)
+  const [showGiftList, setShowGiftList] = useState(false)
+
+  useEffect(() => {
+    if (user?.userId) {
+      api.getUserGifts(user.userId).then((d) => setGifts(d.gifts)).catch(() => {})
+    }
+  }, [user?.userId])
 
   const handleAvatarChange = async (e) => {
     const file = e.target.files?.[0]
@@ -44,6 +54,29 @@ export default function ProfileTab() {
         </div>
       </div>
 
+      {gifts.length > 0 && (
+        <>
+          <h3 className="section-title">Подарки ({gifts.length})</h3>
+          <div className="gifts-row">
+            {gifts.slice(0, showGiftList ? gifts.length : 8).map((g) => (
+              <div key={g.id} className="gift-item" title={g.gift.title + (g.sender ? ` от ${g.sender.name}` : '')}>
+                <span className="gift-emoji">{g.gift.emoji}</span>
+              </div>
+            ))}
+            {gifts.length > 8 && !showGiftList && (
+              <button className="gift-item gift-more" onClick={() => setShowGiftList(true)}>+{gifts.length - 8}</button>
+            )}
+          </div>
+        </>
+      )}
+
+      <div className="settings-group" style={{ marginTop: 12 }}>
+        <button className="settings-item clickable" onClick={() => setShowGiftShop(true)}>
+          <span>🎁 Отправить подарок</span>
+          <span className="settings-arrow">›</span>
+        </button>
+      </div>
+
       {accounts.length > 1 && (
         <>
           <h3 className="section-title">Аккаунты на устройстве</h3>
@@ -61,6 +94,8 @@ export default function ProfileTab() {
           </div>
         </>
       )}
+
+      {showGiftShop && <GiftShop onClose={() => setShowGiftShop(false)} />}
     </div>
   )
 }
