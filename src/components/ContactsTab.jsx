@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { api } from '../api/client'
+import { t } from '../i18n'
 import AppHeader from './AppHeader'
 import UserSearchModal from './UserSearchModal'
 import { resolveMediaUrl } from '../api/client'
@@ -39,9 +40,9 @@ export default function ContactsTab({ onStartChat }) {
       <div className="chat-list">
         {filtered.length === 0 && (
           <div className="empty-tab">
-            <p>Нет контактов</p>
-            <p className="empty-hint">Добавьте друзей по их ID</p>
-            <button className="apple-btn small" onClick={() => setShowSearch(true)}>Добавить</button>
+            <p>{t('Нет контактов')}</p>
+            <p className="empty-hint">{t('Добавьте друзей по их ID')}</p>
+            <button className="apple-btn small" onClick={() => setShowSearch(true)}>{t('Добавить')}</button>
           </div>
         )}
         {filtered.map((c) => (

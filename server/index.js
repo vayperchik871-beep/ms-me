@@ -335,7 +335,19 @@ app.post('/api/auth/verify-device', async (req, res) => {
 app.get('/api/auth/me', authMiddleware, async (req, res) => {
   const u = await dbGet('SELECT id, user_id, name, is_system, avatar, birthday, gender, profile_color, mcoins FROM users WHERE id = ?', req.user.id)
   const extra = await dbGet('SELECT is_admin, banned FROM users WHERE id = ?', req.user.id)
-  res.json({ user: { ...u, ...extra } })
+  res.json({ user: {
+    id: u.id,
+    userId: u.user_id,
+    name: u.name,
+    isSystem: !!u.is_system,
+    avatar: u.avatar,
+    birthday: u.birthday,
+    gender: u.gender,
+    profileColor: u.profile_color,
+    mcoins: u.mcoins || 0,
+    isAdmin: !!extra?.is_admin,
+    banned: !!extra?.banned,
+  } })
 })
 
 // ─── Admin ───

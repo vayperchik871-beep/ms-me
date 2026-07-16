@@ -1,6 +1,7 @@
 import { useRef, useMemo, useState, useCallback } from 'react'
 import { parseEmoji } from '../utils/emoji'
 import { resolveMediaUrl } from '../api/client'
+import { t } from '../i18n'
 
 function formatTime(ts) {
   if (!ts) return ''
@@ -10,7 +11,7 @@ function formatTime(ts) {
   if (d.toDateString() === now.toDateString()) return h
   const yesterday = new Date(now)
   yesterday.setDate(yesterday.getDate() - 1)
-  if (d.toDateString() === yesterday.toDateString()) return 'вчера ' + h
+  if (d.toDateString() === yesterday.toDateString()) return t('вчера') + ' ' + h
   return `${d.getDate().toString().padStart(2, '0')}.${(d.getMonth()+1).toString().padStart(2, '0')} ${h}`
 }
 
@@ -30,7 +31,7 @@ function VoiceMessage({ url, duration }) {
 
   return (
     <div className="voice-msg" onClick={(e) => { e.stopPropagation(); toggle() }}>
-      <button className={`voice-play-btn ${playing ? 'paused' : ''}`} aria-label={playing ? 'Пауза' : 'Воспроизвести'}>
+      <button className={`voice-play-btn ${playing ? 'paused' : ''}`} aria-label={playing ? t('Пауза') : t('Воспроизвести')}>
         {playing ? (
           <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16" /><rect x="14" y="4" width="4" height="16" /></svg>
         ) : (
@@ -112,7 +113,7 @@ export default function MessageBubble({ message, isMine, showName, selected, sel
           </div>
         )}
         <div className="bubble-meta">
-          {message.edited && <span className="edited-tag">изм.</span>}
+          {message.edited && <span className="edited-tag">{t('изм.')}</span>}
           <span className="bubble-time">{formatTime(message.createdAt)}</span>
           {isMine && (
             <svg className={`status-icon ${message.read ? 'read' : ''}`} width="16" height="12" viewBox="0 0 24 18" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">

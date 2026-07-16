@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { api } from '../api/client'
 import { sendWsMessage } from '../hooks/useWebSocket'
+import { t } from '../i18n'
 
 export default function InputBar({ onSend, editText, onCancelEdit, chatId }) {
   const [text, setText] = useState('')
@@ -105,7 +106,7 @@ export default function InputBar({ onSend, editText, onCancelEdit, chatId }) {
         const file = new File([blob], `voice_${Date.now()}.webm`, { type: mime })
         try {
           const { url, type } = await api.uploadAttachment(file, recordingSecRef.current)
-          onSend('', { url, type, name: 'Голосовое сообщение', duration: recordingSecRef.current })
+          onSend('', { url, type, name: t('Голосовое сообщение'), duration: recordingSecRef.current })
         } catch {}
       }
       mediaRecorder.start()
@@ -132,7 +133,7 @@ export default function InputBar({ onSend, editText, onCancelEdit, chatId }) {
         <div className="recording-bar">
           <div className="recording-dot" />
           <span className="recording-time">{formatTime(recordingTime)}</span>
-          <button type="button" className="send-btn active" onClick={stopRecording} aria-label="Отправить голосовое">
+          <button type="button" className="send-btn active" onClick={stopRecording} aria-label={t('Отправить')}>
             <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
               <rect x="6" y="6" width="12" height="12" rx="2" />
             </svg>
@@ -141,7 +142,7 @@ export default function InputBar({ onSend, editText, onCancelEdit, chatId }) {
       ) : (
         <>
           {!attachFile && (
-            <button type="button" className="icon-btn chat-action-btn" onClick={() => fileInputRef.current?.click()} aria-label="Прикрепить">
+            <button type="button" className="icon-btn chat-action-btn" onClick={() => fileInputRef.current?.click()} aria-label={t('Прикрепить')}>
               <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
                 <path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48" />
               </svg>
@@ -169,10 +170,10 @@ export default function InputBar({ onSend, editText, onCancelEdit, chatId }) {
                   value={text}
                   onChange={handleChange}
                   onKeyDown={handleKeyDown}
-                  placeholder="Сообщение"
+                  placeholder={t('Сообщение')}
                   rows={1}
                 />
-                <button type="button" className="emoji-btn" aria-label="Эмодзи">
+                <button type="button" className="emoji-btn" aria-label={t('Эмодзи')}>
                   <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
                     <circle cx="12" cy="12" r="10" />
                     <path d="M8 14s1.5 2 4 2 4-2 4-2" />
@@ -185,13 +186,13 @@ export default function InputBar({ onSend, editText, onCancelEdit, chatId }) {
           </div>
 
           {text.trim() || attachFile ? (
-            <button type="submit" className="icon-btn chat-action-btn send-active" aria-label="Отправить">
+            <button type="submit" className="icon-btn chat-action-btn send-active" aria-label={t('Отправить')}>
               <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
                 <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z" />
               </svg>
             </button>
           ) : (
-            <button type="button" className="icon-btn chat-action-btn" onPointerDown={(e) => { e.preventDefault(); startRecording() }} onPointerUp={stopRecording} onPointerLeave={stopRecording} onContextMenu={(e) => e.preventDefault()} aria-label="Голосовое">
+            <button type="button" className="icon-btn chat-action-btn" onPointerDown={(e) => { e.preventDefault(); startRecording() }} onPointerUp={stopRecording} onPointerLeave={stopRecording} onContextMenu={(e) => e.preventDefault()} aria-label={t('Голосовое')}>
               <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
                 <path d="M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3z" />
                 <path d="M19 10v2a7 7 0 01-14 0v-2" />

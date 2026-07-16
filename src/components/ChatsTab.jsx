@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { api } from '../api/client'
+import { t } from '../i18n'
 import AppHeader from './AppHeader'
 import { ChatListItemSimple } from './UserSearchModal'
 import UserSearchModal from './UserSearchModal'
@@ -49,12 +50,12 @@ export default function ChatsTab({ activeChatId, onSelectChat, onWsEvent }) {
       />
 
       <div className="chat-list">
-        {loading && <p className="empty-hint">Загрузка...</p>}
+        {loading && <p className="empty-hint">{t('Загрузка...')}</p>}
         {!loading && filtered.length === 0 && (
           <div className="empty-tab">
-            <p>Нет чатов</p>
-            <p className="empty-hint">Найдите человека по ID, чтобы начать общение</p>
-            <button className="apple-btn small" onClick={() => setShowSearch(true)}>Найти по ID</button>
+            <p>{t('Нет чатов')}</p>
+            <p className="empty-hint">{t('Найдите человека по ID, чтобы начать общение')}</p>
+            <button className="apple-btn small" onClick={() => setShowSearch(true)}>{t('Найти по ID')}</button>
           </div>
         )}
         {filtered.map((chat) => (

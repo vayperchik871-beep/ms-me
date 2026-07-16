@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { api } from '../api/client'
+import { t } from '../i18n'
 
 export default function AdminPanel({ onBack }) {
   const [stats, setStats] = useState(null)
@@ -107,13 +108,13 @@ export default function AdminPanel({ onBack }) {
                     className={`admin-btn ${u.scam ? 'active-scam' : ''}`}
                     onClick={() => handleScam(u.userId, u.scam)}
                   >
-                    {u.scam ? 'Скам' : 'OK'}
+                    {u.scam ? t('Скам') : 'OK'}
                   </button>
                   <button
                     className={`admin-btn ${u.banned ? 'active-ban' : ''}`}
                     onClick={() => handleBan(u.userId, u.banned)}
                   >
-                    {u.banned ? 'Бан' : 'Ок'}
+                    {u.banned ? t('Бан') : t('Ок')}
                   </button>
                 </div>
               </div>

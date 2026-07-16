@@ -1,9 +1,11 @@
+import { t } from '../i18n'
+
 export default function BottomNav({ active, onChange }) {
   const tabs = [
-    { id: 'chats', label: 'Чаты', icon: ChatIcon },
-    { id: 'contacts', label: 'Контакты', icon: ContactsIcon },
-    { id: 'profile', label: 'Вы', icon: ProfileIcon },
-    { id: 'settings', label: 'Настройки', icon: SettingsIcon },
+    { id: 'chats', label: t('Чаты'), icon: ChatIcon },
+    { id: 'contacts', label: t('Контакты'), icon: ContactsIcon },
+    { id: 'profile', label: t('Профиль'), icon: ProfileIcon },
+    { id: 'settings', label: t('Настройки'), icon: SettingsIcon },
   ]
 
   return (

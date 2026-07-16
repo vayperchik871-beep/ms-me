@@ -5,6 +5,7 @@ import { useWebSocket } from '../hooks/useWebSocket'
 import MessageBubble from './MessageBubble'
 import InputBar from './InputBar'
 import MessageContextMenu from './MessageContextMenu'
+import UserProfileModal from './UserProfileModal'
 import { parseEmoji } from '../utils/emoji'
 import { resolveMediaUrl } from '../api/client'
 import { t } from '../i18n'
@@ -21,6 +22,7 @@ export default function ChatWindow({ chatId, onBack }) {
   const [typingUserId, setTypingUserId] = useState(null)
   const typingTimeoutRef = useRef(null)
   const messagesEndRef = useRef(null)
+  const [profileUserId, setProfileUserId] = useState(null)
 
   const loadChat = useCallback(async () => {
     try {
@@ -199,37 +201,31 @@ export default function ChatWindow({ chatId, onBack }) {
 
   return (
     <main className="chat-window full">
-      <header className="chat-header dark">
-        <button className="back-btn" onClick={onBack} aria-label={t('Назад')}>
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+      <header className="chat-header">
+        <button className="chat-header-back" onClick={onBack} aria-label={t('Назад')}>
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
             <path d="M15 18l-6-6 6-6" />
           </svg>
         </button>
 
-        <div className="chat-header-center">
+        <div className="chat-header-center" onClick={() => peer?.userId && setProfileUserId(peer.userId)}>
           <h2 className="chat-header-name">{peer?.name}</h2>
           <span className={`chat-header-status ${typingUserId ? 'typing' : ''} ${peer?.online ? 'online' : ''}`}>
             {statusText}
           </span>
         </div>
 
-        <div className="chat-header-avatar">
-          {isBot ? (
-            <div className="chat-avatar-circle bot">
-              <img src="/logo.png" alt="" className="avatar-logo" />
-            </div>
-          ) : (
-            <div className="chat-avatar-circle">
-              {peer?.avatar ? (
-                <img src={resolveMediaUrl(peer.avatar)} alt="" className="avatar-img"
-                  onError={(e) => { e.target.style.display = 'none'; e.target.parentElement.textContent = peer?.name?.[0] || '?' }}
-                />
-              ) : (
-                peer?.name?.[0]
-              )}
-            </div>
-          )}
-        </div>
+        <button className="chat-header-avatar" onClick={() => peer?.userId && setProfileUserId(peer.userId)}>
+          <div className="glass-avatar">
+            {peer?.avatar ? (
+              <img src={resolveMediaUrl(peer.avatar)} alt="" className="avatar-img"
+                onError={(e) => { e.target.style.display = 'none'; e.target.parentElement.textContent = peer?.name?.[0] || '?' }}
+              />
+            ) : (
+              <span className="glass-avatar-initials">{peer?.name?.[0] || '?'}</span>
+            )}
+          </div>
+        </button>
       </header>
 
       <div className="messages-area dark">
@@ -273,7 +269,7 @@ export default function ChatWindow({ chatId, onBack }) {
       {replyTo && (
         <div className="reply-bar">
           <div>
-            <span className="reply-label">Ответ {replyTo.senderName || 'пользователю'}</span>
+            <span className="reply-label">{t('Ответ')} {replyTo.senderName || t('пользователю')}</span>
             <span className="reply-text">{replyTo.text}</span>
           </div>
           <button onClick={() => setReplyTo(null)}>✕</button>
@@ -295,6 +291,14 @@ export default function ChatWindow({ chatId, onBack }) {
           onAction={handleContextAction}
           onReact={(emoji) => api.reactMessage(contextMenu.message.id, emoji).then(loadChat)}
           onClose={() => setContextMenu(null)}
+        />
+      )}
+
+      {profileUserId && (
+        <UserProfileModal
+          userId={profileUserId}
+          onClose={() => setProfileUserId(null)}
+          onStartChat={(chatId, userId) => {}}
         />
       )}
     </main>

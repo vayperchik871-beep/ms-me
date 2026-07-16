@@ -42,7 +42,7 @@ export default function SettingsTab({ onLogout, onAddAccount }) {
         </button>
         <button className="settings-item clickable" onClick={() => setShowLangPicker(!showLangPicker)}>
           <span>{t('Язык')}</span>
-          <span className="settings-value">{getLanguages().find(l => l.code === currentLang)?.name || 'Русский'}</span>
+          <span className="settings-value">{getLanguages().find(l => l.code === currentLang)?.name || t('Русский')}</span>
         </button>
         {showLangPicker && (
           <div className="lang-picker">

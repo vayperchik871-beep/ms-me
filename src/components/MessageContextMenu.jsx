@@ -1,16 +1,17 @@
 import { parseEmoji } from '../utils/emoji'
+import { t } from '../i18n'
 
 const REACTIONS = ['❤️', '👍', '👎', '😂', '😮', '😢', '🔥']
 
 const MENU_ITEMS = [
-  { id: 'reply', label: 'Ответить', icon: ReplyIcon },
-  { id: 'forward', label: 'Переслать', icon: ForwardIcon },
-  { id: 'favorite', label: 'В избранное', icon: StarIcon },
-  { id: 'copy', label: 'Копировать', icon: CopyIcon },
-  { id: 'edit', label: 'Редактировать', icon: EditIcon, mineOnly: true },
-  { id: 'pin', label: 'Закрепить', icon: PinIcon },
-  { id: 'select', label: 'Выбрать', icon: SelectIcon },
-  { id: 'delete', label: 'Удалить', icon: DeleteIcon, mineOnly: true, danger: true },
+  { id: 'reply', label: t('Ответить'), icon: ReplyIcon },
+  { id: 'forward', label: t('Переслать'), icon: ForwardIcon },
+  { id: 'favorite', label: t('В избранное'), icon: StarIcon },
+  { id: 'copy', label: t('Копировать'), icon: CopyIcon },
+  { id: 'edit', label: t('Редактировать'), icon: EditIcon, mineOnly: true },
+  { id: 'pin', label: t('Закрепить'), icon: PinIcon },
+  { id: 'select', label: t('Выбрать'), icon: SelectIcon },
+  { id: 'delete', label: t('Удалить'), icon: DeleteIcon, mineOnly: true, danger: true },
 ]
 
 export default function MessageContextMenu({ message, isMine, position, onAction, onReact, onClose }) {
