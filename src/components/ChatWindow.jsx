@@ -22,6 +22,7 @@ export default function ChatWindow({ chatId, onBack }) {
   const [typingUserId, setTypingUserId] = useState(null)
   const typingTimeoutRef = useRef(null)
   const messagesEndRef = useRef(null)
+  const [otherUnread, setOtherUnread] = useState(0)
   const [profileUserId, setProfileUserId] = useState(null)
 
   const loadChat = useCallback(async () => {
@@ -29,6 +30,7 @@ export default function ChatWindow({ chatId, onBack }) {
       const { chats } = await api.getChats()
       const c = chats.find((ch) => ch.id === chatId)
       setChat(c)
+      setOtherUnread(chats.reduce((s, ch) => s + (ch.id !== chatId ? (ch.unread || 0) : 0), 0))
       const { messages: msgs } = await api.getMessages(chatId)
       setMessages(msgs)
     } catch { /* ignore */ }
@@ -200,21 +202,21 @@ export default function ChatWindow({ chatId, onBack }) {
 
   return (
     <main className="chat-window full">
-      <header className="chat-header">
-        <button className="ch-back" onClick={onBack}>
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
-          <span className="ch-back-id">{peer?.userId || ''}</span>
+      <header className="ch-header">
+        <button className="ch-capsule ch-back" onClick={onBack}>
+          <svg className="ch-back-arrow" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+          {otherUnread > 0 && <span className="ch-back-badge">{otherUnread}</span>}
         </button>
 
-        <div className="ch-center" onClick={() => peer?.userId && setProfileUserId(peer.userId)}>
-          <h2 className="ch-name">{peer?.name}</h2>
+        <button className="ch-capsule ch-center" onClick={() => peer?.userId && setProfileUserId(peer.userId)}>
+          <span className="ch-name">{peer?.name}</span>
           <span className={`ch-status ${typingUserId ? 'typing' : ''} ${peer?.online ? 'online' : ''}`}>
             {peer?.online && !typingUserId && <span className="ch-status-dot" />}
             {statusText}
           </span>
-        </div>
+        </button>
 
-        <button className="ch-avatar-btn" onClick={() => peer?.userId && setProfileUserId(peer.userId)}>
+        <button className="ch-capsule ch-avatar-btn" onClick={() => peer?.userId && setProfileUserId(peer.userId)}>
           <div className="ch-avatar" style={{ background: peer?.profileColor ? `linear-gradient(135deg, ${peer.profileColor}, ${peer.profileColor}cc)` : 'var(--bg-tertiary)' }}>
             {peer?.avatar ? (
               <img src={resolveMediaUrl(peer.avatar)} alt="" className="ch-avatar-img"

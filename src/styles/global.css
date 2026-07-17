@@ -302,77 +302,96 @@ input, textarea { font-family: inherit; border: none; outline: none; background:
 .chat-window.full { max-width: 480px; margin: 0 auto; width: 100%; }
 [data-theme="light"] .chat-window.full { border-left: 1px solid var(--border); border-right: 1px solid var(--border); }
 
-.chat-header {
+/* ─── Chat Header (iOS 26 Liquid Glass — 3 capsules) ─── */
+
+.ch-header {
   display: flex; align-items: center; gap: 8px;
-  padding: 8px 12px; min-height: 56px;
-  background: var(--bg-secondary);
-  border-bottom: 1px solid var(--border);
+  padding: 10px 12px; min-height: 58px;
 }
 
-/* Back pill: < arrow + ID badge */
+/* Shared capsule base */
+.ch-capsule {
+  display: flex; align-items: center; justify-content: center;
+  background: rgba(28, 28, 30, 0.72);
+  backdrop-filter: blur(28px) saturate(1.2);
+  -webkit-backdrop-filter: blur(28px) saturate(1.2);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.2s;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.ch-capsule:active { transform: scale(0.93); box-shadow: 0 1px 6px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.04); }
+
+/* ─── Left capsule: back + badge ─── */
 .ch-back {
-  display: flex; align-items: center; gap: 4px;
-  height: 36px; padding: 0 10px 0 8px;
-  background: var(--bg-tertiary);
-  border-radius: 999px; border: none;
-  color: var(--text-primary);
-  cursor: pointer; flex-shrink: 0;
-  transition: transform 0.1s, background 0.15s;
+  flex-shrink: 0;
+  height: 40px; padding: 0 12px 0 10px;
+  border-radius: 20px; gap: 6px;
 }
-.ch-back:active { transform: scale(0.92); background: var(--border); }
-.ch-back svg { flex-shrink: 0; }
-.ch-back-id {
-  font-size: 13px; font-weight: 600;
-  background: var(--text-primary);
-  color: var(--bg-primary);
-  padding: 2px 8px; border-radius: 999px;
+.ch-back-arrow { flex-shrink: 0; color: #fff; }
+.ch-back-badge {
+  display: flex; align-items: center; justify-content: center;
+  min-width: 28px; height: 28px; padding: 0 8px;
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 14px;
+  font-size: 13px; font-weight: 700; color: #fff;
   line-height: 1; white-space: nowrap;
-  max-width: 80px; overflow: hidden; text-overflow: ellipsis;
 }
 
-/* Center: name + status */
+/* ─── Center capsule: name + status ─── */
 .ch-center {
-  flex: 1; display: flex; flex-direction: column;
-  min-width: 0; cursor: pointer;
-  align-items: center;
+  flex: 1;
+  flex-direction: column; align-items: center; justify-content: center;
+  min-width: 0; height: 44px;
+  border-radius: 22px;
+  padding: 0 16px;
 }
 .ch-name {
-  font-size: 16px; font-weight: 600; color: var(--text-primary);
+  font-size: 16px; font-weight: 600; color: #fff;
   line-height: 1.2; margin: 0;
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
-  text-align: center; max-width: 200px;
+  text-align: center; max-width: 100%;
 }
 .ch-status {
-  font-size: 12px; color: var(--text-secondary); line-height: 1.2; margin-top: 1px;
+  font-size: 12px; color: rgba(255, 255, 255, 0.5);
+  line-height: 1.2; margin-top: 1px;
   display: flex; align-items: center; gap: 4px;
 }
-.ch-status.online { color: var(--ms-green); }
-.ch-status.typing { color: var(--ms-green); }
+.ch-status.online { color: #34c759; }
+.ch-status.typing { color: #34c759; }
 .ch-status-dot {
   width: 6px; height: 6px; border-radius: 50%;
-  background: var(--ms-green); display: inline-block;
+  background: #34c759; display: inline-block;
 }
 
-/* Avatar */
+/* ─── Right capsule: avatar ─── */
 .ch-avatar-btn {
-  flex-shrink: 0; background: none; border: none; padding: 0; cursor: pointer;
+  flex-shrink: 0;
+  width: 44px; height: 44px;
+  border-radius: 50%; padding: 3px;
 }
 .ch-avatar {
-  width: 40px; height: 40px; border-radius: 50%;
+  width: 100%; height: 100%; border-radius: 50%;
   background: var(--bg-tertiary);
   display: flex; align-items: center; justify-content: center;
-  overflow: hidden; transition: transform 0.12s;
+  overflow: hidden; position: relative;
 }
-.ch-avatar:active { transform: scale(0.9); }
 .ch-avatar-img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; }
-.ch-avatar-fb { font-size: 16px; font-weight: 600; color: var(--text-primary); display: flex; align-items: center; justify-content: center; width: 100%; height: 100%; }
+.ch-avatar-fb { font-size: 16px; font-weight: 600; color: #fff; display: flex; align-items: center; justify-content: center; width: 100%; height: 100%; }
 
-/* Light theme */
-[data-theme="light"] .chat-header { background: #fff; border-color: rgba(0,0,0,0.06); }
-[data-theme="light"] .ch-back { background: #f2f2f7; }
-[data-theme="light"] .ch-back-id { background: #000; color: #fff; }
+/* ─── Light theme ─── */
+[data-theme="light"] .ch-capsule {
+  background: rgba(242, 242, 247, 0.82);
+  border-color: rgba(60, 60, 67, 0.08);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06), inset 0 1px 0 rgba(255, 255, 255, 0.5);
+}
+[data-theme="light"] .ch-back-arrow { color: #000; }
+[data-theme="light"] .ch-back-badge { background: rgba(0, 0, 0, 0.08); color: #000; }
 [data-theme="light"] .ch-name { color: #000; }
-[data-theme="light"] .ch-avatar { background: #f2f2f7; }
+[data-theme="light"] .ch-status { color: rgba(60, 60, 67, 0.5); }
+[data-theme="light"] .ch-status.online { color: #34c759; }
+[data-theme="light"] .ch-avatar { background: #e5e5ea; }
 [data-theme="light"] .ch-avatar-fb { color: #000; }
 
 .icon-btn {
