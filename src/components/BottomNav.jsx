@@ -1,4 +1,3 @@
-import { useRef, useEffect, useState } from 'react'
 import { t } from '../i18n'
 
 export default function BottomNav({ active, onChange }) {
@@ -9,38 +8,15 @@ export default function BottomNav({ active, onChange }) {
     { id: 'settings', label: t('Настройки'), icon: SettingsIcon },
   ]
 
-  const tabRefs = useRef([])
-  const glassRef = useRef(null)
-  const [indicatorStyle, setIndicatorStyle] = useState({ width: 0, transform: 'translateX(0px)' })
-  const [mounted, setMounted] = useState(false)
-
   const activeIndex = tabs.findIndex((t) => t.id === active)
-
-  useEffect(() => {
-    setMounted(true)
-  }, [])
-
-  useEffect(() => {
-    if (!mounted) return
-    const el = tabRefs.current[activeIndex]
-    const parent = glassRef.current
-    if (!el || !parent) return
-    const parentRect = parent.getBoundingClientRect()
-    const rect = el.getBoundingClientRect()
-    setIndicatorStyle({
-      width: rect.width - 10,
-      transform: `translateX(${rect.left - parentRect.left + 5}px)`,
-    })
-  }, [activeIndex, mounted])
 
   return (
     <nav className="bottom-nav">
-      <div className="bn-glass" ref={glassRef}>
-        <div className={`bn-indicator ${mounted ? 'bn-indicator-visible' : ''}`} style={indicatorStyle} />
-        {tabs.map(({ id, label, icon: Icon }, i) => (
+      <div className="bn-glass" style={{ '--active': activeIndex }  }>
+        <div className="bn-indicator" />
+        {tabs.map(({ id, label, icon: Icon }) => (
           <button
             key={id}
-            ref={(el) => (tabRefs.current[i] = el)}
             className={`bn-tab ${active === id ? 'bn-tab-active' : ''}`}
             onClick={() => onChange(id)}
           >
