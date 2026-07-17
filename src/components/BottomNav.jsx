@@ -1,6 +1,26 @@
+import { useRef, useState, useEffect } from 'react'
 import { t } from '../i18n'
 
-export default function BottomNav({ active, onChange }) {
+const TAB_MENUS = {
+  chats: [
+    { id: 'new-chat', label: () => t('Новый чат'), icon: '✏️' },
+    { id: 'search-chats', label: () => t('Поиск'), icon: '🔍' },
+  ],
+  contacts: [
+    { id: 'add-contact', label: () => t('Добавить'), icon: '👤' },
+    { id: 'search-contacts', label: () => t('Поиск'), icon: '🔍' },
+  ],
+  profile: [
+    { id: 'edit-profile', label: () => t('Редактировать'), icon: '✏️' },
+    { id: 'share-profile', label: () => t('Поделиться'), icon: '📤' },
+  ],
+  settings: [
+    { id: 'toggle-theme', label: () => t('Тема'), icon: '🎨' },
+    { id: 'switch-lang', label: () => t('Язык'), icon: '🌐' },
+  ],
+}
+
+export default function BottomNav({ active, onChange, onMenuAction }) {
   const tabs = [
     { id: 'chats', label: t('Чаты'), icon: ChatIcon },
     { id: 'contacts', label: t('Контакты'), icon: ContactsIcon },
@@ -8,23 +28,131 @@ export default function BottomNav({ active, onChange }) {
     { id: 'settings', label: t('Настройки'), icon: SettingsIcon },
   ]
 
+  const [menu, setMenu] = useState(null)
+  const [hoverIdx, setHoverIdx] = useState(-1)
+  const longPressRef = useRef(null)
+  const longPressActivated = useRef(false)
+  const hoverIdxRef = useRef(-1)
+  const pressedRectRef = useRef(null)
+
   const activeIndex = tabs.findIndex((t) => t.id === active)
+
+  useEffect(() => {
+    hoverIdxRef.current = hoverIdx
+  }, [hoverIdx])
+
+  useEffect(() => {
+    if (!menu) return
+
+    const handleMove = (e) => {
+      const el = document.elementFromPoint(e.clientX, e.clientY)
+      const itemEl = el?.closest('[data-menu-idx]')
+      if (itemEl) {
+        setHoverIdx(parseInt(itemEl.dataset.menuIdx, 10))
+      } else {
+        setHoverIdx(-1)
+      }
+    }
+
+    const handleEnd = () => {
+      if (hoverIdxRef.current >= 0 && menu?.items[hoverIdxRef.current]) {
+        onMenuAction?.(menu.tabId, menu.items[hoverIdxRef.current].id)
+      }
+      setMenu(null)
+      setHoverIdx(-1)
+    }
+
+    document.addEventListener('pointermove', handleMove, { passive: true })
+    document.addEventListener('pointerup', handleEnd)
+    document.addEventListener('pointercancel', handleEnd)
+
+    return () => {
+      document.removeEventListener('pointermove', handleMove)
+      document.removeEventListener('pointerup', handleEnd)
+      document.removeEventListener('pointercancel', handleEnd)
+    }
+  }, [menu])
+
+  const clearLongPress = () => {
+    if (longPressRef.current) {
+      clearTimeout(longPressRef.current)
+      longPressRef.current = null
+    }
+  }
+
+  const handlePointerDown = (e, tabId) => {
+    if (tabId !== active) return
+    longPressActivated.current = false
+    const rect = e.currentTarget.getBoundingClientRect()
+    pressedRectRef.current = rect
+
+    longPressRef.current = setTimeout(() => {
+      const items = TAB_MENUS[tabId]
+      if (!items || items.length === 0) return
+      longPressActivated.current = true
+      setMenu({
+        tabId,
+        items,
+        x: rect.left + rect.width / 2,
+        y: rect.top - 12,
+      })
+      setHoverIdx(-1)
+    }, 250)
+  }
+
+  const handlePointerUp = () => {
+    clearLongPress()
+  }
+
+  const handlePointerCancel = () => {
+    clearLongPress()
+    setMenu(null)
+    setHoverIdx(-1)
+  }
+
+  const handleClick = (tabId) => {
+    if (longPressActivated.current) {
+      longPressActivated.current = false
+      return
+    }
+    onChange(tabId)
+  }
 
   return (
     <nav className="bottom-nav">
-      <div className="bn-glass" style={{ '--active': activeIndex }  }>
+      <div className="bn-glass" style={{ '--active': activeIndex }}>
         <div className="bn-indicator" />
         {tabs.map(({ id, label, icon: Icon }) => (
           <button
             key={id}
             className={`bn-tab ${active === id ? 'bn-tab-active' : ''}`}
-            onClick={() => onChange(id)}
+            onPointerDown={(e) => handlePointerDown(e, id)}
+            onPointerUp={handlePointerUp}
+            onPointerCancel={handlePointerCancel}
+            onClick={() => handleClick(id)}
           >
             <Icon active={active === id} />
             <span>{label}</span>
           </button>
         ))}
       </div>
+
+      {menu && (
+        <div className="bn-menu-anchor" style={{ left: menu.x, top: menu.y }}>
+          <div className="bn-context-menu">
+            {menu.items.map((item, i) => (
+              <button
+                key={item.id}
+                data-menu-idx={i}
+                className={`bn-menu-item ${hoverIdx === i ? 'bn-menu-item-hover' : ''}`}
+              >
+                <span className="bn-menu-icon">{item.icon}</span>
+                <span className="bn-menu-label">{item.label()}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
     </nav>
   )
 }

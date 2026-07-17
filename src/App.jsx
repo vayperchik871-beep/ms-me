@@ -1,5 +1,6 @@
 import { useState, useRef, useCallback, useEffect } from 'react'
 import { useAuth } from './context/AuthContext'
+import { useTheme } from './context/ThemeContext'
 import { useWebSocket } from './hooks/useWebSocket'
 import { api } from './api/client'
 import { Capacitor } from '@capacitor/core'
@@ -11,6 +12,7 @@ import ContactsTab from './components/ContactsTab'
 import ProfileTab from './components/ProfileTab'
 import SettingsTab from './components/SettingsTab'
 import ChatWindow from './components/ChatWindow'
+import { setLanguage, getLanguage } from './i18n'
 
 let notifId = 0
 
@@ -60,10 +62,24 @@ async function showLocalNotification(title, body) {
 
 export default function App() {
   const { user, loading, logout, refreshUser } = useAuth()
+  const { toggleTheme } = useTheme()
   const [tab, setTab] = useState('chats')
   const [activeChatId, setActiveChatId] = useState(null)
   const [showOnboarding, setShowOnboarding] = useState(false)
   const wsHandlers = useRef([])
+
+  const handleMenuAction = (tabId, actionId) => {
+    switch (actionId) {
+      case 'new-chat': case 'search-chats': setTab('chats'); break
+      case 'add-contact': case 'search-contacts': setTab('contacts'); break
+      case 'edit-profile': case 'share-profile': setTab('profile'); break
+      case 'toggle-theme': toggleTheme(); break
+      case 'switch-lang':
+        setLanguage(getLanguage() === 'ru' ? 'en' : 'ru')
+        window.location.reload()
+        break
+    }
+  }
 
   useEffect(() => {
     requestNotifPermission()
@@ -138,7 +154,7 @@ export default function App() {
           onAddAccount={() => setShowOnboarding(true)}
         />
       )}
-      <BottomNav active={tab} onChange={setTab} />
+      <BottomNav active={tab} onChange={setTab} onMenuAction={handleMenuAction} />
     </div>
   )
 }
