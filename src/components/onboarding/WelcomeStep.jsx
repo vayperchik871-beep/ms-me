@@ -1,4 +1,6 @@
-export default function WelcomeStep({ onRegister, onLogin }) {
+import GoogleSignInButton from '../GoogleSignInButton'
+
+export default function WelcomeStep({ onRegister, onLogin, onComplete }) {
   return (
     <div className="welcome-step">
       <div className="welcome-logo-wrap">
@@ -9,20 +11,9 @@ export default function WelcomeStep({ onRegister, onLogin }) {
         Безопасные сообщения.<br />Регистрация по имени и уникальному ID.
       </p>
 
-      <div className="welcome-features">
-        <div className="feature">
-          <span className="feature-icon">🔐</span>
-          <span>Шифрование AES-256</span>
-        </div>
-        <div className="feature">
-          <span className="feature-icon">🆔</span>
-          <span>Уникальный ID вместо номера</span>
-        </div>
-        <div className="feature">
-          <span className="feature-icon">👥</span>
-          <span>Только реальные люди</span>
-        </div>
-      </div>
+      <GoogleSignInButton onComplete={onComplete} label="Продолжить с Google" />
+
+      <div className="welcome-divider"><span>или</span></div>
 
       <button className="apple-btn" onClick={onRegister}>Создать аккаунт</button>
       <button className="apple-btn secondary" onClick={onLogin} style={{ marginTop: 12 }}>Войти</button>

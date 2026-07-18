@@ -115,17 +115,11 @@ export const api = {
   adminScam: (userId, value) => request('/admin/scam', { method: 'POST', body: JSON.stringify({ userId, value }) }),
   adminCommand: (command) => request('/admin/command', { method: 'POST', body: JSON.stringify({ command }) }),
 
-  // Gifts
-  getGifts: () => request('/gifts'),
-  sendGift: (userId, giftId, message) => request('/gifts/send', { method: 'POST', body: JSON.stringify({ userId, giftId, message }) }),
-  getUserGifts: (userId) => request(`/users/${userId}/gifts`),
-
-  // McoinS
-  getMcoins: () => request('/user/mcoins'),
-  earnMcoins: (clicks) => request('/mcoins/earn', { method: 'POST', body: JSON.stringify({ clicks }) }),
-
   // Profile
   updateProfile: (body) => request('/user/profile', { method: 'PATCH', body: JSON.stringify(body) }),
+
+  // Google Auth
+  googleAuth: (body) => request('/auth/google', { method: 'POST', body: JSON.stringify(body) }),
 }
 
 export function resolveMediaUrl(url) {

@@ -12,6 +12,7 @@ import { fileURLToPath } from 'url'
 import { dbGet, dbAll, dbRun, dbExec, SYSTEM_BOT } from './db.js'
 import multer from 'multer'
 import { encrypt, decrypt, generateCode, hashDevice } from './crypto.js'
+import { OAuth2Client } from 'google-auth-library'
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
@@ -40,6 +41,8 @@ const PORT = process.env.PORT || 3001
 const HOST = process.env.HOST || '0.0.0.0'
 const PUBLIC_URL = process.env.PUBLIC_URL || ''
 const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret-change-me'
+const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID || ''
+const googleAuth = GOOGLE_CLIENT_ID ? new OAuth2Client(GOOGLE_CLIENT_ID) : null
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
 const rootDir = path.resolve(__dirname, '..')
@@ -348,6 +351,103 @@ app.get('/api/auth/me', authMiddleware, async (req, res) => {
     isAdmin: !!extra?.is_admin,
     banned: !!extra?.banned,
   } })
+})
+
+// ─── Google Auth ───
+
+app.post('/api/auth/google', async (req, res) => {
+  const { idToken, deviceId } = req.body
+  if (!idToken || !deviceId) {
+    return res.status(400).json({ error: 'Заполните все поля' })
+  }
+  if (!googleAuth) {
+    return res.status(500).json({ error: 'Google Auth не настроен (GOOGLE_CLIENT_ID)' })
+  }
+
+  try {
+    let payload
+
+    // Try as ID token first, then as access token
+    try {
+      const ticket = await googleAuth.verifyIdToken({ idToken, audience: GOOGLE_CLIENT_ID })
+      payload = ticket.getPayload()
+    } catch {
+      // Fallback: verify as access token
+      const info = await googleAuth.getTokenInfo(idToken)
+      if (!info) throw new Error('Invalid token')
+      payload = { sub: info.sub, email: info.email }
+    }
+
+    if (!payload?.sub) {
+      return res.status(400).json({ error: 'Недействительный Google токен' })
+    }
+
+    const googleId = payload.sub
+    const email = payload.email
+    const googleName = payload.name || (email ? email.split('@')[0] : 'User')
+    const avatarUrl = payload.picture || null
+
+    let user = await dbGet('SELECT * FROM users WHERE google_id = ?', googleId)
+    const isAdminApp = req.headers['x-admin-app'] === 'true'
+
+    if (!user) {
+      const countRow = await dbGet('SELECT COUNT(*) as c FROM users WHERE is_system = 0')
+      const isFirst = countRow.c === 0
+
+      let baseId = email ? email.split('@')[0].toLowerCase().replace(/[^a-z0-9_]/g, '').slice(0, 18) : ''
+      if (!baseId || baseId.length < 3) baseId = 'user' + Math.random().toString(36).slice(2, 6)
+      let cleanId = baseId
+      let suffix = 1
+      while (await dbGet('SELECT id FROM users WHERE user_id = ?', cleanId)) {
+        cleanId = baseId.slice(0, 18 - String(suffix).length) + suffix
+        suffix++
+      }
+
+      const id = uuidv4()
+      const fakeHash = await bcrypt.hash(uuidv4(), 12)
+      const now = Date.now()
+
+      await dbRun(
+        'INSERT INTO users (id, user_id, name, password_hash, google_id, avatar, is_admin, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+        id, cleanId, googleName, fakeHash, googleId, avatarUrl, isFirst || isAdminApp ? 1 : 0, now
+      )
+      await dbRun('INSERT INTO devices (id, user_id, device_id, verified, last_seen, created_at) VALUES (?, ?, ?, 1, ?, ?)',
+        uuidv4(), id, hashDevice(deviceId), now, now
+      )
+      const token = await createToken(id, hashDevice(deviceId))
+      await getOrCreateDirectChat(id, SYSTEM_BOT.id)
+      await sendBotMessage(id, `Добро пожаловать в MS Messenger, ${googleName}!\n\nВаш ID: @${cleanId}\n\nВы вошли через Google. Этот чат используется для кодов подтверждения.`)
+
+      return res.json({ token, user: { id, userId: cleanId, name: googleName } })
+    }
+
+    // Existing Google user — log in
+    const devId = hashDevice(deviceId)
+    const device = await dbGet('SELECT * FROM devices WHERE user_id = ? AND device_id = ?', user.id, devId)
+    if (!device) {
+      await dbRun('INSERT INTO devices (id, user_id, device_id, verified, last_seen, created_at) VALUES (?, ?, ?, 1, ?, ?)',
+        uuidv4(), user.id, devId, Date.now(), Date.now()
+      )
+    } else {
+      await dbRun('UPDATE devices SET last_seen = ? WHERE id = ?', Date.now(), device.id)
+    }
+    if (isAdminApp) {
+      await dbRun('UPDATE users SET is_admin = 1 WHERE id = ?', user.id)
+    }
+
+    if (avatarUrl && avatarUrl !== user.avatar) {
+      await dbRun('UPDATE users SET avatar = ? WHERE id = ?', avatarUrl, user.id)
+    }
+
+    const token = await createToken(user.id, devId)
+    res.json({
+      token,
+      user: { id: user.id, userId: user.user_id, name: user.name },
+    })
+  } catch (err) {
+    console.error('Google auth error:', err)
+    res.status(401).json({ error: 'Ошибка верификации Google' })
+  }
 })
 
 // ─── Admin ───

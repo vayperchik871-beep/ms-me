@@ -216,7 +216,7 @@ export default function ChatWindow({ chatId, onBack }) {
           </span>
         </button>
 
-        <button className="ch-capsule ch-avatar-btn" onClick={() => peer?.userId && setProfileUserId(peer.userId)}>
+        <div className="ch-capsule ch-avatar-btn">
           <div className="ch-avatar" style={{ background: peer?.profileColor ? `linear-gradient(135deg, ${peer.profileColor}, ${peer.profileColor}cc)` : 'var(--bg-tertiary)' }}>
             {peer?.avatar ? (
               <img src={resolveMediaUrl(peer.avatar)} alt="" className="ch-avatar-img"
@@ -226,7 +226,7 @@ export default function ChatWindow({ chatId, onBack }) {
               {peer?.name?.[0] || '?'}
             </div>
           </div>
-        </button>
+        </div>
       </header>
 
       <div className="messages-area dark">
@@ -287,7 +287,7 @@ export default function ChatWindow({ chatId, onBack }) {
       {contextMenu && (
         <MessageContextMenu
           message={contextMenu.message}
-          isMine={contextMenu.message.senderId === user?.id}
+          isMine={contextMenu.isMine}
           position={contextMenu.position}
           onAction={handleContextAction}
           onReact={(emoji) => api.reactMessage(contextMenu.message.id, emoji).then(loadChat)}
@@ -299,7 +299,7 @@ export default function ChatWindow({ chatId, onBack }) {
         <UserProfileModal
           userId={profileUserId}
           onClose={() => setProfileUserId(null)}
-          onStartChat={(chatId, userId) => {}}
+          onStartChat={(chatId, userId) => { onBack(); }}
         />
       )}
     </main>

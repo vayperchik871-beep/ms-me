@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useAuth } from '../../context/AuthContext'
+import GoogleSignInButton from '../GoogleSignInButton'
 
 export default function LoginStep({ onComplete, onNeedsVerify, onSwitchRegister }) {
   const { login } = useAuth()
@@ -35,6 +36,10 @@ export default function LoginStep({ onComplete, onNeedsVerify, onSwitchRegister 
       <p className="form-step-desc">Введите ваш ID и пароль</p>
 
       {error && <div className="form-error">{error}</div>}
+
+      <GoogleSignInButton onComplete={onComplete} label="Войти через Google" />
+
+      <div className="welcome-divider"><span>или</span></div>
 
       <div className="profile-fields">
         <div className={`profile-field ${focused === 'id' ? 'focused' : ''}`}>

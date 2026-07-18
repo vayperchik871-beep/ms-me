@@ -13,6 +13,9 @@ import ProfileTab from './components/ProfileTab'
 import SettingsTab from './components/SettingsTab'
 import ChatWindow from './components/ChatWindow'
 import { setLanguage, getLanguage } from './i18n'
+import { GoogleOAuthProvider } from '@react-oauth/google'
+
+const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_WEB_CLIENT_ID || ''
 
 let notifId = 0
 
@@ -127,7 +130,9 @@ export default function App() {
 
   if (!user || showOnboarding) {
     return (
-      <Onboarding onComplete={() => { setShowOnboarding(false); refreshUser() }} />
+      <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
+        <Onboarding onComplete={() => { setShowOnboarding(false); refreshUser() }} />
+      </GoogleOAuthProvider>
     )
   }
 

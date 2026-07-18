@@ -37,6 +37,7 @@ export default function Onboarding({ onComplete }) {
           <WelcomeStep
             onRegister={() => go('register')}
             onLogin={() => go('login')}
+            onComplete={onComplete}
           />
         )}
         {screen === 'register' && (
