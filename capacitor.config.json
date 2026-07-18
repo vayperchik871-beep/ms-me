@@ -18,9 +18,9 @@
     },
     "GoogleAuth": {
       "scopes": ["profile", "email"],
-      "serverClientId": "ТВОЙ_WEB_CLIENT_ID.apps.googleusercontent.com",
-      "androidClientId": "ТВОЙ_ANDROID_CLIENT_ID.apps.googleusercontent.com",
-      "iosClientId": "ТВОЙ_IOS_CLIENT_ID.apps.googleusercontent.com"
+      "serverClientId": "202627330294-tb4nvaatchp87ke6g1i01nedpc8b5c33.apps.googleusercontent.com",
+      "androidClientId": "202627330294-i3glf16hem9j85of1ma9gq9h5vg3cvl4.apps.googleusercontent.com",
+      "iosClientId": "202627330294-i3glf16hem9j85of1ma9gq9h5vg3cvl4.apps.googleusercontent.com"
     }
   }
 }
