@@ -17,6 +17,7 @@ export default function ProfileTab() {
   const [showVerify, setShowVerify] = useState(false)
   const [showVerifyApply, setShowVerifyApply] = useState(false)
   const [verifyStatus, setVerifyStatus] = useState(null)
+  const [verifyApplyType, setVerifyApplyType] = useState('msm')
 
   useEffect(() => {
     api.getVerifyStatus().then(setVerifyStatus).catch(() => {})
@@ -49,7 +50,12 @@ export default function ProfileTab() {
           </div>
           <input ref={fileInputRef} type="file" accept="image/*" hidden onChange={handleAvatarChange} />
 
-          <h1 className="pf-name">{user?.name}</h1>
+          <div className="pf-name-row">
+            <h1 className="pf-name">{user?.name}</h1>
+            {verifyStatus?.verified && (
+              <VerificationBadge size={20} type={verifyStatus?.verifyType || 'msm'} />
+            )}
+          </div>
           <div className="pf-id">@{user?.userId}</div>
           <div className="pf-status">
             <span className="pf-status-dot" />
@@ -82,7 +88,7 @@ export default function ProfileTab() {
         <button className="pf-card-row pf-card-btn" onClick={() => setShowVerify(true)}>
           <span className="pf-card-label" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
             {t('Верификация')}
-            {verifyStatus?.verified && <VerificationBadge size={14} />}
+            {verifyStatus?.verified && <VerificationBadge size={14} type={verifyStatus?.verifyType || 'msm'} />}
           </span>
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" style={{ opacity: 0.3 }}><path d="M9 18l6-6-6-6"/></svg>
         </button>
@@ -114,12 +120,13 @@ export default function ProfileTab() {
       {showVerify && (
         <VerificationDetailScreen
           onClose={() => setShowVerify(false)}
-          onApply={() => { setShowVerify(false); setShowVerifyApply(true) }}
+          onApply={(type) => { setShowVerify(false); setVerifyApplyType(type || 'msm'); setShowVerifyApply(true) }}
         />
       )}
       {showVerifyApply && (
         <VerificationApplyModal
           onClose={() => setShowVerifyApply(false)}
+          verifyType={verifyApplyType}
           onSubmitted={() => { setShowVerifyApply(false); api.getVerifyStatus().then(setVerifyStatus).catch(() => {}) }}
         />
       )}

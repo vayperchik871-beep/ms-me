@@ -12,9 +12,19 @@ const advantages = [
   { icon: '\uD83D\uDC8E', title: 'Выделенный значок в профиле' },
 ]
 
-export default function VerificationDetailScreen({ onClose, onApply }) {
+const devAdvantages = [
+  { icon: '\uD83D\uDCBB', title: 'Статус разработчика' },
+  { icon: '\uD83D\uDD0D', title: 'Доступ к тестовым функциям' },
+  { icon: '\uD83D\uDEE0\uFE0F', title: 'Ранний доступ к обновлениям' },
+  { icon: '\uD83D\uDCAC', title: 'Прямая связь с командой' },
+  { icon: '\uD83D\uDC8E', title: 'Серый значок в профиле' },
+]
+
+export default function VerificationDetailScreen({ onClose, onApply, initialTab }) {
   const { user } = useAuth()
   const [status, setStatus] = useState(null)
+  const [tab, setTab] = useState(initialTab || 'msm')
+  const [animOut, setAnimOut] = useState(false)
   const canvasRef = useRef(null)
 
   useEffect(() => {
@@ -67,52 +77,90 @@ export default function VerificationDetailScreen({ onClose, onApply }) {
     return () => { cancelAnimationFrame(anim); window.removeEventListener('resize', resize) }
   }, [])
 
+  const handleClose = () => {
+    setAnimOut(true)
+    setTimeout(onClose, 300)
+  }
+
   const isVerified = status?.verified
   const isPending = status?.request?.status === 'pending'
+  const curType = tab === 'dev' ? 'dev' : 'msm'
+  const isVerifiedForTab = isVerified && status?.verifyType === curType
+  const isPendingForTab = isPending && status?.request?.verify_type === curType
+
+  const curAdvantages = tab === 'dev' ? devAdvantages : advantages
 
   return (
-    <div className="verify-screen">
+    <div className={`verify-screen ${animOut ? 'verify-screen-exit' : 'verify-screen-enter'}`}>
       <canvas ref={canvasRef} className="verify-particles" />
-      <div className="verify-inner">
-        <button className="verify-close" onClick={onClose}>
+
+      <div className="verify-top-bar">
+        <button className="verify-close" onClick={handleClose}>
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
         </button>
+      </div>
 
+      <div className="verify-tabs">
+        <button
+          className={`verify-tab ${tab === 'msm' ? 'active' : ''}`}
+          onClick={() => setTab('msm')}
+        >
+          <VerificationBadge size={16} type="msm" /> MSM Verif
+        </button>
+        <button
+          className={`verify-tab ${tab === 'dev' ? 'active' : ''}`}
+          onClick={() => setTab('dev')}
+        >
+          <VerificationBadge size={16} type="dev" /> Dev
+        </button>
+      </div>
+
+      <div className="verify-inner">
         <div className="verify-hero">
           <div className="verify-icon-wrap">
             <div className="verify-star">
-              <svg width="100" height="100" viewBox="0 0 100 100" fill="none">
-                <defs>
-                  <linearGradient id="badgeGrad" x1="0" y1="0" x2="100" y2="100" gradientUnits="userSpaceOnUse">
-                    <stop offset="0%" stopColor="#38BDF8"/>
-                    <stop offset="50%" stopColor="#3B82F6"/>
-                    <stop offset="100%" stopColor="#2563EB"/>
-                  </linearGradient>
-                </defs>
-                <path d="M50 4 L61 18 L78 10 L76 28 L96 28 L84 42 L100 52 L84 62 L96 78 L76 76 L78 94 L61 86 L50 100 L39 86 L22 94 L24 76 L4 78 L16 62 L0 52 L16 42 L4 28 L24 28 L22 10 L39 18 Z" fill="url(#badgeGrad)"/>
-                <path d="M38 52 L47 61 L65 43" stroke="#fff" strokeWidth="6" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
+              {tab === 'dev' ? (
+                <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="#8E8E93" strokeWidth="1.5">
+                  <circle cx="12" cy="8" r="4" fill="none"/>
+                  <path d="M4 21c0-4 3.6-7 8-7s8 3 8 7" fill="none"/>
+                  <path d="M17 8l-2 2 4 4" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              ) : (
+                <svg width="100" height="100" viewBox="0 0 100 100" fill="none">
+                  <defs>
+                    <linearGradient id="badgeGrad" x1="0" y1="0" x2="100" y2="100" gradientUnits="userSpaceOnUse">
+                      <stop offset="0%" stopColor="#38BDF8"/>
+                      <stop offset="50%" stopColor="#3B82F6"/>
+                      <stop offset="100%" stopColor="#2563EB"/>
+                    </linearGradient>
+                  </defs>
+                  <path d="M50 4 L61 18 L78 10 L76 28 L96 28 L84 42 L100 52 L84 62 L96 78 L76 76 L78 94 L61 86 L50 100 L39 86 L22 94 L24 76 L4 78 L16 62 L0 52 L16 42 L4 28 L24 28 L22 10 L39 18 Z" fill="url(#badgeGrad)"/>
+                  <path d="M38 52 L47 61 L65 43" stroke="#fff" strokeWidth="6" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              )}
             </div>
           </div>
 
-          <h1 className="verify-title">Slim Verif</h1>
+          <h1 className="verify-title">{tab === 'dev' ? 'Dev' : 'MSM Verif'}</h1>
           <p className="verify-desc">
-            {isVerified
-              ? t('Ваш аккаунт подтверждён')
-              : t('Больше возможностей и эксклюзивные функции с подпиской Slim Verif.')}
+            {isVerifiedForTab
+              ? (tab === 'dev' ? t('Ваш статус разработчика подтверждён') : t('Ваш аккаунт подтверждён'))
+              : (tab === 'dev'
+                ? t('Получите статус разработчика и доступ к тестовым функциям.')
+                : t('Больше возможностей и эксклюзивные функции с MSM Verif.'))}
           </p>
 
-          {isVerified && (
+          {isVerifiedForTab && (
             <div className="verify-badge-row">
-              <VerificationBadge size={20} />
-              <span>{t('Верифицирован')}</span>
+              <VerificationBadge size={20} type={tab === 'dev' ? 'dev' : 'msm'} />
+              <span>{tab === 'dev' ? t('Разработчик') : t('Верифицирован')}</span>
             </div>
           )}
         </div>
 
         <div className="verify-advantages">
           <h2 className="verify-section-title">{t('Преимущества')}</h2>
-          {advantages.map((a, i) => (
+          {curAdvantages.map((a, i) => (
             <div key={i} className="verify-card">
               <div className="verify-card-left">
                 <div className="verify-card-icon">{a.icon}</div>
@@ -123,14 +171,14 @@ export default function VerificationDetailScreen({ onClose, onApply }) {
           ))}
         </div>
 
-        {!isVerified && (
+        {!isVerifiedForTab && (
           <div className="verify-cta-wrap">
             <button
               className="verify-cta"
-              disabled={isPending}
-              onClick={() => isPending ? null : onApply()}
+              disabled={isPendingForTab}
+              onClick={() => isPendingForTab ? null : onApply(curType)}
             >
-              {isPending ? t('Заявка на рассмотрении') : t('Применить')}
+              {isPendingForTab ? t('Заявка на рассмотрении') : t('Подать заявку')}
             </button>
           </div>
         )}

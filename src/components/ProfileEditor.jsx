@@ -37,8 +37,9 @@ export default function ProfileEditor({ onClose }) {
         <div style={{ padding: '16px 0' }}>
           <p className="modal-desc" style={{ marginBottom: 8 }}>{t('День рождения')}</p>
           <input
-            type="date"
+            type="text"
             className="gift-message-input"
+            placeholder="ДД.ММ.ГГГГ"
             value={birthday}
             onChange={(e) => setBirthday(e.target.value)}
             style={{ marginBottom: 16 }}

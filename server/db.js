@@ -186,12 +186,15 @@ try { await dbExec('ALTER TABLE users ADD COLUMN google_id TEXT DEFAULT NULL') }
 try { await dbExec('CREATE INDEX IF NOT EXISTS idx_users_google_id ON users(google_id)') } catch {}
 
 try { await dbExec('ALTER TABLE users ADD COLUMN is_verified INTEGER DEFAULT 0') } catch {}
+try { await dbExec("ALTER TABLE users ADD COLUMN verify_type TEXT DEFAULT 'msm'") } catch {}
+try { await dbExec("ALTER TABLE verification_requests ADD COLUMN verify_type TEXT DEFAULT 'msm'") } catch {}
 
 try {
   await dbExec(`CREATE TABLE IF NOT EXISTS verification_requests (
     id TEXT PRIMARY KEY,
     user_id TEXT NOT NULL REFERENCES users(id),
     message TEXT,
+    verify_type TEXT DEFAULT 'msm',
     status TEXT DEFAULT 'pending',
     created_at INTEGER NOT NULL,
     reviewed_at INTEGER,

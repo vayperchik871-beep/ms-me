@@ -706,25 +706,26 @@ app.patch('/api/user/profile', authMiddleware, async (req, res) => {
 // ─── Verification ───
 
 app.get('/api/verify/status', authMiddleware, async (req, res) => {
-  const user = await dbGet('SELECT is_verified FROM users WHERE id = ?', req.user.id)
-  const request = await dbGet('SELECT id, status, created_at FROM verification_requests WHERE user_id = ? ORDER BY created_at DESC LIMIT 1', req.user.id)
-  res.json({ verified: !!user?.is_verified, request: request || null })
+  const user = await dbGet('SELECT is_verified, verify_type FROM users WHERE id = ?', req.user.id)
+  const request = await dbGet('SELECT id, verify_type, status, created_at FROM verification_requests WHERE user_id = ? ORDER BY created_at DESC LIMIT 1', req.user.id)
+  res.json({ verified: !!user?.is_verified, verifyType: user?.verify_type || 'msm', request: request || null })
 })
 
 app.post('/api/verify/request', authMiddleware, async (req, res) => {
-  const { message } = req.body
-  const existing = await dbGet('SELECT id, status FROM verification_requests WHERE user_id = ? AND status = ?', req.user.id, 'pending')
+  const { message, verifyType } = req.body
+  const type = verifyType === 'dev' ? 'dev' : 'msm'
+  const existing = await dbGet('SELECT id, status FROM verification_requests WHERE user_id = ? AND status = ? AND verify_type = ?', req.user.id, 'pending', type)
   if (existing) return res.status(400).json({ error: 'Заявка уже отправлена' })
-  const user = await dbGet('SELECT is_verified FROM users WHERE id = ?', req.user.id)
-  if (user?.is_verified) return res.status(400).json({ error: 'Вы уже верифицированы' })
+  const user = await dbGet('SELECT is_verified, verify_type FROM users WHERE id = ?', req.user.id)
+  if (user?.is_verified && user?.verify_type === type) return res.status(400).json({ error: 'Вы уже верифицированы' })
   const id = uuidv4()
-  await dbRun('INSERT INTO verification_requests (id, user_id, message, created_at) VALUES (?, ?, ?, ?)', id, req.user.id, message || '', Date.now())
+  await dbRun('INSERT INTO verification_requests (id, user_id, message, verify_type, created_at) VALUES (?, ?, ?, ?, ?)', id, req.user.id, message || '', type, Date.now())
   res.json({ ok: true })
 })
 
 app.get('/api/admin/verify-requests', authMiddleware, adminMiddleware, async (req, res) => {
   const rows = await dbAll(`
-    SELECT vr.id, vr.user_id, vr.message, vr.status, vr.created_at, u.user_id as user_handle, u.name as user_name, u.avatar as user_avatar
+    SELECT vr.id, vr.user_id, vr.message, vr.verify_type, vr.status, vr.created_at, u.user_id as user_handle, u.name as user_name, u.avatar as user_avatar
     FROM verification_requests vr
     JOIN users u ON u.id = vr.user_id
     ORDER BY vr.created_at DESC LIMIT 50
@@ -734,9 +735,9 @@ app.get('/api/admin/verify-requests', authMiddleware, adminMiddleware, async (re
 
 app.post('/api/admin/verify/approve', authMiddleware, adminMiddleware, async (req, res) => {
   const { requestId } = req.body
-  const row = await dbGet('SELECT user_id FROM verification_requests WHERE id = ?', requestId)
+  const row = await dbGet('SELECT user_id, verify_type FROM verification_requests WHERE id = ?', requestId)
   if (!row) return res.status(404).json({ error: 'Заявка не найдена' })
-  await dbRun('UPDATE users SET is_verified = 1 WHERE id = ?', row.user_id)
+  await dbRun("UPDATE users SET is_verified = 1, verify_type = ? WHERE id = ?", row.verify_type || 'msm', row.user_id)
   await dbRun('UPDATE verification_requests SET status = ?, reviewed_at = ?, reviewed_by = ? WHERE id = ?', 'approved', Date.now(), req.user.id, requestId)
   res.json({ ok: true })
 })

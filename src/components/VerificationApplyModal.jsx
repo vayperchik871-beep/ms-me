@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { api } from '../api/client'
 import { t } from '../i18n'
 
-export default function VerificationApplyModal({ onClose, onSubmitted }) {
+export default function VerificationApplyModal({ onClose, onSubmitted, verifyType }) {
   const [message, setMessage] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
@@ -11,7 +11,7 @@ export default function VerificationApplyModal({ onClose, onSubmitted }) {
     setLoading(true)
     setError('')
     try {
-      await api.submitVerifyRequest(message.trim())
+      await api.submitVerifyRequest(message.trim(), verifyType)
       onSubmitted()
     } catch (err) {
       setError(err.message || 'Ошибка')
@@ -27,9 +27,11 @@ export default function VerificationApplyModal({ onClose, onSubmitted }) {
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
         </button>
 
-        <h2 className="apply-title">{t('Заявка на верификацию')}</h2>
+        <h2 className="apply-title">{verifyType === 'dev' ? t('Заявка на Dev') : t('Заявка на верификацию')}</h2>
         <p className="apply-desc">
-          {t('Расскажите, почему вы хотите получить верификацию. Администратор рассмотрит вашу заявку.')}
+          {verifyType === 'dev'
+            ? t('Расскажите, почему вы хотите получить статус разработчика.')
+            : t('Расскажите, почему вы хотите получить верификацию. Администратор рассмотрит вашу заявку.')}
         </p>
 
         <textarea

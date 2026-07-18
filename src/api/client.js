@@ -130,7 +130,7 @@ export const api = {
 
   // Verification
   getVerifyStatus: () => request('/verify/status'),
-  submitVerifyRequest: (message) => request('/verify/request', { method: 'POST', body: JSON.stringify({ message }) }),
+  submitVerifyRequest: (message, verifyType) => request('/verify/request', { method: 'POST', body: JSON.stringify({ message, verifyType }) }),
   getVerifyRequests: () => request('/admin/verify-requests'),
   approveVerify: (requestId) => request('/admin/verify/approve', { method: 'POST', body: JSON.stringify({ requestId }) }),
   rejectVerify: (requestId) => request('/admin/verify/reject', { method: 'POST', body: JSON.stringify({ requestId }) }),
