@@ -50,7 +50,7 @@ export default function SettingsTab({ onLogout, onAddAccount }) {
 
         <button className="capsule-item clickable" onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}>
           <div className="capsule-item-icon">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
           </div>
           <div className="capsule-item-content">
             <span className="capsule-item-title">{t('Тема')}</span>
@@ -82,7 +82,7 @@ export default function SettingsTab({ onLogout, onAddAccount }) {
                   <span className="capsule-item-title">{l.name}</span>
                 </div>
                 {l.code === currentLang && (
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#5DDCD0" strokeWidth="2.5" strokeLinecap="round"><path d="M20 6L9 17l-5-5"/></svg>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M20 6L9 17l-5-5"/></svg>
                 )}
               </button>
             ))}
@@ -123,8 +123,8 @@ export default function SettingsTab({ onLogout, onAddAccount }) {
         )}
         {accounts.map((a) => (
           <button key={a.userId} className="capsule-item clickable capsule-danger" onClick={() => handleRemoveAccount(a.userId)}>
-            <div className="capsule-item-icon capsule-item-icon--red">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+            <div className="capsule-item-icon">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
             </div>
             <div className="capsule-item-content">
               <span className="capsule-item-title">{t('Удалить')} @{a.userId}</span>
