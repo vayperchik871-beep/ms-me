@@ -702,6 +702,52 @@ app.patch('/api/user/profile', authMiddleware, async (req, res) => {
   res.json({ user: { ...u } })
 })
 
+// ─── Verification ───
+
+app.get('/api/verify/status', authMiddleware, async (req, res) => {
+  const user = await dbGet('SELECT is_verified FROM users WHERE id = ?', req.user.id)
+  const request = await dbGet('SELECT id, status, created_at FROM verification_requests WHERE user_id = ? ORDER BY created_at DESC LIMIT 1', req.user.id)
+  res.json({ verified: !!user?.is_verified, request: request || null })
+})
+
+app.post('/api/verify/request', authMiddleware, async (req, res) => {
+  const { message } = req.body
+  const existing = await dbGet('SELECT id, status FROM verification_requests WHERE user_id = ? AND status = ?', req.user.id, 'pending')
+  if (existing) return res.status(400).json({ error: 'Заявка уже отправлена' })
+  const user = await dbGet('SELECT is_verified FROM users WHERE id = ?', req.user.id)
+  if (user?.is_verified) return res.status(400).json({ error: 'Вы уже верифицированы' })
+  const id = uuidv4()
+  await dbRun('INSERT INTO verification_requests (id, user_id, message, created_at) VALUES (?, ?, ?, ?)', id, req.user.id, message || '', Date.now())
+  res.json({ ok: true })
+})
+
+app.get('/api/admin/verify-requests', authMiddleware, adminMiddleware, async (req, res) => {
+  const rows = await dbAll(`
+    SELECT vr.id, vr.user_id, vr.message, vr.status, vr.created_at, u.user_id as user_handle, u.name as user_name, u.avatar as user_avatar
+    FROM verification_requests vr
+    JOIN users u ON u.id = vr.user_id
+    ORDER BY vr.created_at DESC LIMIT 50
+  `)
+  res.json({ requests: rows })
+})
+
+app.post('/api/admin/verify/approve', authMiddleware, adminMiddleware, async (req, res) => {
+  const { requestId } = req.body
+  const row = await dbGet('SELECT user_id FROM verification_requests WHERE id = ?', requestId)
+  if (!row) return res.status(404).json({ error: 'Заявка не найдена' })
+  await dbRun('UPDATE users SET is_verified = 1 WHERE id = ?', row.user_id)
+  await dbRun('UPDATE verification_requests SET status = ?, reviewed_at = ?, reviewed_by = ? WHERE id = ?', 'approved', Date.now(), req.user.id, requestId)
+  res.json({ ok: true })
+})
+
+app.post('/api/admin/verify/reject', authMiddleware, adminMiddleware, async (req, res) => {
+  const { requestId } = req.body
+  const row = await dbGet('SELECT user_id FROM verification_requests WHERE id = ?', requestId)
+  if (!row) return res.status(404).json({ error: 'Заявка не найдена' })
+  await dbRun('UPDATE verification_requests SET status = ?, reviewed_at = ?, reviewed_by = ? WHERE id = ?', 'rejected', Date.now(), req.user.id, requestId)
+  res.json({ ok: true })
+})
+
 // ─── Contacts ───
 
 app.get('/api/contacts', authMiddleware, async (req, res) => {

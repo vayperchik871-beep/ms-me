@@ -185,6 +185,20 @@ try { await dbExec('ALTER TABLE users ADD COLUMN profile_color TEXT DEFAULT NULL
 try { await dbExec('ALTER TABLE users ADD COLUMN google_id TEXT DEFAULT NULL') } catch {}
 try { await dbExec('CREATE INDEX IF NOT EXISTS idx_users_google_id ON users(google_id)') } catch {}
 
+try { await dbExec('ALTER TABLE users ADD COLUMN is_verified INTEGER DEFAULT 0') } catch {}
+
+try {
+  await dbExec(`CREATE TABLE IF NOT EXISTS verification_requests (
+    id TEXT PRIMARY KEY,
+    user_id TEXT NOT NULL REFERENCES users(id),
+    message TEXT,
+    status TEXT DEFAULT 'pending',
+    created_at INTEGER NOT NULL,
+    reviewed_at INTEGER,
+    reviewed_by TEXT
+  )`)
+} catch {}
+
 try { await dbExec('CREATE TABLE IF NOT EXISTS gifts (id TEXT PRIMARY KEY, emoji TEXT NOT NULL, title TEXT NOT NULL, price INTEGER DEFAULT 10)') } catch {}
 try { await dbExec('CREATE TABLE IF NOT EXISTS user_gifts (id TEXT PRIMARY KEY, user_id TEXT NOT NULL REFERENCES users(id), gift_id TEXT NOT NULL REFERENCES gifts(id), sender_id TEXT REFERENCES users(id), message TEXT, created_at INTEGER NOT NULL)') } catch {}
 

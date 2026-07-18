@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { api } from '../api/client'
 import { t } from '../i18n'
+import VerificationRequests from './VerificationRequests'
 
 export default function AdminPanel({ onBack }) {
   const [stats, setStats] = useState(null)
@@ -10,6 +11,7 @@ export default function AdminPanel({ onBack }) {
   const [cmd, setCmd] = useState('')
   const [history, setHistory] = useState([])
   const [tab, setTab] = useState('stats')
+  const [showVerifyReqs, setShowVerifyReqs] = useState(false)
   const terminalRef = useRef(null)
 
   const load = useCallback(async () => {
@@ -77,6 +79,7 @@ export default function AdminPanel({ onBack }) {
         <button className={`admin-tab ${tab === 'stats' ? 'active' : ''}`} onClick={() => setTab('stats')}>Статистика</button>
         <button className={`admin-tab ${tab === 'users' ? 'active' : ''}`} onClick={() => setTab('users')}>Пользователи</button>
         <button className={`admin-tab ${tab === 'terminal' ? 'active' : ''}`} onClick={() => setTab('terminal')}>Терминал</button>
+        <button className="admin-tab" onClick={() => setShowVerifyReqs(true)}>Верификация</button>
       </div>
 
       {tab === 'stats' && (loading ? <p className="empty-hint">Загрузка...</p> : stats ? (

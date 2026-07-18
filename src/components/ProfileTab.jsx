@@ -3,6 +3,9 @@ import { useAuth } from '../context/AuthContext'
 import { api, resolveMediaUrl } from '../api/client'
 import { t } from '../i18n'
 import ProfileEditor from './ProfileEditor'
+import VerificationDetailScreen from './VerificationDetailScreen'
+import VerificationApplyModal from './VerificationApplyModal'
+import VerificationBadge from './VerificationBadge'
 
 const genderLabel = (g) => {
   if (g === 'male') return t('Мужской')
@@ -15,6 +18,13 @@ export default function ProfileTab() {
   const { user, accounts, switchToAccount, refreshUser } = useAuth()
   const fileInputRef = useRef(null)
   const [showEditor, setShowEditor] = useState(false)
+  const [showVerify, setShowVerify] = useState(false)
+  const [showVerifyApply, setShowVerifyApply] = useState(false)
+  const [verifyStatus, setVerifyStatus] = useState(null)
+
+  useEffect(() => {
+    api.getVerifyStatus().then(setVerifyStatus).catch(() => {})
+  }, [])
 
   const handleAvatarChange = async (e) => {
     const file = e.target.files?.[0]
@@ -41,6 +51,12 @@ export default function ProfileTab() {
         <input ref={fileInputRef} type="file" accept="image/*" hidden onChange={handleAvatarChange} />
         <h2>{user?.name}</h2>
         <p className="profile-id">@{user?.userId}</p>
+        {verifyStatus?.verified && (
+          <div className="profile-verified">
+            <VerificationBadge size={16} />
+            <span>{t('Верифицирован')}</span>
+          </div>
+        )}
       </div>
 
       <div className="settings-group">
@@ -67,6 +83,16 @@ export default function ProfileTab() {
           <span>{t('Редактировать профиль')}</span>
           <span className="settings-arrow">›</span>
         </button>
+        <button className="settings-item clickable" onClick={() => setShowVerify(true)}>
+          <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M12 2L4 5v6c0 5.55 3.84 10.74 8 12 4.16-1.26 8-6.45 8-12V5l-8-3z" fill="#00C7BE"/><path d="M9 12l2 2 4-4" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+            {t('Верификация')}
+          </span>
+          <span className="settings-arrow" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            {verifyStatus?.verified && <VerificationBadge size={14} />}
+            ›
+          </span>
+        </button>
       </div>
 
       {accounts.length > 1 && (
@@ -88,6 +114,18 @@ export default function ProfileTab() {
       )}
 
       {showEditor && <ProfileEditor onClose={() => setShowEditor(false)} />}
+      {showVerify && (
+        <VerificationDetailScreen
+          onClose={() => setShowVerify(false)}
+          onApply={() => { setShowVerify(false); setShowVerifyApply(true) }}
+        />
+      )}
+      {showVerifyApply && (
+        <VerificationApplyModal
+          onClose={() => setShowVerifyApply(false)}
+          onSubmitted={() => { setShowVerifyApply(false); api.getVerifyStatus().then(setVerifyStatus).catch(() => {}) }}
+        />
+      )}
     </div>
   )
 }

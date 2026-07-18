@@ -127,6 +127,13 @@ export const api = {
 
   // Google Auth
   googleAuth: (body) => request('/auth/google', { method: 'POST', body: JSON.stringify(body) }),
+
+  // Verification
+  getVerifyStatus: () => request('/verify/status'),
+  submitVerifyRequest: (message) => request('/verify/request', { method: 'POST', body: JSON.stringify({ message }) }),
+  getVerifyRequests: () => request('/admin/verify-requests'),
+  approveVerify: (requestId) => request('/admin/verify/approve', { method: 'POST', body: JSON.stringify({ requestId }) }),
+  rejectVerify: (requestId) => request('/admin/verify/reject', { method: 'POST', body: JSON.stringify({ requestId }) }),
 }
 
 export function resolveMediaUrl(url) {
