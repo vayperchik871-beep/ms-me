@@ -29,8 +29,9 @@ const upload = multer({
   storage,
   limits: { fileSize: 20 * 1024 * 1024 },
   fileFilter: (req, file, cb) => {
-    const allowed = /\.(jpg|jpeg|png|gif|webp|mp4|ogg|wav|mp3|webm|mov|heic)$/i
+    const allowed = /\.(jpg|jpeg|png|gif|webp|mp4|ogg|oga|wav|mp3|webm|mov|heic|m4a|aac|flac|opus)$/i
     if (allowed.test(path.extname(file.originalname))) return cb(null, true)
+    if (file.mimetype && (file.mimetype.startsWith('image/') || file.mimetype.startsWith('audio/') || file.mimetype.startsWith('video/'))) return cb(null, true)
     cb(new Error('Недопустимый формат файла'))
   },
 })

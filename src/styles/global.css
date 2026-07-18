@@ -661,6 +661,15 @@ input, textarea { font-family: inherit; border: none; outline: none; background:
   padding: 8px 12px calc(env(safe-area-inset-bottom, 8px) + 8px);
 }
 
+.ig-rec-cancel {
+  width: 32px; height: 32px; border-radius: 50%;
+  background: rgba(255,255,255,0.08); border: none;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; color: rgba(255,255,255,0.5);
+  transition: background 0.15s, transform 0.1s;
+}
+.ig-rec-cancel:active { transform: scale(0.9); background: rgba(255,69,58,0.2); color: #FF453A; }
+
 .ig-rec-dot {
   width: 10px; height: 10px;
   border-radius: 50%;
@@ -679,6 +688,16 @@ input, textarea { font-family: inherit; border: none; outline: none; background:
   font-variant-numeric: tabular-nums;
   min-width: 36px;
 }
+
+.ig-spinner {
+  animation: igSpin 0.8s linear infinite;
+}
+@keyframes igSpin { to { transform: rotate(360deg); } }
+
+.ig-attach-audio {
+  opacity: 0.5;
+}
+.ig-attach-audio:active { opacity: 1; }
 
 /* ─── Context Menu ─── */
 
