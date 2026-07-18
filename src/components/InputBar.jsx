@@ -10,6 +10,7 @@ export default function InputBar({ onSend, editText, onCancelEdit, chatId }) {
   const [recording, setRecording] = useState(false)
   const [recordingTime, setRecordingTime] = useState(0)
   const inputRef = useRef(null)
+  const textareaRef = useRef(null)
   const fileInputRef = useRef(null)
   const mediaRecorderRef = useRef(null)
   const chunksRef = useRef([])
@@ -21,6 +22,15 @@ export default function InputBar({ onSend, editText, onCancelEdit, chatId }) {
   useEffect(() => {
     if (editText) setText(editText)
   }, [editText])
+
+  useEffect(() => {
+    if (textareaRef.current) {
+      textareaRef.current.style.height = 'auto'
+      textareaRef.current.style.height = Math.min(textareaRef.current.scrollHeight, 100) + 'px'
+    }
+  }, [text])
+
+  const hasText = text.trim().length > 0
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -39,7 +49,7 @@ export default function InputBar({ onSend, editText, onCancelEdit, chatId }) {
     setText('')
     if (typingTimerRef.current) clearTimeout(typingTimerRef.current)
     sendWsMessage({ type: 'typing', chatId, isTyping: false })
-    inputRef.current?.focus()
+    textareaRef.current?.focus()
   }
 
   const handleChange = (e) => {
@@ -126,54 +136,55 @@ export default function InputBar({ onSend, editText, onCancelEdit, chatId }) {
   }
 
   return (
-    <form className="input-bar" onSubmit={handleSubmit}>
+    <form className="ig-bar" onSubmit={handleSubmit}>
       <input ref={fileInputRef} type="file" accept="image/*,video/*" hidden onChange={handleAttach} />
 
       {recording ? (
-        <div className="recording-bar">
-          <div className="recording-dot" />
-          <span className="recording-time">{formatTime(recordingTime)}</span>
-          <button type="button" className="send-btn active" onClick={stopRecording} aria-label={t('Отправить')}>
+        <div className="ig-recording">
+          <div className="ig-rec-dot" />
+          <span className="ig-rec-time">{formatTime(recordingTime)}</span>
+          <button type="button" className="ig-btn ig-send" onClick={stopRecording} aria-label={t('Отправить')}>
             <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
               <rect x="6" y="6" width="12" height="12" rx="2" />
             </svg>
           </button>
         </div>
       ) : (
-        <>
+        <div className="ig-row">
           {!attachFile && (
-            <button type="button" className="icon-btn chat-action-btn" onClick={() => fileInputRef.current?.click()} aria-label={t('Прикрепить')}>
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+            <button type="button" className="ig-btn ig-attach" onClick={() => fileInputRef.current?.click()} aria-label={t('Прикрепить')}>
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48" />
               </svg>
             </button>
           )}
 
-          <div className="input-wrap">
+          <div className={`ig-capsule${attachFile ? ' ig-capsule-attach' : ''}`}>
             {editText && (
-              <button type="button" className="cancel-edit" onClick={onCancelEdit}>✕</button>
+              <button type="button" className="ig-cancel" onClick={onCancelEdit}>✕</button>
             )}
             {attachFile && (
-              <div className="attach-preview">
+              <div className="ig-attach-preview">
                 {attachPreview ? (
-                  <img src={attachPreview} alt="" className="attach-thumb" />
+                  <img src={attachPreview} alt="" />
                 ) : (
-                  <div className="attach-file-icon">📎</div>
+                  <div className="ig-attach-icon">📎</div>
                 )}
-                <button type="button" className="cancel-edit" onClick={cancelAttach}>✕</button>
+                <button type="button" className="ig-cancel" onClick={cancelAttach}>✕</button>
               </div>
             )}
             {!attachFile && (
               <>
                 <textarea
-                  ref={inputRef}
+                  ref={textareaRef}
+                  className="ig-textarea"
                   value={text}
                   onChange={handleChange}
                   onKeyDown={handleKeyDown}
                   placeholder={t('Сообщение')}
                   rows={1}
                 />
-                <button type="button" className="emoji-btn" aria-label={t('Эмодзи')}>
+                <button type="button" className="ig-emoji" aria-label={t('Эмодзи')}>
                   <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
                     <circle cx="12" cy="12" r="10" />
                     <path d="M8 14s1.5 2 4 2 4-2 4-2" />
@@ -185,14 +196,15 @@ export default function InputBar({ onSend, editText, onCancelEdit, chatId }) {
             )}
           </div>
 
-          {text.trim() || attachFile ? (
-            <button type="submit" className="icon-btn chat-action-btn send-active" aria-label={t('Отправить')}>
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z" />
+          {hasText || attachFile ? (
+            <button type="submit" className="ig-btn ig-send" aria-label={t('Отправить')}>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="22" y1="2" x2="11" y2="13" />
+                <polygon points="22 2 15 22 11 13 2 9 22 2" />
               </svg>
             </button>
           ) : (
-            <button type="button" className="icon-btn chat-action-btn" onPointerDown={(e) => { e.preventDefault(); startRecording() }} onPointerUp={stopRecording} onPointerLeave={stopRecording} onContextMenu={(e) => e.preventDefault()} aria-label={t('Голосовое')}>
+            <button type="button" className="ig-btn ig-mic" onPointerDown={(e) => { e.preventDefault(); startRecording() }} onPointerUp={stopRecording} onPointerLeave={stopRecording} onContextMenu={(e) => e.preventDefault()} aria-label={t('Голосовое')}>
               <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
                 <path d="M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3z" />
                 <path d="M19 10v2a7 7 0 01-14 0v-2" />
@@ -201,7 +213,7 @@ export default function InputBar({ onSend, editText, onCancelEdit, chatId }) {
               </svg>
             </button>
           )}
-        </>
+        </div>
       )}
     </form>
   )
