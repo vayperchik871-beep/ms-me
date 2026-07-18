@@ -14,13 +14,6 @@ const genderLabel = (g) => {
   return g
 }
 
-function formatDate(dateStr) {
-  if (!dateStr) return '—'
-  const d = new Date(dateStr)
-  const months = ['январь','февраль','март','апрель','май','июнь','июль','август','сентябрь','октябрь','ноябрь','декабрь']
-  return `${months[d.getMonth()]} ${d.getFullYear()} г.`
-}
-
 export default function ProfileTab() {
   const { user, accounts, switchToAccount, refreshUser } = useAuth()
   const fileInputRef = useRef(null)
@@ -44,12 +37,6 @@ export default function ProfileTab() {
 
   return (
     <div className="tab-content pf-screen">
-      {/* Edit capsule — top right */}
-      <button className="pf-edit-capsule" onClick={() => setShowEditor(true)}>
-        {t('Редактировать')}
-      </button>
-
-      {/* Hero */}
       <div className="pf-hero">
         <div className="pf-avatar" onClick={() => fileInputRef.current?.click()}>
           {user?.avatar ? (
@@ -59,7 +46,14 @@ export default function ProfileTab() {
         </div>
         <input ref={fileInputRef} type="file" accept="image/*" hidden onChange={handleAvatarChange} />
 
-        <h1 className="pf-name">{user?.name}</h1>
+        <div className="pf-name-row">
+          <h1 className="pf-name">{user?.name}</h1>
+          <button className="pf-edit-pill" onClick={() => setShowEditor(true)}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+          </button>
+        </div>
+
+        <div className="pf-id">@{user?.userId}</div>
 
         <div className="pf-status">
           <span className="pf-status-dot" />
@@ -67,56 +61,31 @@ export default function ProfileTab() {
         </div>
       </div>
 
-      {/* Info card */}
       <div className="pf-card">
-        <div className="pf-card-row">
-          <span className="pf-card-label">ID</span>
-          <span className="pf-card-value">{user?.userId}</span>
-        </div>
-        <div className="pf-card-divider" />
-        <div className="pf-card-row">
-          <span className="pf-card-label">{t('Дата регистрации')}</span>
-          <span className="pf-card-value">{formatDate(user?.createdAt)}</span>
-        </div>
-      </div>
-
-      {/* Details card */}
-      <div className="pf-card">
+        {user?.bio ? (
+          <>
+            <div className="pf-card-row">
+              <div>
+                <span className="pf-card-label">{t('О себе')}</span>
+                <span className="pf-card-value">{user.bio}</span>
+              </div>
+            </div>
+            <div className="pf-card-divider" />
+          </>
+        ) : null}
         <div className="pf-card-row">
           <div>
-            <span className="pf-card-label">{t('Имя пользователя')}</span>
-            <span className="pf-card-value pf-card-link">@{user?.userId}</span>
+            <span className="pf-card-label">{t('День рождения')}</span>
+            <span className="pf-card-value">{user?.birthday || '—'}</span>
           </div>
         </div>
         <div className="pf-card-divider" />
         <div className="pf-card-row">
           <div>
-            <span className="pf-card-label">{t('О себе')}</span>
-            <span className="pf-card-value">{user?.bio || '—'}</span>
+            <span className="pf-card-label">{t('Пол')}</span>
+            <span className="pf-card-value">{genderLabel(user?.gender) || '—'}</span>
           </div>
         </div>
-        {user?.birthday && (
-          <>
-            <div className="pf-card-divider" />
-            <div className="pf-card-row">
-              <div>
-                <span className="pf-card-label">{t('День рождения')}</span>
-                <span className="pf-card-value">{user?.birthday}</span>
-              </div>
-            </div>
-          </>
-        )}
-        {user?.gender && (
-          <>
-            <div className="pf-card-divider" />
-            <div className="pf-card-row">
-              <div>
-                <span className="pf-card-label">{t('Пол')}</span>
-                <span className="pf-card-value">{genderLabel(user?.gender)}</span>
-              </div>
-            </div>
-          </>
-        )}
         <div className="pf-card-divider" />
         <button className="pf-card-row pf-card-btn" onClick={() => setShowVerify(true)}>
           <span className="pf-card-label" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
@@ -127,7 +96,6 @@ export default function ProfileTab() {
         </button>
       </div>
 
-      {/* Accounts */}
       {accounts.length > 1 && (
         <div className="pf-card">
           {accounts.map((a, i) => (
