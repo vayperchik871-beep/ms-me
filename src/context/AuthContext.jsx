@@ -72,12 +72,21 @@ export function AuthProvider({ children }) {
 
   const googleLogin = async (idToken) => {
     const result = await api.googleAuth({ idToken, deviceId: getDeviceId() })
+    if (result.needsSetup) return result
     const account = { ...result.user, token: result.token }
     saveAccount(account)
     setAccounts(getAccounts())
     setUser(result.user)
     reconnectWs()
     return result
+  }
+
+  const saveAccountAndLogin = (userData, token) => {
+    const account = { ...userData, token }
+    saveAccount(account)
+    setAccounts(getAccounts())
+    setUser(userData)
+    reconnectWs()
   }
 
   const logout = () => {
@@ -99,6 +108,7 @@ export function AuthProvider({ children }) {
     <AuthContext.Provider value={{
       user, loading, accounts, login, register, verifyDevice, googleLogin,
       logout, switchToAccount, canAddAccount: canAddAccount(), refreshUser,
+      saveAccountAndLogin,
     }}>
       {children}
     </AuthContext.Provider>

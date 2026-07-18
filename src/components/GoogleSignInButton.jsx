@@ -12,8 +12,8 @@ export default function GoogleSignInButton({ onComplete, label }) {
       const { GoogleAuth } = await import('@codetrix-studio/capacitor-google-auth')
       await GoogleAuth.initialize()
       const user = await GoogleAuth.signIn()
-      await googleLogin(user.authentication.idToken)
-      onComplete?.()
+      const result = await googleLogin(user.authentication.idToken)
+      onComplete?.(result)
     } catch (err) {
       console.error('Google sign-in error:', err)
     } finally {

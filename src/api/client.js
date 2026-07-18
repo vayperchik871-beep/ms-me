@@ -16,7 +16,14 @@ function getApiUrl(path = '') {
   return `${base}/api${path}`
 }
 
+let _tempToken = null
+
+export function setToken(token) {
+  _tempToken = token
+}
+
 export function getToken() {
+  if (_tempToken) return _tempToken
   const acc = getActiveAccount()
   return acc?.token || null
 }

@@ -403,22 +403,22 @@ app.post('/api/auth/google', async (req, res) => {
         suffix++
       }
 
+      const tempId = 'google_' + Math.random().toString(36).slice(2, 8)
       const id = uuidv4()
       const fakeHash = await bcrypt.hash(uuidv4(), 12)
       const now = Date.now()
 
       await dbRun(
         'INSERT INTO users (id, user_id, name, password_hash, google_id, avatar, is_admin, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
-        id, cleanId, googleName, fakeHash, googleId, avatarUrl, isFirst || isAdminApp ? 1 : 0, now
+        id, tempId, googleName, fakeHash, googleId, avatarUrl, isFirst || isAdminApp ? 1 : 0, now
       )
       await dbRun('INSERT INTO devices (id, user_id, device_id, verified, last_seen, created_at) VALUES (?, ?, ?, 1, ?, ?)',
         uuidv4(), id, hashDevice(deviceId), now, now
       )
       const token = await createToken(id, hashDevice(deviceId))
       await getOrCreateDirectChat(id, SYSTEM_BOT.id)
-      await sendBotMessage(id, `Добро пожаловать в MS Messenger, ${googleName}!\n\nВаш ID: @${cleanId}\n\nВы вошли через Google. Этот чат используется для кодов подтверждения.`)
 
-      return res.json({ token, user: { id, userId: cleanId, name: googleName } })
+      return res.json({ needsSetup: true, token, user: { id, userId: tempId, name: googleName, avatar: avatarUrl } })
     }
 
     // Existing Google user — log in
@@ -685,10 +685,19 @@ app.get('/api/users/:userId', authMiddleware, async (req, res) => {
 })
 
 app.patch('/api/user/profile', authMiddleware, async (req, res) => {
-  const { birthday, gender, profileColor } = req.body
+  const { birthday, gender, profileColor, name, userId, avatar } = req.body
   if (birthday !== undefined) await dbRun('UPDATE users SET birthday = ? WHERE id = ?', birthday || null, req.user.id)
   if (gender !== undefined) await dbRun('UPDATE users SET gender = ? WHERE id = ?', gender || null, req.user.id)
   if (profileColor !== undefined) await dbRun('UPDATE users SET profile_color = ? WHERE id = ?', profileColor || null, req.user.id)
+  if (name !== undefined) await dbRun('UPDATE users SET name = ? WHERE id = ?', name.trim(), req.user.id)
+  if (avatar !== undefined) await dbRun('UPDATE users SET avatar = ? WHERE id = ?', avatar || null, req.user.id)
+  if (userId !== undefined) {
+    const cleanId = sanitizeUserId(userId)
+    const existing = await dbGet('SELECT id FROM users WHERE user_id = ? AND id != ?', cleanId, req.user.id)
+    if (existing) return res.status(409).json({ error: 'Этот ID уже занят' })
+    if (cleanId.length < 3) return res.status(400).json({ error: 'ID должен быть минимум 3 символа' })
+    await dbRun('UPDATE users SET user_id = ? WHERE id = ?', cleanId, req.user.id)
+  }
   const u = await dbGet('SELECT id, user_id, name, avatar, birthday, gender, profile_color FROM users WHERE id = ?', req.user.id)
   res.json({ user: { ...u } })
 })

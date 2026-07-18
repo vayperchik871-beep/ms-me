@@ -248,3 +248,101 @@
 
 .register-nav .apple-btn { flex: 1; }
 .register-nav .apple-btn.secondary { flex: 0.6; }
+
+/* ─── Google Setup Step ─── */
+
+.setup-step {
+  width: 100%;
+  text-align: center;
+  animation-duration: 0.35s;
+  animation-fill-mode: both;
+}
+
+.setup-title {
+  font-size: 28px; font-weight: 700; letter-spacing: -0.3px;
+  color: #fff; margin-bottom: 8px;
+}
+
+.setup-subtitle {
+  font-size: 15px; line-height: 1.5; color: #8E8E93; margin-bottom: 24px;
+}
+
+.setup-form {
+  width: 100%;
+  display: flex; flex-direction: column;
+  gap: 16px;
+}
+
+.setup-avatar {
+  display: flex; flex-direction: column; align-items: center; gap: 6px;
+  margin-bottom: 4px;
+  cursor: pointer;
+}
+
+.setup-avatar-img {
+  width: 80px; height: 80px; border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+}
+
+.setup-avatar-placeholder {
+  width: 80px; height: 80px; border-radius: 50%;
+  background: rgba(255, 255, 255, 0.08);
+  display: flex; align-items: center; justify-content: center;
+  color: #636366;
+  border: 2px dashed rgba(255, 255, 255, 0.12);
+}
+
+.setup-avatar-label {
+  font-size: 12px; color: #636366;
+}
+
+.setup-field {
+  display: flex; flex-direction: column; gap: 4px;
+  text-align: left;
+}
+
+.setup-label {
+  font-size: 13px; color: #8E8E93; font-weight: 500;
+  padding-left: 2px;
+}
+
+.setup-input {
+  width: 100%; height: 48px;
+  background: rgba(28, 28, 30, 0.86);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 12px;
+  padding: 0 14px;
+  font-size: 16px; color: #fff;
+  outline: none;
+  transition: border-color 0.2s;
+  font-family: inherit;
+}
+
+.setup-input:focus {
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+.setup-input::placeholder { color: #636366; }
+
+select.setup-input {
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg width='12' height='8' viewBox='0 0 12 8' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1.5L6 6.5L11 1.5' stroke='%23636366' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 14px center;
+  padding-right: 40px;
+  cursor: pointer;
+}
+
+select.setup-input option {
+  background: #1C1C1E;
+  color: #fff;
+}
+
+.setup-error {
+  background: rgba(255, 69, 58, 0.15); color: #FF453A;
+  padding: 10px 14px; border-radius: 10px; font-size: 14px;
+  margin-top: 4px;
+}

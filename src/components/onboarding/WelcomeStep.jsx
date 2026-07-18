@@ -11,21 +11,6 @@ export default function WelcomeStep({ onRegister, onLogin, onComplete }) {
         Безопасные сообщения.<br />Регистрация по имени и уникальному ID.
       </p>
 
-      <div className="welcome-features">
-        <div className="feature">
-          <span className="feature-icon">🔐</span>
-          <span>Шифрование AES-256</span>
-        </div>
-        <div className="feature">
-          <span className="feature-icon">🆔</span>
-          <span>Уникальный ID вместо номера</span>
-        </div>
-        <div className="feature">
-          <span className="feature-icon">👥</span>
-          <span>Только реальные люди</span>
-        </div>
-      </div>
-
       <GoogleSignInButton onComplete={onComplete} label="Продолжить с Google" />
 
       <div className="welcome-divider"><span>или</span></div>
