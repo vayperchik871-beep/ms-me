@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { api } from '../api/client'
 import { useAuth } from '../context/AuthContext'
 import { t } from '../i18n'
@@ -15,9 +15,56 @@ const advantages = [
 export default function VerificationDetailScreen({ onClose, onApply }) {
   const { user } = useAuth()
   const [status, setStatus] = useState(null)
+  const canvasRef = useRef(null)
 
   useEffect(() => {
     api.getVerifyStatus().then(setStatus).catch(() => {})
+  }, [])
+
+  useEffect(() => {
+    const canvas = canvasRef.current
+    if (!canvas) return
+    const ctx = canvas.getContext('2d')
+    let w = canvas.width = canvas.offsetWidth * devicePixelRatio
+    let h = canvas.height = canvas.offsetHeight * devicePixelRatio
+    ctx.scale(devicePixelRatio, devicePixelRatio)
+    w /= devicePixelRatio; h /= devicePixelRatio
+
+    const particles = Array.from({ length: 20 }, () => ({
+      x: Math.random() * w, y: Math.random() * h,
+      vx: (Math.random() - 0.5) * 0.3,
+      vy: (Math.random() - 0.5) * 0.3,
+      r: Math.random() * 2 + 0.5,
+      a: Math.random() * 0.5 + 0.15,
+      da: (Math.random() - 0.5) * 0.008,
+    }))
+
+    let anim
+    const loop = () => {
+      ctx.clearRect(0, 0, w, h)
+      for (const p of particles) {
+        p.x += p.vx; p.y += p.vy
+        p.a += p.da
+        if (p.a > 0.65 || p.a < 0.05) p.da *= -1
+        if (p.x < 0 || p.x > w) p.vx *= -1
+        if (p.y < 0 || p.y > h) p.vy *= -1
+        ctx.beginPath()
+        ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2)
+        ctx.fillStyle = `rgba(147, 197, 253, ${p.a})`
+        ctx.fill()
+      }
+      anim = requestAnimationFrame(loop)
+    }
+    loop()
+
+    const resize = () => {
+      w = canvas.width = canvas.offsetWidth * devicePixelRatio
+      h = canvas.height = canvas.offsetHeight * devicePixelRatio
+      ctx.scale(devicePixelRatio, devicePixelRatio)
+      w /= devicePixelRatio; h /= devicePixelRatio
+    }
+    window.addEventListener('resize', resize)
+    return () => { cancelAnimationFrame(anim); window.removeEventListener('resize', resize) }
   }, [])
 
   const isVerified = status?.verified
@@ -25,6 +72,7 @@ export default function VerificationDetailScreen({ onClose, onApply }) {
 
   return (
     <div className="verify-screen">
+      <canvas ref={canvasRef} className="verify-particles" />
       <div className="verify-inner">
         <button className="verify-close" onClick={onClose}>
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>

@@ -3,14 +3,12 @@ import { api } from '../api/client'
 import { useAuth } from '../context/AuthContext'
 import { t } from '../i18n'
 
-const COLORS = ['#007AFF', '#FF2D55', '#FF9500', '#FFCC00', '#34C759', '#5AC8FA', '#AF52DE', '#FF6482', '#00C7BE', '#FFD60A']
 const GENDERS = ['male', 'female', 'other']
 
 export default function ProfileEditor({ onClose }) {
   const { user, refreshUser } = useAuth()
   const [birthday, setBirthday] = useState(user?.birthday || '')
   const [gender, setGender] = useState(user?.gender || '')
-  const [profileColor, setProfileColor] = useState(user?.profileColor || '#007AFF')
   const [saving, setSaving] = useState(false)
 
   const genderLabel = (g) => {
@@ -23,7 +21,7 @@ export default function ProfileEditor({ onClose }) {
   const handleSave = async () => {
     setSaving(true)
     try {
-      await api.updateProfile({ birthday: birthday || null, gender: gender || null, profileColor })
+      await api.updateProfile({ birthday: birthday || null, gender: gender || null })
       await refreshUser()
       onClose()
     } catch {}
@@ -65,17 +63,6 @@ export default function ProfileEditor({ onClose }) {
             )}
           </div>
 
-          <p className="modal-desc" style={{ marginBottom: 8 }}>{t('Цвет профиля')}</p>
-          <div className="profile-color-grid">
-            {COLORS.map((c) => (
-              <button
-                key={c}
-                className={`profile-color-swatch ${profileColor === c ? 'active' : ''}`}
-                style={{ background: c }}
-                onClick={() => setProfileColor(c)}
-              />
-            ))}
-          </div>
         </div>
 
         <div style={{ display: 'flex', gap: 12 }}>
