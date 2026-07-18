@@ -1172,7 +1172,7 @@ input, textarea { font-family: inherit; border: none; outline: none; background:
 
 .verify-screen {
   position: fixed; inset: 0; z-index: 310;
-  background: linear-gradient(180deg, #0c2a2d 0%, #0a1e22 30%, #081418 100%);
+  background: linear-gradient(180deg, #0a1a1d 0%, #060d0e 40%, #000 100%);
   display: flex; flex-direction: column;
   overflow: hidden;
 }
