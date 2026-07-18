@@ -1278,18 +1278,17 @@ input, textarea { font-family: inherit; border: none; outline: none; background:
 
 .verify-cta {
   width: 100%; padding: 16px;
-  border-radius: 16px; border: none;
+  border-radius: 16px; border: 1px solid rgba(255,255,255,0.08);
   font-size: 17px; font-weight: 700;
   color: #fff; cursor: pointer;
-  background: linear-gradient(135deg, #4ECDC4, #44A8A0);
-  box-shadow: 0 8px 32px rgba(78,205,196,0.3);
-  transition: transform 0.12s, box-shadow 0.2s;
+  background: rgba(255,255,255,0.06);
+  backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+  transition: transform 0.12s, background 0.2s;
 }
-.verify-cta:active { transform: scale(0.97); }
+.verify-cta:active { transform: scale(0.97); background: rgba(255,255,255,0.12); }
 .verify-cta:disabled {
-  background: rgba(255,255,255,0.08);
-  color: rgba(255,255,255,0.4);
-  box-shadow: none;
+  background: rgba(255,255,255,0.03);
+  color: rgba(255,255,255,0.3);
 }
 
 /* Light theme — slim verif */
@@ -1307,44 +1306,49 @@ input, textarea { font-family: inherit; border: none; outline: none; background:
 [data-theme="light"] .verify-badge-row { background: rgba(68,168,160,0.1); border-color: rgba(68,168,160,0.2); }
 [data-theme="light"] .verify-badge-row span { color: #44A8A0; }
 
-/* ─── Verification Apply Modal (Liquid Glass) ─── */
+/* ─── Verification Apply Modal ─── */
 
-@keyframes verifyModalIn { from { opacity: 0; transform: scale(0.92) } to { opacity: 1; transform: scale(1) } }
-@keyframes verifyModalOut { from { opacity: 1; transform: scale(1) } to { opacity: 0; transform: scale(0.92) } }
+@keyframes applyModalIn { from { opacity: 0; transform: scale(0.92) } to { opacity: 1; transform: scale(1) } }
 
-.verify-modal-overlay {
+.apply-overlay {
   position: fixed; inset: 0; z-index: 320;
-  background: rgba(0,0,0,0.5);
-  backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+  background: rgba(0,0,0,0.6);
+  backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
   display: flex; align-items: center; justify-content: center;
   padding: 24px;
 }
 
-.verify-modal {
+.apply-modal {
+  position: relative;
   width: 100%; max-width: 360px;
-  background: rgba(30,30,30,0.92);
-  backdrop-filter: blur(40px); -webkit-backdrop-filter: blur(40px);
-  border: 1px solid rgba(255,255,255,0.1);
+  background: #1a1a1a;
+  border: 1px solid rgba(255,255,255,0.08);
   border-radius: 20px;
-  padding: 24px;
-  animation: verifyModalIn 0.25s ease-out;
+  padding: 28px 24px 24px;
+  animation: applyModalIn 0.25s ease-out;
 }
 
-.verify-modal-header {
-  display: flex; align-items: center; justify-content: space-between;
-  margin-bottom: 12px;
-}
-.verify-modal-header h2 { margin: 0; font-size: 18px; font-weight: 700; color: #fff; }
-
-.verify-modal-desc {
-  font-size: 13px; color: rgba(255,255,255,0.5); margin: 0 0 14px; line-height: 1.5;
-}
-
-.verify-modal-input {
-  width: 100%; min-height: 100px; resize: vertical;
+.apply-close {
+  position: absolute; top: 14px; right: 14px;
+  width: 32px; height: 32px; border-radius: 50%;
   background: rgba(255,255,255,0.06);
-  backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
-  border: 1px solid rgba(255,255,255,0.1);
+  border: none; display: flex; align-items: center; justify-content: center;
+  cursor: pointer; color: rgba(255,255,255,0.4);
+  transition: background 0.12s;
+}
+.apply-close:hover { background: rgba(255,255,255,0.12); }
+
+.apply-title {
+  margin: 0 0 8px; font-size: 18px; font-weight: 700; color: #fff;
+}
+.apply-desc {
+  margin: 0 0 16px; font-size: 13px; color: rgba(255,255,255,0.4); line-height: 1.5;
+}
+
+.apply-input {
+  width: 100%; min-height: 100px; resize: vertical;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.08);
   border-radius: 14px;
   padding: 12px 14px;
   font-size: 15px; color: #fff;
@@ -1352,55 +1356,33 @@ input, textarea { font-family: inherit; border: none; outline: none; background:
   transition: border-color 0.2s;
   box-sizing: border-box;
 }
-.verify-modal-input:focus { border-color: #00C7BE; }
-.verify-modal-input::placeholder { color: rgba(255,255,255,0.25); }
+.apply-input:focus { border-color: rgba(0,199,190,0.5); }
+.apply-input::placeholder { color: rgba(255,255,255,0.2); }
 
-.verify-modal-chars {
-  text-align: right; font-size: 11px; color: rgba(255,255,255,0.25);
+.apply-chars {
+  text-align: right; font-size: 11px; color: rgba(255,255,255,0.2);
   margin: 4px 0 0;
 }
+.apply-error { color: #ff5555; font-size: 13px; margin: 8px 0 0; }
 
-.verify-modal-error {
-  color: #ff5555; font-size: 13px; margin: 8px 0 0;
+.apply-actions {
+  display: flex; gap: 10px; margin-top: 16px;
 }
-
-.verify-modal-actions {
-  display: flex; gap: 10px; margin-top: 18px;
-}
-.verify-modal-cancel, .verify-modal-submit {
+.apply-cancel, .apply-send {
   flex: 1; padding: 13px; border-radius: 14px; border: none;
   font-size: 15px; font-weight: 600; cursor: pointer;
   transition: transform 0.1s, opacity 0.2s;
 }
-.verify-modal-cancel:active, .verify-modal-submit:active { transform: scale(0.96); }
-.verify-modal-cancel {
-  background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.6);
+.apply-cancel:active, .apply-send:active { transform: scale(0.96); }
+.apply-cancel {
+  background: rgba(255,255,255,0.06); color: rgba(255,255,255,0.5);
 }
-.verify-modal-submit {
+.apply-send {
   background: linear-gradient(135deg, #00C7BE, #009E97);
   color: #fff;
+  box-shadow: 0 4px 16px rgba(0,199,190,0.25);
 }
-.verify-modal-submit:disabled { opacity: 0.4; cursor: not-allowed; }
-
-.verify-close-sm {
-  width: 32px; height: 32px; border-radius: 50%;
-  background: rgba(255,255,255,0.08);
-  border: none; display: flex; align-items: center; justify-content: center;
-  cursor: pointer; color: rgba(255,255,255,0.5);
-  transition: background 0.12s;
-}
-.verify-close-sm:hover { background: rgba(255,255,255,0.15); }
-
-/* Light theme — modal */
-[data-theme="light"] .verify-modal-overlay { background: rgba(0,0,0,0.3); }
-[data-theme="light"] .verify-modal { background: rgba(255,255,255,0.92); border-color: rgba(0,0,0,0.06); }
-[data-theme="light"] .verify-modal-header h2 { color: #000; }
-[data-theme="light"] .verify-modal-desc { color: rgba(0,0,0,0.5); }
-[data-theme="light"] .verify-modal-input { background: rgba(0,0,0,0.04); border-color: rgba(0,0,0,0.08); color: #000; }
-[data-theme="light"] .verify-modal-input::placeholder { color: rgba(0,0,0,0.3); }
-[data-theme="light"] .verify-modal-chars { color: rgba(0,0,0,0.3); }
-[data-theme="light"] .verify-modal-cancel { background: rgba(0,0,0,0.06); color: rgba(0,0,0,0.5); }
-[data-theme="light"] .verify-close-sm { background: rgba(0,0,0,0.06); color: rgba(0,0,0,0.4); }
+.apply-send:disabled { opacity: 0.35; cursor: not-allowed; box-shadow: none; }
 
 /* ─── Verification Requests (Admin) ─── */
 

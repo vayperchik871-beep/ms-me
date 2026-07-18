@@ -5,11 +5,11 @@ import { t } from '../i18n'
 import VerificationBadge from './VerificationBadge'
 
 const advantages = [
-  { icon: '✓', title: 'Пользователи начнут вам доверять', desc: '' },
-  { icon: '🛡', title: 'Защита от подделки аккаунта', desc: '' },
-  { icon: '⭐', title: 'Эксклюзивные функции', desc: '' },
-  { icon: '🚀', title: 'Приоритетная поддержка', desc: '' },
-  { icon: '💎', title: 'Выделенный значок в профиле', desc: '' },
+  { icon: '\u2705', title: 'Пользователи начнут вам доверять' },
+  { icon: '\uD83D\uDD12', title: 'Защита от подделки аккаунта' },
+  { icon: '\u2B50', title: 'Эксклюзивные функции' },
+  { icon: '\uD83D\uDE80', title: 'Приоритетная поддержка' },
+  { icon: '\uD83D\uDC8E', title: 'Выделенный значок в профиле' },
 ]
 
 function Particles() {
@@ -37,7 +37,7 @@ function Particles() {
         r: Math.random() * 2.5 + 0.5,
         dx: (Math.random() - 0.5) * 0.2,
         dy: (Math.random() - 0.5) * 0.2,
-        opacity: Math.random() * 0.4 + 0.1,
+        opacity: Math.random() * 0.3 + 0.05,
       })
     }
 
@@ -46,7 +46,7 @@ function Particles() {
       particles.forEach(p => {
         ctx.beginPath()
         ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2)
-        ctx.fillStyle = `rgba(100, 220, 210, ${p.opacity})`
+        ctx.fillStyle = `rgba(180, 180, 180, ${p.opacity})`
         ctx.fill()
         p.x += p.dx
         p.y += p.dy
@@ -84,9 +84,16 @@ export default function VerificationDetailScreen({ onClose, onApply }) {
       <div className="verify-hero">
         <div className="verify-icon-wrap">
           <div className="verify-star">
-            <svg width="52" height="52" viewBox="0 0 24 24" fill="none">
-              <path d="M12 2L9.19 5.63L4.64 5.96L7.86 9.22L6.82 13.73L12 11.47L17.18 13.73L16.14 9.22L19.36 5.96L14.81 5.63L12 2Z" fill="#5DDCD0" strokeLinejoin="round"/>
-              <path d="M9 12l2 2 4-4" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+            <svg width="100" height="100" viewBox="0 0 100 100" fill="none">
+              <defs>
+                <linearGradient id="badgeGrad" x1="0" y1="0" x2="100" y2="100" gradientUnits="userSpaceOnUse">
+                  <stop offset="0%" stopColor="#38BDF8"/>
+                  <stop offset="50%" stopColor="#3B82F6"/>
+                  <stop offset="100%" stopColor="#2563EB"/>
+                </linearGradient>
+              </defs>
+              <path d="M50 4 L61 18 L78 10 L76 28 L96 28 L84 42 L100 52 L84 62 L96 78 L76 76 L78 94 L61 86 L50 100 L39 86 L22 94 L24 76 L4 78 L16 62 L0 52 L16 42 L4 28 L24 28 L22 10 L39 18 Z" fill="url(#badgeGrad)"/>
+              <path d="M38 52 L47 61 L65 43" stroke="#fff" strokeWidth="6" strokeLinecap="round" strokeLinejoin="round"/>
             </svg>
           </div>
         </div>

@@ -84,10 +84,7 @@ export default function ProfileTab() {
           <span className="settings-arrow">›</span>
         </button>
         <button className="settings-item clickable" onClick={() => setShowVerify(true)}>
-          <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M12 2L4 5v6c0 5.55 3.84 10.74 8 12 4.16-1.26 8-6.45 8-12V5l-8-3z" fill="#00C7BE"/><path d="M9 12l2 2 4-4" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
-            {t('Верификация')}
-          </span>
+          <span>{t('Верификация')}</span>
           <span className="settings-arrow" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
             {verifyStatus?.verified && <VerificationBadge size={14} />}
             ›
