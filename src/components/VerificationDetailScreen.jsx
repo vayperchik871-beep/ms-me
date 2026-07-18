@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext'
 import { t } from '../i18n'
 import VerificationBadge from './VerificationBadge'
 
-const advantages = [
+const msmAdvantages = [
   { icon: '\u2705', title: 'Пользователи начнут вам доверять' },
   { icon: '\uD83D\uDD12', title: 'Защита от подделки аккаунта' },
   { icon: '\u2B50', title: 'Эксклюзивные функции' },
@@ -88,7 +88,7 @@ export default function VerificationDetailScreen({ onClose, onApply, initialTab 
   const isVerifiedForTab = isVerified && status?.verifyType === curType
   const isPendingForTab = isPending && status?.request?.verify_type === curType
 
-  const curAdvantages = tab === 'dev' ? devAdvantages : advantages
+  const advantages = tab === 'dev' ? devAdvantages : msmAdvantages
 
   return (
     <div className={`verify-screen ${animOut ? 'verify-screen-exit' : 'verify-screen-enter'}`}>
@@ -97,21 +97,6 @@ export default function VerificationDetailScreen({ onClose, onApply, initialTab 
       <div className="verify-top-bar">
         <button className="verify-close" onClick={handleClose}>
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
-        </button>
-      </div>
-
-      <div className="verify-tabs">
-        <button
-          className={`verify-tab ${tab === 'msm' ? 'active' : ''}`}
-          onClick={() => setTab('msm')}
-        >
-          <VerificationBadge size={16} type="msm" /> MSM Verif
-        </button>
-        <button
-          className={`verify-tab ${tab === 'dev' ? 'active' : ''}`}
-          onClick={() => setTab('dev')}
-        >
-          <VerificationBadge size={16} type="dev" /> Dev
         </button>
       </div>
 
@@ -160,7 +145,7 @@ export default function VerificationDetailScreen({ onClose, onApply, initialTab 
 
         <div className="verify-advantages">
           <h2 className="verify-section-title">{t('Преимущества')}</h2>
-          {curAdvantages.map((a, i) => (
+          {advantages.map((a, i) => (
             <div key={i} className="verify-card">
               <div className="verify-card-left">
                 <div className="verify-card-icon">{a.icon}</div>
@@ -172,7 +157,7 @@ export default function VerificationDetailScreen({ onClose, onApply, initialTab 
         </div>
 
         {!isVerifiedForTab && (
-          <div className="verify-cta-wrap">
+          <div className="verify-cta-wrap" style={{ marginTop: 'auto' }}>
             <button
               className="verify-cta"
               disabled={isPendingForTab}
@@ -182,6 +167,23 @@ export default function VerificationDetailScreen({ onClose, onApply, initialTab 
             </button>
           </div>
         )}
+      </div>
+
+      <div className="verify-bnav">
+        <button
+          className={`verify-bnav-tab ${tab === 'msm' ? 'active' : ''}`}
+          onClick={() => setTab('msm')}
+        >
+          <VerificationBadge size={18} type="msm" />
+          <span>MSM Verif</span>
+        </button>
+        <button
+          className={`verify-bnav-tab ${tab === 'dev' ? 'active' : ''}`}
+          onClick={() => setTab('dev')}
+        >
+          <VerificationBadge size={18} type="dev" />
+          <span>Dev</span>
+        </button>
       </div>
     </div>
   )
