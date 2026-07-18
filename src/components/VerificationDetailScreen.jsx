@@ -5,11 +5,11 @@ import { t } from '../i18n'
 import VerificationBadge from './VerificationBadge'
 
 const advantages = [
-  { icon: '✓', title: 'Подтверждённый аккаунт', desc: 'Пользователи сразу увидят, что ваш аккаунт настоящий' },
-  { icon: '🛡', title: 'Защита от подделки', desc: 'Никто не сможет выдать себя за вас' },
-  { icon: '⭐', title: 'Повышенное доверие', desc: 'Ваш профиль будет вызывать больше доверия' },
-  { icon: '🚀', title: 'Приоритетная поддержка', desc: 'Быстрый ответ от команды MSM Messenger' },
-  { icon: '💎', title: 'Эксклюзивные функции', desc: 'Ранний доступ к новым возможностям' },
+  { icon: '✓', title: 'Пользователи начнут вам доверять', desc: '' },
+  { icon: '🛡', title: 'Защита от подделки аккаунта', desc: '' },
+  { icon: '⭐', title: 'Эксклюзивные функции', desc: '' },
+  { icon: '🚀', title: 'Приоритетная поддержка', desc: '' },
+  { icon: '💎', title: 'Выделенный значок в профиле', desc: '' },
 ]
 
 function Particles() {
@@ -30,14 +30,14 @@ function Particles() {
     resize()
     window.addEventListener('resize', resize)
 
-    for (let i = 0; i < 40; i++) {
+    for (let i = 0; i < 50; i++) {
       particles.push({
         x: Math.random() * w,
         y: Math.random() * h,
-        r: Math.random() * 2 + 0.5,
-        dx: (Math.random() - 0.5) * 0.3,
-        dy: (Math.random() - 0.5) * 0.3,
-        opacity: Math.random() * 0.5 + 0.1,
+        r: Math.random() * 2.5 + 0.5,
+        dx: (Math.random() - 0.5) * 0.2,
+        dy: (Math.random() - 0.5) * 0.2,
+        opacity: Math.random() * 0.4 + 0.1,
       })
     }
 
@@ -46,7 +46,7 @@ function Particles() {
       particles.forEach(p => {
         ctx.beginPath()
         ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2)
-        ctx.fillStyle = `rgba(0, 199, 190, ${p.opacity})`
+        ctx.fillStyle = `rgba(100, 220, 210, ${p.opacity})`
         ctx.fill()
         p.x += p.dx
         p.y += p.dy
@@ -83,20 +83,19 @@ export default function VerificationDetailScreen({ onClose, onApply }) {
 
       <div className="verify-hero">
         <div className="verify-icon-wrap">
-          <div className="verify-icon-glow" />
-          <div className="verify-icon">
-            <svg width="48" height="48" viewBox="0 0 24 24" fill="none">
-              <path d="M12 2L4 5v6c0 5.55 3.84 10.74 8 12 4.16-1.26 8-6.45 8-12V5l-8-3z" fill="#00C7BE"/>
+          <div className="verify-star">
+            <svg width="52" height="52" viewBox="0 0 24 24" fill="none">
+              <path d="M12 2L9.19 5.63L4.64 5.96L7.86 9.22L6.82 13.73L12 11.47L17.18 13.73L16.14 9.22L19.36 5.96L14.81 5.63L12 2Z" fill="#5DDCD0" strokeLinejoin="round"/>
               <path d="M9 12l2 2 4-4" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
             </svg>
           </div>
         </div>
 
-        <h1 className="verify-title">MSM Verify</h1>
+        <h1 className="verify-title">Slim Verif</h1>
         <p className="verify-desc">
           {isVerified
             ? t('Ваш аккаунт подтверждён')
-            : t('Подтвердите свой аккаунт и получите значок верификации')}
+            : t('Больше возможностей и эксклюзивные функции с подпиской Slim Verif.')}
         </p>
 
         {isVerified && (
@@ -111,23 +110,25 @@ export default function VerificationDetailScreen({ onClose, onApply }) {
         <h2 className="verify-section-title">{t('Преимущества')}</h2>
         {advantages.map((a, i) => (
           <div key={i} className="verify-card">
-            <div className="verify-card-icon">{a.icon}</div>
-            <div className="verify-card-text">
-              <h3>{t(a.title)}</h3>
-              <p>{t(a.desc)}</p>
+            <div className="verify-card-left">
+              <div className="verify-card-icon">{a.icon}</div>
+              <span className="verify-card-title">{t(a.title)}</span>
             </div>
+            <svg className="verify-card-chevron" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M9 18l6-6-6-6"/></svg>
           </div>
         ))}
       </div>
 
       {!isVerified && (
-        <button
-          className="verify-cta"
-          disabled={isPending}
-          onClick={() => isPending ? null : onApply()}
-        >
-          {isPending ? t('Заявка на рассмотрении') : t('Получить MSM Verify')}
-        </button>
+        <div className="verify-cta-wrap">
+          <button
+            className="verify-cta"
+            disabled={isPending}
+            onClick={() => isPending ? null : onApply()}
+          >
+            {isPending ? t('Заявка на рассмотрении') : t('Применить')}
+          </button>
+        </div>
       )}
     </div>
   )
