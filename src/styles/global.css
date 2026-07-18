@@ -787,9 +787,105 @@ input, textarea { font-family: inherit; border: none; outline: none; background:
   margin-bottom: 16px; text-align: center;
 }
 
-/* ─── Profile & Settings — Capsule Liquid Glass ─── */
+/* ─── Profile Screen (Swiftgram-style) ─── */
 
-@keyframes capsulePress { from { transform: scale(1) } to { transform: scale(0.96) } }
+.pf-screen {
+  padding: 16px; overflow-y: auto;
+  display: flex; flex-direction: column; gap: 14px;
+  position: relative;
+}
+
+/* Edit capsule — top right */
+.pf-edit-capsule {
+  position: absolute; top: 14px; right: 14px; z-index: 5;
+  padding: 8px 18px; border-radius: 999px;
+  background: rgba(255,255,255,0.1);
+  backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255,255,255,0.08);
+  color: #fff; font-size: 14px; font-weight: 500;
+  cursor: pointer;
+  transition: transform 0.12s, background 0.15s;
+}
+.pf-edit-capsule:active { transform: scale(0.93); background: rgba(255,255,255,0.18); }
+
+[data-theme="light"] .pf-edit-capsule { background: rgba(0,0,0,0.06); color: #000; border-color: rgba(0,0,0,0.08); }
+[data-theme="light"] .pf-edit-capsule:active { background: rgba(0,0,0,0.1); }
+
+/* Hero */
+.pf-hero {
+  display: flex; flex-direction: column; align-items: center;
+  padding: 12px 0 4px; text-align: center;
+}
+
+.pf-avatar {
+  width: 100px; height: 100px; border-radius: 50%;
+  background: linear-gradient(135deg, #3b82f6, #60a5fa);
+  display: flex; align-items: center; justify-content: center;
+  margin-bottom: 14px;
+  cursor: pointer;
+  overflow: hidden;
+  position: relative;
+}
+.pf-avatar:active { transform: scale(0.95); transition: transform 0.15s; }
+.pf-avatar-img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; position: absolute; inset: 0; }
+.pf-avatar-letter { font-size: 40px; font-weight: 700; color: #fff; z-index: 1; }
+.pf-avatar-fallback .pf-avatar-letter { display: block !important; }
+
+.pf-name { font-size: 24px; font-weight: 700; color: #fff; margin: 0; }
+
+.pf-status {
+  display: flex; align-items: center; gap: 5px;
+  margin-top: 6px; font-size: 14px; color: rgba(255,255,255,0.4);
+}
+.pf-status-dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: #34c759;
+}
+
+/* Cards */
+.pf-card {
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+.pf-card-row {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 14px 16px;
+  width: 100%; text-align: left; color: inherit; background: none; border: none;
+  font-size: 15px; cursor: default;
+}
+.pf-card-btn { cursor: pointer; transition: background 0.12s; }
+.pf-card-btn:active { background: rgba(255,255,255,0.06); }
+
+.pf-card-divider {
+  height: 1px;
+  background: rgba(255,255,255,0.06);
+  margin: 0 16px;
+}
+
+.pf-card-label {
+  font-size: 13px; color: rgba(255,255,255,0.35); display: block; margin-bottom: 2px;
+}
+.pf-card-value {
+  font-size: 15px; color: rgba(255,255,255,0.85); font-weight: 500;
+}
+.pf-card-link { color: #3b82f6; }
+
+.pf-card-active { background: rgba(255,255,255,0.05); }
+
+/* Light theme */
+[data-theme="light"] .pf-hero .pf-name { color: #000; }
+[data-theme="light"] .pf-status { color: rgba(0,0,0,0.4); }
+[data-theme="light"] .pf-card { background: rgba(0,0,0,0.03); border-color: rgba(0,0,0,0.06); }
+[data-theme="light"] .pf-card-divider { background: rgba(0,0,0,0.06); }
+[data-theme="light"] .pf-card-label { color: rgba(0,0,0,0.35); }
+[data-theme="light"] .pf-card-value { color: rgba(0,0,0,0.85); }
+[data-theme="light"] .pf-card-btn:active { background: rgba(0,0,0,0.05); }
+[data-theme="light"] .pf-card-active { background: rgba(0,0,0,0.04); }
+
+/* ─── Settings Capsules ─── */
 
 .capsule-screen {
   padding: 20px 14px; overflow-y: auto;
@@ -810,44 +906,6 @@ input, textarea { font-family: inherit; border: none; outline: none; background:
   margin: 8px 0 2px; padding-left: 6px;
 }
 
-/* ── Profile Hero ── */
-
-.capsule-profile-hero {
-  display: flex; flex-direction: column; align-items: center;
-  padding: 16px 0 8px; text-align: center;
-}
-
-.capsule-avatar-wrap {
-  position: relative; cursor: pointer;
-  margin-bottom: 14px;
-}
-.capsule-avatar-wrap:active .capsule-avatar { transform: scale(0.94); transition: transform 0.15s; }
-
-.capsule-avatar {
-  width: 88px; height: 88px; border-radius: 50%;
-  background: rgba(255,255,255,0.06);
-  border: 1px solid rgba(255,255,255,0.08);
-  display: flex; align-items: center; justify-content: center;
-  font-size: 34px; font-weight: 700; color: rgba(255,255,255,0.7);
-  overflow: hidden;
-  transition: transform 0.2s, box-shadow 0.2s;
-}
-.capsule-avatar-img {
-  width: 100%; height: 100%; object-fit: cover; border-radius: 50%;
-}
-
-.capsule-name { font-size: 22px; font-weight: 700; color: #fff; margin: 0; }
-.capsule-handle { font-size: 14px; color: rgba(255,255,255,0.35); margin: 2px 0 0; }
-.capsule-verified-badge {
-  display: inline-flex; align-items: center; gap: 5px;
-  margin-top: 8px; padding: 4px 12px;
-  background: rgba(255,255,255,0.04);
-  border-radius: 20px; border: 1px solid rgba(255,255,255,0.06);
-}
-.capsule-verified-badge span { font-size: 12px; font-weight: 600; color: rgba(255,255,255,0.5); }
-
-/* ── Capsule Item ── */
-
 .capsule-item {
   display: flex; align-items: center; gap: 12px;
   padding: 14px 14px;
@@ -856,7 +914,7 @@ input, textarea { font-family: inherit; border: none; outline: none; background:
   border: 1px solid rgba(255,255,255,0.06);
   border-radius: 18px;
   cursor: default; position: relative;
-  transition: transform 0.18s cubic-bezier(0.32,0.72,0,1), background 0.15s, box-shadow 0.25s;
+  transition: transform 0.18s cubic-bezier(0.32,0.72,0,1), background 0.15s;
   overflow: hidden;
   width: 100%; text-align: left; color: inherit; text-decoration: none;
 }
@@ -905,14 +963,8 @@ input, textarea { font-family: inherit; border: none; outline: none; background:
   display: flex; flex-direction: column; gap: 8px; margin-top: 4px;
 }
 
-/* ── Light theme ── */
-
 [data-theme="light"] .capsule-page-title { color: #000; }
 [data-theme="light"] .capsule-section-label { color: rgba(0,0,0,0.3); }
-[data-theme="light"] .capsule-name { color: #000; }
-[data-theme="light"] .capsule-handle { color: rgba(0,0,0,0.4); }
-[data-theme="light"] .capsule-verified-badge { background: rgba(0,0,0,0.03); border-color: rgba(0,0,0,0.06); }
-[data-theme="light"] .capsule-verified-badge span { color: rgba(0,0,0,0.5); }
 [data-theme="light"] .capsule-item { background: rgba(0,0,0,0.03); border-color: rgba(0,0,0,0.06); }
 [data-theme="light"] .capsule-item::before { background: linear-gradient(135deg, rgba(255,255,255,0.8) 0%, transparent 50%); }
 [data-theme="light"] .capsule-item.clickable:active { background: rgba(0,0,0,0.06); }
@@ -920,7 +972,6 @@ input, textarea { font-family: inherit; border: none; outline: none; background:
 [data-theme="light"] .capsule-item-title { color: rgba(0,0,0,0.85); }
 [data-theme="light"] .capsule-item-value { color: rgba(0,0,0,0.35); }
 [data-theme="light"] .capsule-item-arrow { color: rgba(0,0,0,0.2); }
-[data-theme="light"] .capsule-avatar { background: rgba(0,0,0,0.04); border-color: rgba(0,0,0,0.08); color: rgba(0,0,0,0.5); }
 [data-theme="light"] .capsule-active { background: rgba(0,0,0,0.05) !important; border-color: rgba(0,0,0,0.08) !important; }
 [data-theme="light"] .capsule-danger .capsule-item-title { color: #FF453A; }
 

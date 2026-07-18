@@ -14,6 +14,13 @@ const genderLabel = (g) => {
   return g
 }
 
+function formatDate(dateStr) {
+  if (!dateStr) return '—'
+  const d = new Date(dateStr)
+  const months = ['январь','февраль','март','апрель','май','июнь','июль','август','сентябрь','октябрь','ноябрь','декабрь']
+  return `${months[d.getMonth()]} ${d.getFullYear()} г.`
+}
+
 export default function ProfileTab() {
   const { user, accounts, switchToAccount, refreshUser } = useAuth()
   const fileInputRef = useRef(null)
@@ -36,124 +43,108 @@ export default function ProfileTab() {
   }
 
   return (
-    <div className="tab-content capsule-screen">
-      <div className="capsule-profile-hero">
-        <div className="capsule-avatar-wrap" onClick={() => fileInputRef.current?.click()}>
-          <div className="capsule-avatar">
-            {user?.avatar ? (
-              <img src={resolveMediaUrl(user.avatar)} alt="" className="capsule-avatar-img" onError={(e) => { e.target.style.display = 'none'; e.target.parentElement.textContent = user.name?.[0] || '?' }} />
-            ) : (
-              <span>{user?.name?.[0]?.toUpperCase()}</span>
-            )}
-          </div>
+    <div className="tab-content pf-screen">
+      {/* Edit capsule — top right */}
+      <button className="pf-edit-capsule" onClick={() => setShowEditor(true)}>
+        {t('Редактировать')}
+      </button>
+
+      {/* Hero */}
+      <div className="pf-hero">
+        <div className="pf-avatar" onClick={() => fileInputRef.current?.click()}>
+          {user?.avatar ? (
+            <img src={resolveMediaUrl(user.avatar)} alt="" className="pf-avatar-img" onError={(e) => { e.target.style.display = 'none'; e.target.parentElement.classList.add('pf-avatar-fallback') }} />
+          ) : null}
+          <span className="pf-avatar-letter">{user?.name?.[0]?.toUpperCase()}</span>
         </div>
         <input ref={fileInputRef} type="file" accept="image/*" hidden onChange={handleAvatarChange} />
-        <h2 className="capsule-name">{user?.name}</h2>
-        <p className="capsule-handle">@{user?.userId}</p>
-        {verifyStatus?.verified && (
-          <div className="capsule-verified-badge">
-            <VerificationBadge size={16} />
-            <span>{t('Верифицирован')}</span>
+
+        <h1 className="pf-name">{user?.name}</h1>
+
+        <div className="pf-status">
+          <span className="pf-status-dot" />
+          <span>{t('онлайн')}</span>
+        </div>
+      </div>
+
+      {/* Info card */}
+      <div className="pf-card">
+        <div className="pf-card-row">
+          <span className="pf-card-label">ID</span>
+          <span className="pf-card-value">{user?.userId}</span>
+        </div>
+        <div className="pf-card-divider" />
+        <div className="pf-card-row">
+          <span className="pf-card-label">{t('Дата регистрации')}</span>
+          <span className="pf-card-value">{formatDate(user?.createdAt)}</span>
+        </div>
+      </div>
+
+      {/* Details card */}
+      <div className="pf-card">
+        <div className="pf-card-row">
+          <div>
+            <span className="pf-card-label">{t('Имя пользователя')}</span>
+            <span className="pf-card-value pf-card-link">@{user?.userId}</span>
           </div>
+        </div>
+        <div className="pf-card-divider" />
+        <div className="pf-card-row">
+          <div>
+            <span className="pf-card-label">{t('О себе')}</span>
+            <span className="pf-card-value">{user?.bio || '—'}</span>
+          </div>
+        </div>
+        {user?.birthday && (
+          <>
+            <div className="pf-card-divider" />
+            <div className="pf-card-row">
+              <div>
+                <span className="pf-card-label">{t('День рождения')}</span>
+                <span className="pf-card-value">{user?.birthday}</span>
+              </div>
+            </div>
+          </>
         )}
-      </div>
-
-      <p className="capsule-section-label">{t('Информация')}</p>
-      <div className="capsule-section">
-        <div className="capsule-item">
-          <div className="capsule-item-icon">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-          </div>
-          <div className="capsule-item-content">
-            <span className="capsule-item-title">{t('Имя')}</span>
-            <span className="capsule-item-value">{user?.name}</span>
-          </div>
-          <svg className="capsule-item-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M9 18l6-6-6-6"/></svg>
-        </div>
-
-        <div className="capsule-item">
-          <div className="capsule-item-icon">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg>
-          </div>
-          <div className="capsule-item-content">
-            <span className="capsule-item-title">ID</span>
-            <span className="capsule-item-value">@{user?.userId}</span>
-          </div>
-          <svg className="capsule-item-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M9 18l6-6-6-6"/></svg>
-        </div>
-
-        <div className="capsule-item">
-          <div className="capsule-item-icon">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-          </div>
-          <div className="capsule-item-content">
-            <span className="capsule-item-title">{t('День рождения')}</span>
-            <span className="capsule-item-value">{user?.birthday || '—'}</span>
-          </div>
-          <svg className="capsule-item-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M9 18l6-6-6-6"/></svg>
-        </div>
-
-        <div className="capsule-item">
-          <div className="capsule-item-icon">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v8M8 12h8"/></svg>
-          </div>
-          <div className="capsule-item-content">
-            <span className="capsule-item-title">{t('Пол')}</span>
-            <span className="capsule-item-value">{genderLabel(user?.gender) || '—'}</span>
-          </div>
-          <svg className="capsule-item-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M9 18l6-6-6-6"/></svg>
-        </div>
-      </div>
-
-      <div className="capsule-section">
-        <button className="capsule-item clickable" onClick={() => setShowEditor(true)}>
-          <div className="capsule-item-icon">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-          </div>
-          <div className="capsule-item-content">
-            <span className="capsule-item-title">{t('Редактировать профиль')}</span>
-          </div>
-          <svg className="capsule-item-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M9 18l6-6-6-6"/></svg>
-        </button>
-
-        <button className="capsule-item clickable" onClick={() => setShowVerify(true)}>
-          <div className="capsule-item-icon">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><path d="M12 2L4 5v6c0 5.55 3.84 10.74 8 12 4.16-1.26 8-6.45 8-12V5l-8-3z"/><path d="M9 12l2 2 4-4"/></svg>
-          </div>
-          <div className="capsule-item-content">
-            <span className="capsule-item-title">{t('Верификация')}</span>
-          </div>
-          <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+        {user?.gender && (
+          <>
+            <div className="pf-card-divider" />
+            <div className="pf-card-row">
+              <div>
+                <span className="pf-card-label">{t('Пол')}</span>
+                <span className="pf-card-value">{genderLabel(user?.gender)}</span>
+              </div>
+            </div>
+          </>
+        )}
+        <div className="pf-card-divider" />
+        <button className="pf-card-row pf-card-btn" onClick={() => setShowVerify(true)}>
+          <span className="pf-card-label" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            {t('Верификация')}
             {verifyStatus?.verified && <VerificationBadge size={14} />}
-            <svg className="capsule-item-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M9 18l6-6-6-6"/></svg>
           </span>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" style={{ opacity: 0.3 }}><path d="M9 18l6-6-6-6"/></svg>
         </button>
       </div>
 
+      {/* Accounts */}
       {accounts.length > 1 && (
-        <>
-          <p className="capsule-section-label">{t('Аккаунты на устройстве')}</p>
-          <div className="capsule-section">
-            {accounts.map((a) => (
+        <div className="pf-card">
+          {accounts.map((a, i) => (
+            <div key={a.userId}>
+              {i > 0 && <div className="pf-card-divider" />}
               <button
-                key={a.userId}
-                className={`capsule-item clickable ${a.userId === user?.userId ? 'capsule-active' : ''}`}
+                className={`pf-card-row pf-card-btn ${a.userId === user?.userId ? 'pf-card-active' : ''}`}
                 onClick={() => switchToAccount(a.userId)}
               >
-                <div className="capsule-item-icon">
-                  <span style={{ fontSize: 16, fontWeight: 700, opacity: 0.6 }}>{a.name?.[0]?.toUpperCase()}</span>
-                </div>
-                <div className="capsule-item-content">
-                  <span className="capsule-item-title">{a.name}</span>
-                  <span className="capsule-item-value">@{a.userId}</span>
-                </div>
+                <span className="pf-card-value">{a.name} <span style={{ opacity: 0.4 }}>@{a.userId}</span></span>
                 {a.userId === user?.userId && (
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M20 6L9 17l-5-5"/></svg>
                 )}
               </button>
-            ))}
-          </div>
-        </>
+            </div>
+          ))}
+        </div>
       )}
 
       {showEditor && <ProfileEditor onClose={() => setShowEditor(false)} />}
