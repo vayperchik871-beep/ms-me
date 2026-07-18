@@ -170,20 +170,23 @@ export default function VerificationDetailScreen({ onClose, onApply, initialTab 
       </div>
 
       <div className="verify-bnav">
-        <button
-          className={`verify-bnav-tab ${tab === 'msm' ? 'active' : ''}`}
-          onClick={() => setTab('msm')}
-        >
-          <VerificationBadge size={18} type="msm" />
-          <span>MSM Verif</span>
-        </button>
-        <button
-          className={`verify-bnav-tab ${tab === 'dev' ? 'active' : ''}`}
-          onClick={() => setTab('dev')}
-        >
-          <VerificationBadge size={18} type="dev" />
-          <span>Dev</span>
-        </button>
+        <div className="verify-bnav-glass" style={{ '--active': tab === 'dev' ? 1 : 0 }}>
+          <div className="verify-bnav-indicator" />
+          <button
+            className={`verify-bnav-tab ${tab === 'msm' ? 'active' : ''}`}
+            onClick={() => setTab('msm')}
+          >
+            <VerificationBadge size={22} type="msm" />
+            <span>MSM Verif</span>
+          </button>
+          <button
+            className={`verify-bnav-tab ${tab === 'dev' ? 'active' : ''}`}
+            onClick={() => setTab('dev')}
+          >
+            <VerificationBadge size={22} type="dev" />
+            <span>Dev</span>
+          </button>
+        </div>
       </div>
     </div>
   )
