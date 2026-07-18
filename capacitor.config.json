@@ -1,5 +1,5 @@
 {
-  "appId": "com.msmessenger.app",
+  "appId": "com.ms.messenger",
   "appName": "MS Messenger",
   "webDir": "dist",
   "bundledWebRuntime": false,

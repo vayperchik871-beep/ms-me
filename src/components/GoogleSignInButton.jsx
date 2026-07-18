@@ -1,26 +1,13 @@
-import { useState, useRef } from 'react'
+import { useState } from 'react'
 import { useAuth } from '../context/AuthContext'
 import { Capacitor } from '@capacitor/core'
-
-const isConfigured = () => {
-  if (typeof window === 'undefined') return false
-  const cfg = window.Capacitor?.getConfig?.()
-  const ga = cfg?.plugins?.GoogleAuth
-  const androidId = ga?.androidClientId || ''
-  return androidId.includes('.apps.googleusercontent.com') && !androidId.includes('ТВОЙ')
-}
 
 export default function GoogleSignInButton({ onComplete, label }) {
   const { googleLogin } = useAuth()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
-  const configured = useRef(isConfigured())
 
   const handleClick = async () => {
-    if (!configured.current) {
-      setError('Google Sign-In не настроен. Настройте Client ID в capacitor.config.json и GOOGLE_CLIENT_ID на сервере.')
-      return
-    }
     setLoading(true)
     setError('')
     try {
@@ -31,7 +18,7 @@ export default function GoogleSignInButton({ onComplete, label }) {
       onComplete?.(result)
     } catch (err) {
       console.error('Google sign-in error:', err)
-      setError(err.message || 'Ошибка входа через Google')
+      setError(err.message || 'Ошибка входа')
     } finally {
       setLoading(false)
     }
