@@ -1,0 +1,28 @@
+name: MsMessenger
+options:
+  bundleIdPrefix: com.ms
+  deploymentTarget:
+    iOS: "16.0"
+  xcodeVersion: "16.0"
+
+settings:
+  SWIFT_VERSION: "5.0"
+  SWIFT_STRICT_CONCURRENCY: minimal
+
+targets:
+  MsMessenger:
+    type: application
+    platform: iOS
+    sources:
+      - path: MsMessenger
+    info:
+      path: MsMessenger/Info.plist
+    settings:
+      PRODUCT_BUNDLE_IDENTIFIER: com.ms.messenger
+      INFOPLIST_FILE: MsMessenger/Info.plist
+      ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+      DEVELOPMENT_TEAM: ""
+    dependencies:
+      - sdk: AuthenticationServices.framework
+      - sdk: CryptoKit.framework
+      - sdk: UIKit.framework
