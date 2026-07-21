@@ -15,7 +15,6 @@ struct MsMessengerApp: App {
                 }
             }
             .preferredColorScheme(theme.isDark ? .dark : .light)
-            .ignoresSafeArea()
         }
     }
 }

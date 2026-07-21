@@ -8,7 +8,5 @@ struct TabBarView: View {
             SettingsView().tabItem { Label("Настройки", systemImage: "gearshape.fill") }
         }
         .tint(ThemeManager.shared.accent)
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(Color.yellow)
     }
 }

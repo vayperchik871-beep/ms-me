@@ -7,36 +7,70 @@ struct OnboardingView: View {
     @State private var password = ""
     @State private var error: String?
     @State private var loading = false
+    @FocusState private var focusedField: String?
     var onComplete: () -> Void
 
     var body: some View {
-        ScrollView {
-            VStack(spacing: 24) {
-                Spacer(minLength: 40)
-                Image(systemName: "bubble.left.and.bubble.right.fill").font(.system(size: 56)).foregroundColor(.purple)
-                Text("MS Messenger").font(.largeTitle).bold()
-                VStack(spacing: 16) {
-                    Picker("", selection: $isLogin) { Text("Вход").tag(true); Text("Регистрация").tag(false) }.pickerStyle(.segmented)
-                    VStack(spacing: 12) {
-                        TextField("ID", text: $userId).textFieldStyle(.roundedBorder).autocapitalization(.none).disableAutocorrection(true)
-                        if !isLogin { TextField("Имя", text: $name).textFieldStyle(.roundedBorder) }
-                        SecureField("Пароль", text: $password).textFieldStyle(.roundedBorder)
-                    }
-                    if let error { Text(error).foregroundColor(.red).font(.caption) }
-                    Button(action: submit) { Text(isLogin ? "Войти" : "Зарегистрироваться").frame(maxWidth: .infinity) }
+        ScrollViewReader { proxy in
+            ScrollView {
+                VStack(spacing: 24) {
+                    Spacer().frame(height: 60)
+                    Image(systemName: "bubble.left.and.bubble.right.fill")
+                        .font(.system(size: 56))
+                        .foregroundColor(.purple)
+                    Text("MS Messenger")
+                        .font(.largeTitle).bold()
+                    VStack(spacing: 16) {
+                        Picker("", selection: $isLogin) {
+                            Text("Вход").tag(true)
+                            Text("Регистрация").tag(false)
+                        }.pickerStyle(.segmented)
+                        VStack(spacing: 12) {
+                            TextField("ID", text: $userId)
+                                .textFieldStyle(.roundedBorder)
+                                .autocapitalization(.none)
+                                .disableAutocorrection(true)
+                                .focused($focusedField, equals: "id")
+                                .id("id")
+                            if !isLogin {
+                                TextField("Имя", text: $name)
+                                    .textFieldStyle(.roundedBorder)
+                                    .focused($focusedField, equals: "name")
+                                    .id("name")
+                            }
+                            SecureField("Пароль", text: $password)
+                                .textFieldStyle(.roundedBorder)
+                                .focused($focusedField, equals: "password")
+                                .id("password")
+                        }
+                        if let error {
+                            Text(error).foregroundColor(.red).font(.caption)
+                        }
+                        Button(action: submit) {
+                            Text(isLogin ? "Войти" : "Зарегистрироваться")
+                                .frame(maxWidth: .infinity)
+                        }
                         .buttonStyle(.borderedProminent).tint(.purple)
                         .disabled(loading || userId.isEmpty || password.isEmpty || (!isLogin && name.isEmpty))
-                    Divider().frame(maxWidth: 200)
-                    Button(action: googleSignIn) { HStack { Image(systemName: "g.circle.fill"); Text("Google") }.frame(maxWidth: .infinity) }.buttonStyle(.bordered)
-                }.padding(.horizontal, 16)
-                Spacer()
+                        Divider().frame(maxWidth: 200)
+                        Button(action: googleSignIn) {
+                            HStack { Image(systemName: "g.circle.fill"); Text("Google") }
+                                .frame(maxWidth: .infinity)
+                        }.buttonStyle(.bordered)
+                    }
+                    .padding(.horizontal, 24)
+                    Spacer().frame(minLength: 40)
+                }
+            }
+            .scrollDismissesKeyboard(.interactively)
+            .onChange(of: focusedField) { field in
+                if let field { DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { withAnimation { proxy.scrollTo(field, anchor: .center) } } }
             }
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(Color.green)
     }
 
     private func submit() {
+        focusedField = nil
         loading = true; error = nil
         let deviceId = UIDevice.current.identifierForVendor?.uuidString ?? UUID().uuidString
         Task {
@@ -53,6 +87,7 @@ struct OnboardingView: View {
     }
 
     private func googleSignIn() {
+        focusedField = nil
         loading = true; error = nil
         let deviceId = UIDevice.current.identifierForVendor?.uuidString ?? UUID().uuidString
         Task {
