@@ -1,7 +1,7 @@
 import Foundation
 import AuthenticationServices
 
-class GoogleSignInService: NSObject, ASWebAuthenticationSessionDelegate {
+class GoogleSignInService: NSObject {
     static let shared = GoogleSignInService()
     private let clientID = "202627330294-tb4nvaatchp87ke6g1i01nedpc8b5c33.apps.googleusercontent.com"
     private let redirectURI = "com.googleusercontent.apps.202627330294-i3glf16hem9j85of1ma9gq9h5vg3cvl4:/oauthredirect"
