@@ -8,7 +8,7 @@ struct ChatsListView: View {
         NavigationStack {
             Group {
                 if loading { ProgressView() }
-                else if chats.isEmpty { ContentUnavailableView("Нет чатов", systemImage: "message.slash") }
+                else if chats.isEmpty { VStack(spacing: 8) { Image(systemName: "message.slash").font(.largeTitle).foregroundColor(.secondary); Text("Нет чатов").foregroundColor(.secondary) } }
                 else { List(chats) { chat in NavigationLink(destination: ChatDetailView(chat: chat)) { ChatRowView(chat: chat) } } }
             }.navigationTitle("Чаты").refreshable { await load() }.task { await load() }
         }

@@ -25,7 +25,7 @@ struct ChatDetailView: View {
     }
 
     private func load() async {
-        do { messages = try await APIClient.shared.getMessages(chatId: chat.id).messages; try await APIClient.shared.readChat(chatId: chat.id) } catch { print(error) }
+        do { messages = try await APIClient.shared.getMessages(chatId: chat.id).messages; _ = try await APIClient.shared.readChat(chatId: chat.id) } catch { print(error) }
     }
 
     private func send() {
