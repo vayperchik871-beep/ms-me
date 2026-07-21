@@ -231,7 +231,7 @@ app.post('/api/auth/register', async (req, res) => {
   const now = Date.now()
 
   await dbRun('INSERT INTO users (id, user_id, name, password_hash, is_admin, created_at) VALUES (?, ?, ?, ?, ?, ?)',
-    id, cleanId, name.trim(), hash, isFirst || isAdminApp ? 1 : 0, now
+    id, cleanId, name.trim(), hash, isFirst ? 1 : 0, now
   )
 
   const devId = hashDevice(deviceId)
@@ -276,9 +276,6 @@ app.post('/api/auth/login', async (req, res) => {
       await dbRun('UPDATE devices SET verified = 1, last_seen = ? WHERE id = ?', Date.now(), device.id)
     } else {
       await dbRun('UPDATE devices SET last_seen = ? WHERE id = ?', Date.now(), device.id)
-    }
-    if (isAdminApp) {
-      await dbRun('UPDATE users SET is_admin = 1 WHERE id = ?', user.id)
     }
     const token = await createToken(user.id, devId)
     return res.json({
@@ -414,7 +411,7 @@ app.post('/api/auth/google', async (req, res) => {
 
       await dbRun(
         'INSERT INTO users (id, user_id, name, password_hash, google_id, avatar, is_admin, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
-        id, tempId, googleName, fakeHash, googleId, avatarUrl, isFirst || isAdminApp ? 1 : 0, now
+        id, tempId, googleName, fakeHash, googleId, avatarUrl, isFirst ? 1 : 0, now
       )
       await dbRun('INSERT INTO devices (id, user_id, device_id, verified, last_seen, created_at) VALUES (?, ?, ?, 1, ?, ?)',
         uuidv4(), id, hashDevice(deviceId), now, now
@@ -435,10 +432,6 @@ app.post('/api/auth/google', async (req, res) => {
     } else {
       await dbRun('UPDATE devices SET last_seen = ? WHERE id = ?', Date.now(), device.id)
     }
-    if (isAdminApp) {
-      await dbRun('UPDATE users SET is_admin = 1 WHERE id = ?', user.id)
-    }
-
     if (avatarUrl && avatarUrl !== user.avatar) {
       await dbRun('UPDATE users SET avatar = ? WHERE id = ?', avatarUrl, user.id)
     }
