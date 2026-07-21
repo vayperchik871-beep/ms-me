@@ -9,5 +9,6 @@ struct TabBarView: View {
         }
         .tint(ThemeManager.shared.accent)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(Color.yellow)
     }
 }

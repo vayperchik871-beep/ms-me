@@ -15,7 +15,7 @@ struct MsMessengerApp: App {
                 }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .background(theme.isDark ? Color.black : Color.white)
+            .background(Color.red)
             .preferredColorScheme(theme.isDark ? .dark : .light)
             .ignoresSafeArea()
         }
