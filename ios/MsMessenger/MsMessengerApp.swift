@@ -7,7 +7,9 @@ struct MsMessengerApp: App {
 
     var body: some Scene {
         WindowGroup {
-            Group {
+            ZStack {
+                (theme.isDark ? Color.black : Color.white)
+                    .ignoresSafeArea()
                 if isAuthenticated {
                     ContentView().onAppear { WebSocketService.shared.connect(token: APIClient.shared.token ?? "") }
                 } else {
