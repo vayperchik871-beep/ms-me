@@ -27,28 +27,28 @@ jobs:
 
       - name: Build for Simulator
         run: |
+          set -e
           xcodebuild build \
             -project MsMessenger.xcodeproj \
             -scheme MsMessenger \
             -sdk iphonesimulator \
-            -destination 'generic/platform=iOS Simulator' \
             -configuration Debug \
             -derivedDataPath build \
             CODE_SIGNING_ALLOWED=NO
+          echo "=== Build products ==="
+          find build/Build/Products -name "*.app" -type d
+          test -d build/Build/Products/Debug-iphonesimulator/MsMessenger.app
 
-      - name: Package .app
+      - name: Package for Appetize
         run: |
-          APP="build/Build/Products/Debug-iphonesimulator/MsMessenger.app"
-          echo "=== .app contents ==="
-          ls -la "$APP"
-          echo "=== Creating tar.gz ==="
-          tar -czf /tmp/MsMessenger-iOS.tar.gz -C build/Build/Products/Debug-iphonesimulator MsMessenger.app
-          echo "=== tar.gz contents ==="
-          tar -tzf /tmp/MsMessenger-iOS.tar.gz | head -5
-          cp /tmp/MsMessenger-iOS.tar.gz MsMessenger-iOS.tar.gz
+          set -e
+          cd build/Build/Products/Debug-iphonesimulator
+          zip -r MsMessenger.zip MsMessenger.app
+          unzip -l MsMessenger.zip
+          cp MsMessenger.zip ../../../../MsMessenger.zip
 
       - uses: actions/upload-artifact@v4
         with:
           name: MsMessenger-iOS
-          path: ios/MsMessenger-iOS.tar.gz
+          path: ios/MsMessenger.zip
           retention-days: 14
