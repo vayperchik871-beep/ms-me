@@ -37,33 +37,6 @@ jobs:
             CODE_SIGN_IDENTITY="" \
             DEVELOPMENT_TEAM=""
 
-      - name: Build for Simulator
-        run: |
-          xcodebuild build \
-            -project MsMessenger.xcodeproj \
-            -scheme MsMessenger \
-            -sdk iphonesimulator \
-            -configuration Debug \
-            -derivedDataPath build-sim \
-            CODE_SIGNING_ALLOWED=NO \
-            CODE_SIGN_IDENTITY="" \
-            DEVELOPMENT_TEAM=""
-
-      - name: Run in Simulator & take screenshot
-        run: |
-          RUNTIME=$(xcrun simctl list runtimes -j | python3 -c "import json,sys; d=json.load(sys.stdin); rs=[r for r in d.get('runtimes',[]) if 'iOS' in r.get('name','') and r.get('isAvailable',False)]; print(rs[-1]['name'] if rs else '')")
-          echo "Using runtime: $RUNTIME"
-          DEVICE_TYPE=$(xcrun simctl list devicetypes -j | python3 -c "import json,sys; d=json.load(sys.stdin); ts=[t for t in d.get('devicetypes',[]) if 'iPhone' in t.get('name','')]; ts.sort(key=lambda t: t['name']); print(ts[-1]['name'] if ts else 'iPhone 14 Pro')")
-          echo "Using device: $DEVICE_TYPE"
-          DEVICE_ID=$(xcrun simctl create MsMessenger "$DEVICE_TYPE" "$RUNTIME")
-          xcrun simctl boot "$DEVICE_ID"
-          xcrun simctl install "$DEVICE_ID" build-sim/Build/Products/Debug-iphonesimulator/MsMessenger.app
-          xcrun simctl launch "$DEVICE_ID" com.ms.messenger
-          sleep 5
-          xcrun simctl screenshot "$DEVICE_ID" screenshot.png
-          xcrun simctl shutdown "$DEVICE_ID"
-          xcrun simctl delete "$DEVICE_ID"
-
       - name: Package artifact (IPA)
         run: |
           mkdir -p artifact/Payload
