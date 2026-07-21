@@ -31,7 +31,7 @@ struct OnboardingView: View {
                         Button(action: googleSignIn) { HStack { Image(systemName: "g.circle.fill"); Text("Google") }.frame(maxWidth: .infinity) }.buttonStyle(.bordered)
                     }
                     Spacer()
-                }.padding(.horizontal, max(16, (geo.size.width - 400) / 2))
+                }            .padding(.horizontal, UIDevice.current.userInterfaceIdiom == .pad ? max(16, (geo.size.width - 400) / 2) : 16)
             }
         }
     }
