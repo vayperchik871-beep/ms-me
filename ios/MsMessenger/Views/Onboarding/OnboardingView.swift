@@ -59,7 +59,7 @@ struct OnboardingView: View {
                         }.buttonStyle(.bordered)
                     }
                     .padding(.horizontal, 24)
-                    Spacer().frame(minLength: 40)
+                    Spacer(minLength: 40)
                 }
             }
             .scrollDismissesKeyboard(.interactively)
