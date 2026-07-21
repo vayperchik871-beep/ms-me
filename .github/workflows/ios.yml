@@ -51,13 +51,11 @@ jobs:
 
       - name: Run in Simulator & take screenshot
         run: |
-          DEVICE_ID=$(xcrun simctl create MsMessenger "iPhone 16 Pro" "iOS18.0" 2>/dev/null || echo "")
-          if [ -z "$DEVICE_ID" ]; then
-            DEVICE_ID=$(xcrun simctl create MsMessenger "iPhone 15 Pro" "iOS17.0" 2>/dev/null || echo "")
-          fi
-          if [ -z "$DEVICE_ID" ]; then
-            DEVICE_ID=$(xcrun simctl create MsMessenger "iPhone 14 Pro" "iOS16.0" 2>/dev/null || echo "")
-          fi
+          RUNTIME=$(xcrun simctl list runtimes -j | python3 -c "import json,sys; d=json.load(sys.stdin); rs=[r for r in d.get('runtimes',[]) if 'iOS' in r.get('name','') and r.get('isAvailable',False)]; print(rs[-1]['name'] if rs else '')")
+          echo "Using runtime: $RUNTIME"
+          DEVICE_TYPE=$(xcrun simctl list devicetypes -j | python3 -c "import json,sys; d=json.load(sys.stdin); ts=[t for t in d.get('devicetypes',[]) if 'iPhone' in t.get('name','')]; ts.sort(key=lambda t: t['name']); print(ts[-1]['name'] if ts else 'iPhone 14 Pro')")
+          echo "Using device: $DEVICE_TYPE"
+          DEVICE_ID=$(xcrun simctl create MsMessenger "$DEVICE_TYPE" "$RUNTIME")
           xcrun simctl boot "$DEVICE_ID"
           xcrun simctl install "$DEVICE_ID" build-sim/Build/Products/Debug-iphonesimulator/MsMessenger.app
           xcrun simctl launch "$DEVICE_ID" com.ms.messenger
