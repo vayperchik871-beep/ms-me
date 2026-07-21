@@ -6,6 +6,7 @@ struct AdminTerminalView: View {
     @State private var history: [(type: String, text: String)] = []
     @State private var loading = false
     @ObservedObject private var theme = ThemeManager.shared
+    @FocusState private var isInputFocused: Bool
 
     var body: some View {
         NavigationStack {
@@ -19,12 +20,13 @@ struct AdminTerminalView: View {
                 }.background(theme.terminalBg)
                 HStack(spacing: 8) {
                     Text(">").font(.system(.body, design: .monospaced)).foregroundColor(theme.terminalGreen)
-                    TextField("введите команду...", text: $command).font(.system(.body, design: .monospaced)).foregroundColor(theme.terminalText).autocapitalization(.none).disableAutocorrection(true).onSubmit(submit)
+                    TextField("введите команду...", text: $command).font(.system(.body, design: .monospaced)).foregroundColor(theme.terminalText).autocapitalization(.none).disableAutocorrection(true).focused($isInputFocused).onSubmit(submit)
                     if loading { ProgressView().scaleEffect(0.7) }
                 }.padding(12).background(Color(hex: "#1a1a1a")!)
-            }.navigationTitle("Терминал").navigationBarTitleDisplayMode(.inline)
-                .toolbar { ToolbarItem(placement: .cancellationAction) { Button("Закрыть") { dismiss() } } }
-                .onAppear { history.append(("system", "Терминал администратора. Введите help для списка команд.")) }
+            }
+            .navigationTitle("Терминал").navigationBarTitleDisplayMode(.inline)
+            .toolbar { ToolbarItem(placement: .cancellationAction) { Button("Закрыть") { dismiss() } } }
+            .onAppear { history.append(("system", "Терминал администратора. Введите help для списка команд.")) }
         }
     }
 

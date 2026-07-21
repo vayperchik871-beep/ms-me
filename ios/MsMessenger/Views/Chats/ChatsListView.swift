@@ -9,7 +9,7 @@ struct ChatsListView: View {
             Group {
                 if loading { ProgressView() }
                 else if chats.isEmpty { VStack(spacing: 8) { Image(systemName: "message.slash").font(.largeTitle).foregroundColor(.secondary); Text("Нет чатов").foregroundColor(.secondary) } }
-                else { List(chats) { chat in NavigationLink(destination: ChatDetailView(chat: chat)) { ChatRowView(chat: chat) } } }
+                else { List(chats) { chat in NavigationLink(destination: ChatDetailView(chat: chat)) { ChatRowView(chat: chat) } }.listStyle(.plain) }
             }.navigationTitle("Чаты").refreshable { await load() }.task { await load() }
         }
     }
@@ -25,7 +25,7 @@ struct ChatRowView: View {
     let chat: Chat
     var body: some View {
         HStack(spacing: 12) {
-            ZStack { Circle().fill(ThemeManager.shared.accent.opacity(0.2)).frame(width: 48, height: 48); Text(chat.name?.prefix(1).uppercased() ?? "?").font(.title3).bold().foregroundColor(ThemeManager.shared.accent) }
+            ZStack { Circle().fill(ThemeManager.shared.accent.opacity(0.2)).frame(width: 44, height: 44); Text(chat.name?.prefix(1).uppercased() ?? "?").font(.title3).bold().foregroundColor(ThemeManager.shared.accent) }
             VStack(alignment: .leading, spacing: 4) {
                 Text(chat.name ?? "Чат").font(.body).fontWeight(.medium)
                 if let last = chat.lastMessage { Text(last.text ?? "Вложение").font(.caption).foregroundColor(ThemeManager.shared.textSecondary).lineLimit(1) }

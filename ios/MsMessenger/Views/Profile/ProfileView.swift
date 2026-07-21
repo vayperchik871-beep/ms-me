@@ -8,7 +8,7 @@ struct ProfileView: View {
     var body: some View {
         Form {
             Section("Профиль") {
-                HStack { Spacer(); ZStack { Circle().fill(ThemeManager.shared.accent.opacity(0.2)).frame(width: 80, height: 80); Text(user.name.prefix(1).uppercased()).font(.largeTitle).foregroundColor(ThemeManager.shared.accent) }; Spacer() }
+                HStack { Spacer(); ZStack { Circle().fill(ThemeManager.shared.accent.opacity(0.2)).frame(width: 72, height: 72); Text(user.name.prefix(1).uppercased()).font(.largeTitle).foregroundColor(ThemeManager.shared.accent) }; Spacer() }
                 HStack { Text("ID"); Spacer(); Text("@\(user.userId)").foregroundColor(ThemeManager.shared.textSecondary) }
                 HStack { Text("Имя"); Spacer(); TextField("Имя", text: $newName).multilineTextAlignment(.trailing).onAppear { newName = user.name } }
                 Button("Сохранить") { saving = true; Task { do { _ = try await APIClient.shared.updateProfile(["name": newName]) } catch { print(error) }; saving = false } }.disabled(saving || newName.isEmpty)
