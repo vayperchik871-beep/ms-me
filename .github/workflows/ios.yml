@@ -37,10 +37,40 @@ jobs:
             CODE_SIGN_IDENTITY="" \
             DEVELOPMENT_TEAM=""
 
+      - name: Build for Simulator
+        run: |
+          xcodebuild build \
+            -project MsMessenger.xcodeproj \
+            -scheme MsMessenger \
+            -sdk iphonesimulator \
+            -configuration Debug \
+            -derivedDataPath build-sim \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGN_IDENTITY="" \
+            DEVELOPMENT_TEAM=""
+
+      - name: Run in Simulator & take screenshot
+        run: |
+          DEVICE_ID=$(xcrun simctl create MsMessenger "iPhone 16 Pro" "iOS18.0" 2>/dev/null || echo "")
+          if [ -z "$DEVICE_ID" ]; then
+            DEVICE_ID=$(xcrun simctl create MsMessenger "iPhone 15 Pro" "iOS17.0" 2>/dev/null || echo "")
+          fi
+          if [ -z "$DEVICE_ID" ]; then
+            DEVICE_ID=$(xcrun simctl create MsMessenger "iPhone 14 Pro" "iOS16.0" 2>/dev/null || echo "")
+          fi
+          xcrun simctl boot "$DEVICE_ID"
+          xcrun simctl install "$DEVICE_ID" build-sim/Build/Products/Debug-iphonesimulator/MsMessenger.app
+          xcrun simctl launch "$DEVICE_ID" com.ms.messenger
+          sleep 5
+          xcrun simctl screenshot "$DEVICE_ID" screenshot.png
+          xcrun simctl shutdown "$DEVICE_ID"
+          xcrun simctl delete "$DEVICE_ID"
+
       - name: Package artifact
         run: |
           mkdir -p artifact
           cp -R build/Build/Products/Debug-iphoneos/MsMessenger.app artifact/
+          cp screenshot.png artifact/ 2>/dev/null || true
           cd artifact && zip -r MsMessenger-iOS.zip MsMessenger.app
 
       - uses: actions/upload-artifact@v4
