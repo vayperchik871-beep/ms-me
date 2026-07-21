@@ -544,6 +544,7 @@ app.post('/api/admin/command', authMiddleware, adminMiddleware, async (req, res)
           '  bc <text>      — отправить сообщение всем чатам (broadcast)',
           '  say <id> <msg> — написать от имени бота в личный чат с пользователем',
           '  clear          — очистить терминал',
+          '  purge          — удалить ВСЕ аккаунты (кроме системного)',
           '  help           — эта справка',
         ].join('\n')))
       }
@@ -645,6 +646,19 @@ app.post('/api/admin/command', authMiddleware, adminMiddleware, async (req, res)
           chat.id, botId, enc.content_enc, enc.content_iv, enc.content_tag, Date.now()
         )
         return res.json(say(`Сообщение отправлено @${targetId}`))
+      }
+      case 'purge': {
+        if (args[0] !== '--force') {
+          return res.json(say('ВНИМАНИЕ: это удалит ВСЕ аккаунты и данные. Подтверди: purge --force'))
+        }
+        const count = await dbGet('SELECT COUNT(*) as c FROM users WHERE is_system = 0')
+        await dbRun('DELETE FROM message_reactions WHERE message_id IN (SELECT id FROM messages WHERE sender_id IN (SELECT id FROM users WHERE is_system = 0))')
+        await dbRun('DELETE FROM messages WHERE sender_id IN (SELECT id FROM users WHERE is_system = 0)')
+        await dbRun('DELETE FROM chat_participants WHERE user_id IN (SELECT id FROM users WHERE is_system = 0)')
+        await dbRun('DELETE FROM sessions WHERE user_id IN (SELECT id FROM users WHERE is_system = 0)')
+        await dbRun('DELETE FROM devices WHERE user_id IN (SELECT id FROM users WHERE is_system = 0)')
+        await dbRun('DELETE FROM users WHERE is_system = 0')
+        return res.json(say(`Очищено аккаунтов: ${count.c}. Все данные удалены.`))
       }
       default:
         return res.json(say(`Неизвестная команда: ${cmd}. Введите help для списка команд`))
