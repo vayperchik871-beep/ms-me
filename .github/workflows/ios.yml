@@ -25,26 +25,25 @@ jobs:
           brew install xcodegen
           xcodegen generate
 
-      - name: Build .app
+      - name: Build .app (Simulator)
         run: |
           xcodebuild build \
             -project MsMessenger.xcodeproj \
             -scheme MsMessenger \
-            -sdk iphoneos \
+            -sdk iphonesimulator \
             -configuration Debug \
             -derivedDataPath build \
             CODE_SIGNING_ALLOWED=NO \
             CODE_SIGN_IDENTITY="" \
             DEVELOPMENT_TEAM=""
 
-      - name: Package artifact (IPA)
+      - name: Package artifact (ZIP for Appetize)
         run: |
-          mkdir -p artifact/Payload
-          cp -R build/Build/Products/Debug-iphoneos/MsMessenger.app artifact/Payload/
-          cd artifact && zip -r MsMessenger-iOS.ipa Payload/MsMessenger.app
+          mkdir -p artifact
+          cd build/Build/Products/Debug-iphonesimulator && zip -r ../../../artifact/MsMessenger-iOS.zip MsMessenger.app
 
       - uses: actions/upload-artifact@v4
         with:
           name: MsMessenger-iOS
-          path: ios/artifact/MsMessenger-iOS.ipa
+          path: ios/artifact/MsMessenger-iOS.zip
           retention-days: 14
