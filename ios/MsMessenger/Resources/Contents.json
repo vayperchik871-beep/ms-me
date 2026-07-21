@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>items</key>
+    <array>
+        <dict>
+            <key>assets</key>
+            <array>
+                <dict>
+                    <key>author</key>
+                    <string>MS Messenger</string>
+                    <key>filename</key>
+                    <string>AppIcon.appiconset/Contents.json</string>
+                    <key>idiom</key>
+                    <string>universal</string>
+                    <key>size</key>
+                    <string>1024x1024</string>
+                    <key>scale</key>
+                    <string>1x</string>
+                </dict>
+            </array>
+            <key>info</key>
+            <dict>
+                <key>author</key>
+                <string>xcode</string>
+                <key>version</key>
+                <integer>1</integer>
+            </dict>
+        </dict>
+    </array>
+</dict>
+</plist>
