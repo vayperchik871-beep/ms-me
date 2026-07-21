@@ -25,29 +25,30 @@ jobs:
           brew install xcodegen
           xcodegen generate
 
-      - name: Build .app (Simulator)
+      - name: Build for Simulator
         run: |
           xcodebuild build \
             -project MsMessenger.xcodeproj \
             -scheme MsMessenger \
             -sdk iphonesimulator \
+            -destination 'generic/platform=iOS Simulator' \
             -configuration Debug \
             -derivedDataPath build \
-            CODE_SIGNING_ALLOWED=NO \
-            CODE_SIGN_IDENTITY="" \
-            DEVELOPMENT_TEAM=""
+            CODE_SIGNING_ALLOWED=NO
 
-      - name: Package artifact (ZIP for Appetize)
+      - name: Verify .app exists
         run: |
-          mkdir -p artifact
-          APP_DIR="build/Build/Products/Debug-iphonesimulator/MsMessenger.app"
-          echo "Contents of .app:"
-          ls -la "$APP_DIR"
+          find build -name "MsMessenger.app" -type d
+          ls -la build/Build/Products/Debug-iphonesimulator/MsMessenger.app/
+
+      - name: Create ZIP
+        run: |
           cd build/Build/Products/Debug-iphonesimulator
-          zip -r ../../../../artifact/MsMessenger-iOS.zip MsMessenger.app
-          cd ../../../..
-          echo "ZIP contents:"
-          unzip -l artifact/MsMessenger-iOS.zip | head -15
+          zip -r /tmp/MsMessenger-iOS.zip MsMessenger.app
+          echo "=== ZIP contents ==="
+          unzip -l /tmp/MsMessenger-iOS.zip
+          mkdir -p ../../../../artifact
+          cp /tmp/MsMessenger-iOS.zip ../../../../artifact/MsMessenger-iOS.zip
 
       - uses: actions/upload-artifact@v4
         with:
