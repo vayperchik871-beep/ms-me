@@ -64,15 +64,14 @@ jobs:
           xcrun simctl shutdown "$DEVICE_ID"
           xcrun simctl delete "$DEVICE_ID"
 
-      - name: Package artifact
+      - name: Package artifact (IPA)
         run: |
-          mkdir -p artifact
-          cp -R build/Build/Products/Debug-iphoneos/MsMessenger.app artifact/
-          cp screenshot.png artifact/ 2>/dev/null || true
-          cd artifact && zip -r MsMessenger-iOS.zip MsMessenger.app
+          mkdir -p artifact/Payload
+          cp -R build/Build/Products/Debug-iphoneos/MsMessenger.app artifact/Payload/
+          cd artifact && zip -r MsMessenger-iOS.ipa Payload/MsMessenger.app
 
       - uses: actions/upload-artifact@v4
         with:
           name: MsMessenger-iOS
-          path: ios/artifact/MsMessenger-iOS.zip
+          path: ios/artifact/MsMessenger-iOS.ipa
           retention-days: 14
