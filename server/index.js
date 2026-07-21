@@ -655,12 +655,26 @@ app.post('/api/admin/command', authMiddleware, adminMiddleware, async (req, res)
           return res.json(say('ВНИМАНИЕ: это удалит ВСЕ аккаунты и данные. Подтверди: purge --force'))
         }
         const count = await dbGet('SELECT COUNT(*) as c FROM users WHERE is_system = 0')
-        await dbRun('DELETE FROM message_reactions WHERE message_id IN (SELECT id FROM messages WHERE sender_id IN (SELECT id FROM users WHERE is_system = 0))')
-        await dbRun('DELETE FROM messages WHERE sender_id IN (SELECT id FROM users WHERE is_system = 0)')
-        await dbRun('DELETE FROM chat_participants WHERE user_id IN (SELECT id FROM users WHERE is_system = 0)')
-        await dbRun('DELETE FROM sessions WHERE user_id IN (SELECT id FROM users WHERE is_system = 0)')
-        await dbRun('DELETE FROM devices WHERE user_id IN (SELECT id FROM users WHERE is_system = 0)')
-        await dbRun('DELETE FROM users WHERE is_system = 0')
+        const userIds = await dbAll('SELECT id FROM users WHERE is_system = 0')
+        const ids = userIds.map(r => `'${r.id}'`).join(',')
+        if (!ids) return res.json(say('Нет аккаунтов для удаления'))
+        await dbExec('PRAGMA foreign_keys = OFF')
+        try {
+          await dbRun(`DELETE FROM message_reactions WHERE user_id IN (${ids}) OR message_id IN (SELECT id FROM messages WHERE sender_id IN (${ids}))`)
+          await dbRun(`DELETE FROM favorites WHERE user_id IN (${ids}) OR message_id IN (SELECT id FROM messages WHERE sender_id IN (${ids}))`)
+          await dbRun(`DELETE FROM user_gifts WHERE user_id IN (${ids}) OR sender_id IN (${ids})`)
+          await dbRun(`DELETE FROM messages WHERE sender_id IN (${ids})`)
+          await dbRun(`DELETE FROM chat_participants WHERE user_id IN (${ids})`)
+          await dbRun(`DELETE FROM contacts WHERE user_id IN (${ids}) OR contact_id IN (${ids})`)
+          await dbRun(`DELETE FROM verification_codes WHERE user_id IN (${ids})`)
+          await dbRun(`DELETE FROM verification_requests WHERE user_id IN (${ids})`)
+          await dbRun(`DELETE FROM sessions WHERE user_id IN (${ids})`)
+          await dbRun(`DELETE FROM devices WHERE user_id IN (${ids})`)
+          await dbRun(`DELETE FROM chats WHERE id NOT IN (SELECT DISTINCT chat_id FROM chat_participants)`)
+          await dbRun(`DELETE FROM users WHERE is_system = 0`)
+        } finally {
+          await dbExec('PRAGMA foreign_keys = ON')
+        }
         return res.json(say(`Очищено аккаунтов: ${count.c}. Все данные удалены.`))
       }
       default:
