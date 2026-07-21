@@ -13,6 +13,8 @@ struct ContactsListView: View {
                 .onChange(of: search) { _ in guard !search.isEmpty else { searchResults = []; return }; Task { do { searchResults = try await APIClient.shared.searchUsers(query: search).users } catch {} } }
                 .task { await load() }.refreshable { await load() }
                 .overlay { if loading { ProgressView() } }
+                .toolbarBackground(ThemeManager.shared.isDark ? Color.black : Color(.systemGroupedBackground), for: .navigationBar)
+                .toolbarBackground(.visible, for: .navigationBar)
         }
     }
 

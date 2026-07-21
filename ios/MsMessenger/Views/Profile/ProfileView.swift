@@ -14,6 +14,9 @@ struct ProfileView: View {
                 Button("Сохранить") { saving = true; Task { do { _ = try await APIClient.shared.updateProfile(["name": newName]) } catch { print(error) }; saving = false } }.disabled(saving || newName.isEmpty)
             }
             if let mcoins = user.mcoins { Section("Монеты") { HStack { Image(systemName: "bitcoinsign.circle.fill").foregroundColor(.yellow); Text("\(mcoins) MCoins") } } }
-        }.navigationTitle("Профиль")
+        }
+        .navigationTitle("Профиль")
+        .toolbarBackground(ThemeManager.shared.isDark ? Color.black : Color(.systemGroupedBackground), for: .navigationBar)
+        .toolbarBackground(.visible, for: .navigationBar)
     }
 }

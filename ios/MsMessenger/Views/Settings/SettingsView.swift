@@ -16,6 +16,8 @@ struct SettingsView: View {
                 }
                 Section("О приложении") { HStack { Text("Версия"); Spacer(); Text("1.0.2").foregroundColor(theme.textSecondary) } }
             }.navigationTitle("Настройки").sheet(isPresented: $showAdmin) { AdminTerminalView() }.task { await loadUser() }
+            .toolbarBackground(theme.isDark ? Color.black : Color(.systemGroupedBackground), for: .navigationBar)
+            .toolbarBackground(.visible, for: .navigationBar)
         }
     }
 

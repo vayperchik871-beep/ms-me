@@ -32,6 +32,8 @@ struct ChatDetailView: View {
             .safeAreaInset(edge: .bottom) { Color.clear.frame(height: 0) }
         }
         .navigationTitle(chat.name ?? "Чат")
+        .toolbarBackground(ThemeManager.shared.isDark ? Color.black : Color(.systemGroupedBackground), for: .navigationBar)
+        .toolbarBackground(.visible, for: .navigationBar)
         .task { await load() }
         .onReceive(ws.$newMessage) { msg in guard let msg, msg.chatId == chat.id else { return }; if !messages.contains(where: { $0.id == msg.id }) { messages.append(msg) } }
     }
