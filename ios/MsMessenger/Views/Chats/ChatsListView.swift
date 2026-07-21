@@ -8,9 +8,11 @@ struct ChatsListView: View {
         NavigationStack {
             Group {
                 if loading { ProgressView() }
-                else if chats.isEmpty { VStack(spacing: 8) { Image(systemName: "message.slash").font(.largeTitle).foregroundColor(.secondary); Text("Нет чатов").foregroundColor(.secondary) } }
+                else if chats.isEmpty { VStack(spacing: 8) { Image(systemName: "message.slash").font(.largeTitle).foregroundColor(.secondary); Text("Нет чатов").foregroundColor(.secondary) }.frame(maxWidth: .infinity, maxHeight: .infinity) }
                 else { List(chats) { chat in NavigationLink(destination: ChatDetailView(chat: chat)) { ChatRowView(chat: chat) } }.listStyle(.plain) }
-            }.navigationTitle("Чаты").refreshable { await load() }.task { await load() }
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .navigationTitle("Чаты").refreshable { await load() }.task { await load() }
         }
     }
 

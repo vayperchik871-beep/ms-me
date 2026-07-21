@@ -13,7 +13,10 @@ struct MsMessengerApp: App {
                 } else {
                     OnboardingView(onComplete: { isAuthenticated = true })
                 }
-            }.preferredColorScheme(theme.isDark ? .dark : .light)
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .background(theme.isDark ? Color.black : Color.white)
+            .preferredColorScheme(theme.isDark ? .dark : .light)
         }
     }
 }
