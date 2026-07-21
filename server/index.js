@@ -89,6 +89,9 @@ async function authMiddleware(req, res, next) {
     const adminRow = await dbGet('SELECT is_admin, banned FROM users WHERE id = ?', payload.userId)
     const user = { ...row, is_admin: adminRow?.is_admin || 0, banned: adminRow?.banned || 0 }
     if (user.banned) return res.status(403).json({ error: 'Аккаунт заблокирован' })
+    if (user.is_admin && req.headers['x-admin-app'] !== 'true') {
+      return res.status(403).json({ error: 'Используйте админ-приложение', code: 'ADMIN_APP_REQUIRED' })
+    }
     req.user = user
     req.deviceId = payload.deviceId
     req.token = header.slice(7)
@@ -1113,12 +1116,16 @@ wss.on('connection', (ws, req) => {
   const url = new URL(req.url, `http://${req.headers.host}`)
   const token = url.searchParams.get('token')
   if (!token) { ws.close(); return }
+  const isAdminApp = url.searchParams.get('admin') === 'true'
 
   try {
     const payload = jwt.verify(token, JWT_SECRET)
 
     dbGet('SELECT * FROM sessions WHERE token = ?', token).then(async (session) => {
       if (!session || session.expires_at < Date.now()) { ws.close(); return }
+
+      const userRow = await dbGet('SELECT is_admin FROM users WHERE id = ?', payload.userId)
+      if (userRow?.is_admin && !isAdminApp) { ws.send(JSON.stringify({ type: 'error', message: 'Используйте админ-приложение' })); ws.close(); return }
 
       ws.userId = payload.userId
       ws.token = token

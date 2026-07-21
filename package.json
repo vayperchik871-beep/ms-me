@@ -11,6 +11,7 @@
     "dev:client": "vite",
     "dev:server": "node server/index.js",
     "build": "vite build",
+    "build:admin": "set VITE_ADMIN_MODE=true && vite build",
     "preview": "vite preview",
     "start": "node server/index.js",
     "server": "node server/index.js",

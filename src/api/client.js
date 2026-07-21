@@ -153,18 +153,19 @@ export function resolveMediaUrl(url) {
 export function getWsUrl() {
   const token = getToken()
   if (!token) return null
+  const admin = import.meta.env?.VITE_ADMIN_MODE === 'true' ? '&admin=true' : ''
 
   const configured = (import.meta.env?.VITE_API_BASE_URL || '').trim()
   if (configured) {
     const base = configured.replace(/\/$/, '')
     const wsBase = base.replace(/^http:\/\//i, 'ws://').replace(/^https:\/\//i, 'wss://')
-    return `${wsBase}/ws?token=${token}`
+    return `${wsBase}/ws?token=${token}${admin}`
   }
 
   const isNative = window.location.protocol === 'file:' || window.Capacitor?.isNativePlatform?.()
   if (isNative) {
-    return `wss://ms-messenger-server.onrender.com/ws?token=${token}`
+    return `wss://ms-messenger-server.onrender.com/ws?token=${token}${admin}`
   }
 
-  return `/ws?token=${token}`
+  return `/ws?token=${token}${admin}`
 }
