@@ -70,7 +70,6 @@ async function request(path, options = {}) {
   const token = getToken()
   const headers = { 'Content-Type': 'application/json', ...options.headers }
   if (token) headers.Authorization = `Bearer ${token}`
-  if (import.meta.env?.VITE_ADMIN_MODE === 'true') headers['X-Admin-App'] = 'true'
 
   const res = await fetch(getApiUrl(path), { ...options, headers })
   const data = await res.json().catch(() => ({}))
@@ -85,7 +84,6 @@ async function upload(path, field, file, extra = {}) {
   for (const [k, v] of Object.entries(extra)) form.append(k, v)
   const headers = {}
   if (token) headers.Authorization = `Bearer ${token}`
-  if (import.meta.env?.VITE_ADMIN_MODE === 'true') headers['X-Admin-App'] = 'true'
   const res = await fetch(getApiUrl(path), { method: 'POST', headers, body: form })
   const data = await res.json().catch(() => ({}))
   if (!res.ok) throw new Error(data.error || 'Ошибка загрузки')
@@ -153,19 +151,18 @@ export function resolveMediaUrl(url) {
 export function getWsUrl() {
   const token = getToken()
   if (!token) return null
-  const admin = import.meta.env?.VITE_ADMIN_MODE === 'true' ? '&admin=true' : ''
 
   const configured = (import.meta.env?.VITE_API_BASE_URL || '').trim()
   if (configured) {
     const base = configured.replace(/\/$/, '')
     const wsBase = base.replace(/^http:\/\//i, 'ws://').replace(/^https:\/\//i, 'wss://')
-    return `${wsBase}/ws?token=${token}${admin}`
+    return `${wsBase}/ws?token=${token}`
   }
 
   const isNative = window.location.protocol === 'file:' || window.Capacitor?.isNativePlatform?.()
   if (isNative) {
-    return `wss://ms-messenger-server.onrender.com/ws?token=${token}${admin}`
+    return `wss://ms-messenger-server.onrender.com/ws?token=${token}`
   }
 
-  return `/ws?token=${token}${admin}`
+  return `/ws?token=${token}`
 }

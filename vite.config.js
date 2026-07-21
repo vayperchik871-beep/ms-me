@@ -5,17 +5,9 @@ export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '')
   const apiTarget = env.VITE_API_TARGET || env.API_TARGET || 'http://localhost:3001'
   const wsTarget = env.VITE_WS_TARGET || apiTarget.replace(/^http/, 'ws')
-  const isAdmin = env.VITE_ADMIN_MODE === 'true'
 
   return {
     plugins: [react()],
-    build: {
-      rollupOptions: {
-        input: {
-          main: isAdmin ? 'admin.html' : 'index.html',
-        },
-      },
-    },
     server: {
       host: true,
       port: 5173,

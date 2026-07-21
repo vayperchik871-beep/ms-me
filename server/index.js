@@ -89,9 +89,6 @@ async function authMiddleware(req, res, next) {
     const adminRow = await dbGet('SELECT is_admin, banned FROM users WHERE id = ?', payload.userId)
     const user = { ...row, is_admin: adminRow?.is_admin || 0, banned: adminRow?.banned || 0 }
     if (user.banned) return res.status(403).json({ error: 'Аккаунт заблокирован' })
-    if (user.is_admin && req.headers['x-admin-app'] !== 'true') {
-      return res.status(403).json({ error: 'Используйте админ-приложение', code: 'ADMIN_APP_REQUIRED' })
-    }
     req.user = user
     req.deviceId = payload.deviceId
     req.token = header.slice(7)
@@ -536,6 +533,9 @@ app.post('/api/admin/command', authMiddleware, adminMiddleware, async (req, res)
           '  unban <id>     — разбанить пользователя',
           '  scam <id>      — пометить как скам',
           '  unscam <id>    — снять метку скам',
+          '  promote <id>   — сделать пользователя админом',
+          '  demote <id>    — снять админ-права',
+          '  delete <id>    — удалить пользователя и все его данные',
           '  online         — список онлайн пользователей',
           '  bc <text>      — отправить сообщение всем чатам (broadcast)',
           '  say <id> <msg> — написать от имени бота в личный чат с пользователем',
@@ -596,6 +596,46 @@ app.post('/api/admin/command', authMiddleware, adminMiddleware, async (req, res)
         const newName = user.name.replace(/^\[SCAM\]\s*/i, '')
         await dbRun('UPDATE users SET scam = 0, name = ? WHERE id = ?', newName, user.id)
         return res.json(say(`Метка скам снята с @${args[0]} (имя: ${newName})`))
+      }
+      case 'promote': {
+        if (!args[0]) return res.json(say('Укажите userId: promote <id>'))
+        const user = await dbGet('SELECT id FROM users WHERE user_id = ? AND is_system = 0', args[0])
+        if (!user) return res.json(say('Пользователь не найден'))
+        await dbRun('UPDATE users SET is_admin = 1 WHERE id = ?', user.id)
+        return res.json(say(`@${args[0]} теперь админ`))
+      }
+      case 'demote': {
+        if (!args[0]) return res.json(say('Укажите userId: demote <id>'))
+        if (args[0] === 'admin') return res.json(say('Нельзя снять админа с главного аккаунта'))
+        const user = await dbGet('SELECT id FROM users WHERE user_id = ? AND is_system = 0', args[0])
+        if (!user) return res.json(say('Пользователь не найден'))
+        await dbRun('UPDATE users SET is_admin = 0 WHERE id = ?', user.id)
+        return res.json(say(`У @${args[0]} сняты админ-права`))
+      }
+      case 'delete': {
+        if (!args[0]) return res.json(say('Укажите userId: delete <id>'))
+        if (args[0] === 'admin') return res.json(say('Нельзя удалить главный аккаунт'))
+        const user = await dbGet('SELECT id FROM users WHERE user_id = ? AND is_system = 0', args[0])
+        if (!user) return res.json(say('Пользователь не найден'))
+        const id = user.id
+        await dbExec('PRAGMA foreign_keys = OFF')
+        try {
+          await dbRun(`DELETE FROM message_reactions WHERE user_id = '${id}' OR message_id IN (SELECT id FROM messages WHERE sender_id = '${id}')`)
+          await dbRun(`DELETE FROM favorites WHERE user_id = '${id}' OR message_id IN (SELECT id FROM messages WHERE sender_id = '${id}')`)
+          await dbRun(`DELETE FROM user_gifts WHERE user_id = '${id}' OR sender_id = '${id}'`)
+          await dbRun(`DELETE FROM messages WHERE sender_id = '${id}'`)
+          await dbRun(`DELETE FROM chat_participants WHERE user_id = '${id}'`)
+          await dbRun(`DELETE FROM contacts WHERE user_id = '${id}' OR contact_id = '${id}'`)
+          await dbRun(`DELETE FROM verification_codes WHERE user_id = '${id}'`)
+          await dbRun(`DELETE FROM verification_requests WHERE user_id = '${id}'`)
+          await dbRun(`DELETE FROM sessions WHERE user_id = '${id}'`)
+          await dbRun(`DELETE FROM devices WHERE user_id = '${id}'`)
+          await dbRun(`DELETE FROM chats WHERE id NOT IN (SELECT DISTINCT chat_id FROM chat_participants)`)
+          await dbRun(`DELETE FROM users WHERE id = '${id}'`)
+        } finally {
+          await dbExec('PRAGMA foreign_keys = ON')
+        }
+        return res.json(say(`@${args[0]} удалён`))
       }
       case 'online': {
         const online = Array.from(clients.values()).filter((c) => c.readyState === 1)
@@ -1123,16 +1163,12 @@ wss.on('connection', (ws, req) => {
   const url = new URL(req.url, `http://${req.headers.host}`)
   const token = url.searchParams.get('token')
   if (!token) { ws.close(); return }
-  const isAdminApp = url.searchParams.get('admin') === 'true'
 
   try {
     const payload = jwt.verify(token, JWT_SECRET)
 
     dbGet('SELECT * FROM sessions WHERE token = ?', token).then(async (session) => {
       if (!session || session.expires_at < Date.now()) { ws.close(); return }
-
-      const userRow = await dbGet('SELECT is_admin FROM users WHERE id = ?', payload.userId)
-      if (userRow?.is_admin && !isAdminApp) { ws.send(JSON.stringify({ type: 'error', message: 'Используйте админ-приложение' })); ws.close(); return }
 
       ws.userId = payload.userId
       ws.token = token

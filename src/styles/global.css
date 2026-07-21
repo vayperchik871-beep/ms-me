@@ -1153,24 +1153,6 @@ input, textarea { font-family: inherit; border: none; outline: none; background:
 .admin-terminal-input { flex: 1; background: transparent; border: none; outline: none; color: #e0e0e0; font-family: 'Courier New', monospace; font-size: 13px; }
 .admin-terminal-input::placeholder { color: #555; }
 
-/* Admin terminal app (standalone, no messenger UI) */
-.admin-terminal-app { display: flex; flex-direction: column; height: 100vh; background: #0d0d0d; overflow: hidden; }
-.admin-terminal-app-header { display: flex; align-items: center; gap: 10px; padding: 10px 16px; background: #1a1a1a; border-bottom: 1px solid #333; flex-shrink: 0; }
-.admin-badge { background: var(--accent, #7c3aed); color: #fff; font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 4px; letter-spacing: 0.5px; text-transform: uppercase; }
-.admin-app-title { color: #e0e0e0; font-size: 14px; font-weight: 500; flex: 1; }
-.admin-user-name { color: #6272a4; font-size: 12px; }
-.admin-terminal-app-body { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
-.admin-terminal-app .admin-terminal-output { flex: 1; overflow-y: auto; padding: 10px 12px; font-family: 'Courier New', monospace; font-size: 12px; line-height: 1.5; white-space: pre-wrap; word-break: break-all; }
-.admin-terminal-app .admin-terminal-input-row { display: flex; align-items: center; border-top: 1px solid #333; padding: 6px 12px; background: #1a1a1a; flex-shrink: 0; }
-.admin-terminal-app .terminal-prompt { color: #8aff80; font-family: 'Courier New', monospace; font-size: 13px; margin-right: 6px; }
-.admin-terminal-app .admin-terminal-input { flex: 1; background: transparent; border: none; outline: none; color: #e0e0e0; font-family: 'Courier New', monospace; font-size: 13px; }
-.admin-terminal-app .admin-terminal-input::placeholder { color: #555; }
-.admin-terminal-app .terminal-line { margin-bottom: 2px; }
-.admin-terminal-app .terminal-line.input { color: #8aff80; }
-.admin-terminal-app .terminal-line.output { color: #e0e0e0; }
-.admin-terminal-app .terminal-line.error { color: #ff5555; }
-.admin-terminal-app .terminal-line.system { color: #6272a4; font-style: italic; }
-
 .settings-header { display: flex; align-items: center; gap: 12px; padding: 12px 16px; }
 
 @media (min-width: 481px) {

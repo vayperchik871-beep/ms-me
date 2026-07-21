@@ -90,7 +90,7 @@ export default function SettingsTab({ onLogout, onAddAccount }) {
         )}
       </div>
 
-      {(user?.isAdmin || user?.is_admin || import.meta.env?.VITE_ADMIN_MODE === 'true') && (
+      {(user?.isAdmin || user?.is_admin) && (
         <>
           <p className="capsule-section-label">{t('Администрирование')}</p>
           <div className="capsule-section">

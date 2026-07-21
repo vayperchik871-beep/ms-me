@@ -4,4 +4,6 @@
     <string name="title_activity_main">MS Messenger</string>
     <string name="package_name">com.ms.messenger</string>
     <string name="custom_url_scheme">com.ms.messenger</string>
+    <string name="server_client_id">202627330294-tb4nvaatchp87ke6g1i01nedpc8b5c33.apps.googleusercontent.com</string>
+    <string name="android_client_id">202627330294-i3glf16hem9j85of1ma9gq9h5vg3cvl4.apps.googleusercontent.com</string>
 </resources>
