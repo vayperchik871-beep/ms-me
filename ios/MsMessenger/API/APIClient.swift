@@ -103,7 +103,7 @@ final class APIClient {
 
     func getContacts() async throws -> UsersResponse { try await request("/contacts") }
 
-    func addContact(userId: String) async throws -> EmptyResponse {
+    func addContact(userId: String) async throws -> AddContactResponse {
         try await request("/contacts", method: "POST", body: try JSONEncoder().encode(["userId": userId]))
     }
 

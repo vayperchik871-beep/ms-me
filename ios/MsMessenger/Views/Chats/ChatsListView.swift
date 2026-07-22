@@ -30,10 +30,10 @@ struct ChatRowView: View {
     let chat: Chat
     var body: some View {
         HStack(spacing: 12) {
-            ZStack { Circle().fill(ThemeManager.shared.accent.opacity(0.2)).frame(width: 44, height: 44); Text(chat.name?.prefix(1).uppercased() ?? "?").font(.title3).bold().foregroundColor(ThemeManager.shared.accent) }
+            ZStack { Circle().fill(ThemeManager.shared.accent.opacity(0.2)).frame(width: 44, height: 44); Text(chat.peer?.name.prefix(1).uppercased() ?? "?").font(.title3).bold().foregroundColor(ThemeManager.shared.accent) }
             VStack(alignment: .leading, spacing: 4) {
-                Text(chat.name ?? "Чат").font(.body).fontWeight(.medium)
-                if let last = chat.lastMessage { Text(last.text ?? "Вложение").font(.caption).foregroundColor(ThemeManager.shared.textSecondary).lineLimit(1) }
+                Text(chat.peer?.name ?? "Чат").font(.body).fontWeight(.medium)
+                if let last = chat.lastMessage, !last.isEmpty { Text(last).font(.caption).foregroundColor(ThemeManager.shared.textSecondary).lineLimit(1) }
             }
             Spacer()
             if let unread = chat.unreadCount, unread > 0 { Text("\(unread)").font(.caption2).bold().foregroundColor(.white).padding(6).background(ThemeManager.shared.accent).clipShape(Circle()) }

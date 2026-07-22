@@ -5,18 +5,30 @@ struct ContactsListView: View {
     @State private var search = ""
     @State private var searchResults: [User] = []
     @State private var loading = true
+    @State private var navigateChat: Chat?
 
     var body: some View {
         NavigationStack {
-            List { if !search.isEmpty { ForEach(searchResults) { user in ContactRowView(user: user) } } else { ForEach(contacts) { c in ContactRowView(user: c) } } }
-                .listStyle(.plain)
-                .scrollContentBackground(.hidden)
-                .navigationTitle("Контакты").searchable(text: $search)
-                .onChange(of: search, initial: false) { _, _ in guard !search.isEmpty else { searchResults = []; return }; Task { do { searchResults = try await APIClient.shared.searchUsers(query: search).users } catch {} } }
-                .task { await load() }.refreshable { await load() }
-                .overlay { if loading { ProgressView() } }
-                .toolbarBackground(.ultraThinMaterial, for: .navigationBar)
-                .toolbarBackground(.visible, for: .navigationBar)
+            List {
+                if !search.isEmpty {
+                    ForEach(searchResults) { user in
+                        Button(action: { openChat(user: user) }) { ContactRowView(user: user) }
+                    }
+                } else {
+                    ForEach(contacts) { c in
+                        Button(action: { openChat(user: c) }) { ContactRowView(user: c) }
+                    }
+                }
+            }
+            .listStyle(.plain)
+            .scrollContentBackground(.hidden)
+            .navigationTitle("Контакты").searchable(text: $search)
+            .onChange(of: search, initial: false) { _, _ in guard !search.isEmpty else { searchResults = []; return }; Task { do { searchResults = try await APIClient.shared.searchUsers(query: search).users } catch {} } }
+            .task { await load() }.refreshable { await load() }
+            .overlay { if loading { ProgressView() } }
+            .toolbarBackground(.ultraThinMaterial, for: .navigationBar)
+            .toolbarBackground(.visible, for: .navigationBar)
+            .navigationDestination(item: $navigateChat) { ChatDetailView(chat: $0) }
         }
     }
 
@@ -24,6 +36,15 @@ struct ContactsListView: View {
         loading = true
         do { contacts = try await APIClient.shared.getContacts().users } catch { print(error) }
         loading = false
+    }
+
+    private func openChat(user: User) {
+        Task {
+            do {
+                let resp = try await APIClient.shared.addContact(userId: user.userId)
+                navigateChat = Chat(id: resp.chatId, peer: Peer(id: resp.contact.id, userId: resp.contact.userId, name: resp.contact.name, isSystem: nil, avatar: nil, profileColor: nil, online: nil, lastSeen: nil), lastMessage: nil, lastTime: nil, unread: nil)
+            } catch { print(error) }
+        }
     }
 }
 

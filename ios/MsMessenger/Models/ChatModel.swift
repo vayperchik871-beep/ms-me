@@ -2,14 +2,24 @@ import Foundation
 
 struct Chat: Codable, Identifiable, Hashable {
     let id: String
-    let type: String
-    var name: String?
-    var avatar: String?
-    var lastMessage: Message?
-    var unreadCount: Int?
-    var participants: [ChatParticipant]?
-    var isPinned: Bool?
-    var createdAt: Int?
+    let peer: Peer?
+    let lastMessage: String?
+    let lastTime: String?
+    let unread: Int?
+
+    var name: String? { peer?.name }
+    var unreadCount: Int? { unread }
+}
+
+struct Peer: Codable, Hashable {
+    let id: String
+    let userId: String
+    let name: String
+    let isSystem: Bool?
+    let avatar: String?
+    let profileColor: String?
+    let online: Bool?
+    let lastSeen: Int?
 }
 
 struct ChatParticipant: Codable, Identifiable, Hashable {
@@ -22,3 +32,4 @@ struct ChatParticipant: Codable, Identifiable, Hashable {
 }
 
 struct ChatListResponse: Codable { let chats: [Chat] }
+struct AddContactResponse: Codable { let contact: User; let chatId: String }
