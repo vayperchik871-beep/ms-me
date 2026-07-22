@@ -240,10 +240,12 @@ app.post('/api/auth/register', async (req, res) => {
   if (avatar) {
     try {
       const buf = Buffer.from(avatar, 'base64')
-      const fileName = `avatars/${id}.png`
-      require('fs').writeFileSync(require('path').join(__dirname, 'public', fileName), buf)
-      avatarUrl = `https://ms-messenger-server.onrender.com/${fileName}`
-    } catch {}
+      const avatarsDir = path.join(rootDir, 'uploads', 'avatars')
+      if (!fs.existsSync(avatarsDir)) fs.mkdirSync(avatarsDir, { recursive: true })
+      const fileName = `${id}.png`
+      fs.writeFileSync(path.join(avatarsDir, fileName), buf)
+      avatarUrl = `/uploads/avatars/${fileName}`
+    } catch (e) { console.error('Avatar save error:', e) }
   }
 
   await dbRun('INSERT INTO users (id, user_id, name, password_hash, phone, bio, avatar, is_admin, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
