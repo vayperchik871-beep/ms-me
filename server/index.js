@@ -298,7 +298,7 @@ app.post('/api/auth/login', async (req, res) => {
     const token = await createToken(user.id, devId)
     return res.json({
       token,
-      user: { id: user.id, userId: user.user_id, name: user.name },
+      user: { id: user.id, userId: user.user_id, name: user.name, phone: user.phone, bio: user.bio, avatar: user.avatar },
       needsVerification: false,
     })
   }
@@ -350,7 +350,7 @@ app.post('/api/auth/verify-device', async (req, res) => {
   const token = await createToken(user.id, devId)
   res.json({
     token,
-    user: { id: user.id, userId: user.user_id, name: user.name },
+    user: { id: user.id, userId: user.user_id, name: user.name, phone: user.phone, bio: user.bio, avatar: user.avatar },
   })
 })
 
@@ -459,7 +459,7 @@ app.post('/api/auth/google', async (req, res) => {
     const token = await createToken(user.id, devId)
     res.json({
       token,
-      user: { id: user.id, userId: user.user_id, name: user.name },
+      user: { id: user.id, userId: user.user_id, name: user.name, phone: user.phone, bio: user.bio, avatar: user.avatar },
     })
   } catch (err) {
     console.error('Google auth error:', err)

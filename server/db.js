@@ -173,6 +173,11 @@ try { await dbExec('CREATE INDEX IF NOT EXISTS idx_users_userid ON users(user_id
 try { await dbExec('ALTER TABLE users ADD COLUMN avatar TEXT DEFAULT NULL') } catch {}
 try { await dbExec('ALTER TABLE messages ADD COLUMN attachment TEXT DEFAULT NULL') } catch {}
 try { await dbExec('ALTER TABLE chat_participants ADD COLUMN last_read INTEGER DEFAULT NULL') } catch {}
+try { await dbExec('ALTER TABLE chat_participants ADD COLUMN role TEXT DEFAULT NULL') } catch {}
+try { await dbExec('ALTER TABLE chat_participants ADD COLUMN joined_at INTEGER DEFAULT NULL') } catch {}
+try { await dbExec('ALTER TABLE chats ADD COLUMN name TEXT DEFAULT NULL') } catch {}
+try { await dbExec('ALTER TABLE chats ADD COLUMN about TEXT DEFAULT NULL') } catch {}
+try { await dbExec('ALTER TABLE chats ADD COLUMN created_by TEXT DEFAULT NULL') } catch {}
 try { await dbExec('ALTER TABLE users ADD COLUMN is_admin INTEGER DEFAULT 0') } catch {}
 try { await dbExec('ALTER TABLE users ADD COLUMN banned INTEGER DEFAULT 0') } catch {}
 try { await dbExec('ALTER TABLE users ADD COLUMN scam INTEGER DEFAULT 0') } catch {}
@@ -187,6 +192,8 @@ try { await dbExec('CREATE INDEX IF NOT EXISTS idx_users_google_id ON users(goog
 
 try { await dbExec('ALTER TABLE users ADD COLUMN is_verified INTEGER DEFAULT 0') } catch {}
 try { await dbExec("ALTER TABLE users ADD COLUMN verify_type TEXT DEFAULT 'msm'") } catch {}
+try { await dbExec('ALTER TABLE users ADD COLUMN phone TEXT DEFAULT NULL') } catch {}
+try { await dbExec('ALTER TABLE users ADD COLUMN bio TEXT DEFAULT NULL') } catch {}
 try { await dbExec("ALTER TABLE verification_requests ADD COLUMN verify_type TEXT DEFAULT 'msm'") } catch {}
 
 try {
