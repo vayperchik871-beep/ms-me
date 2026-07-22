@@ -137,19 +137,19 @@ struct OnboardingView: View {
                 .background(Color.white.opacity(0.08))
                 .cornerRadius(12)
 
-            TextField("XXX", text: $phonePrefix)
+            TextField("XXXX", text: $phonePrefix)
                 .font(.system(size: 22, weight: .medium, design: .monospaced))
                 .keyboardType(.numberPad)
                 .multilineTextAlignment(.center)
                 .foregroundColor(.white)
                 .tint(Color(hex: "#6C63FF"))
                 .padding(.vertical, 14)
-                .frame(width: 70)
+                .frame(width: 80)
                 .background(Color.white.opacity(0.08))
                 .cornerRadius(12)
                 .onChange(of: phonePrefix) { _, new in
                     let filtered = new.filter(\.isNumber)
-                    phonePrefix = String(filtered.prefix(3))
+                    phonePrefix = String(filtered.prefix(4))
                 }
 
             Text(" ")
@@ -175,7 +175,7 @@ struct OnboardingView: View {
     }
 
     private var fullPhone: String { "+777\(phonePrefix)\(phoneLast)" }
-    private var phoneValid: Bool { phonePrefix.count == 3 && phoneLast.count == 4 }
+    private var phoneValid: Bool { phonePrefix.count == 4 && phoneLast.count == 4 }
 
     // MARK: - Step 2: Credentials
 
@@ -191,8 +191,8 @@ struct OnboardingView: View {
             }
 
             VStack(spacing: 16) {
-                onboardingField(icon: "at", placeholder: "your_id", text: $userId, isSecure: false)
-                onboardingField(icon: "lock", placeholder: "минимум 6 символов", text: $password, isSecure: true)
+                simpleField(placeholder: "Уникальный ID", text: $userId, isSecure: false)
+                simpleField(placeholder: "Пароль (минимум 6 символов)", text: $password, isSecure: true)
             }
             .padding(.horizontal, 40)
 
@@ -252,8 +252,8 @@ struct OnboardingView: View {
             }
 
             VStack(spacing: 16) {
-                onboardingField(icon: "person", placeholder: "Как вас зовут?", text: $name, isSecure: false)
-                onboardingField(icon: "text.word.spacing", placeholder: "О себе (необязательно)", text: $bio, isSecure: false)
+                simpleField(placeholder: "Как вас зовут?", text: $name, isSecure: false)
+                simpleField(placeholder: "О себе (необязательно)", text: $bio, isSecure: false)
             }
             .padding(.horizontal, 40)
 
@@ -282,12 +282,8 @@ struct OnboardingView: View {
 
     // MARK: - Shared Components
 
-    private func onboardingField(icon: String, placeholder: String, text: Binding<String>, isSecure: Bool) -> some View {
-        HStack(spacing: 12) {
-            Image(systemName: icon)
-                .font(.system(size: 16))
-                .foregroundColor(Color(hex: "#6C63FF"))
-                .frame(width: 24)
+    private func simpleField(placeholder: String, text: Binding<String>, isSecure: Bool) -> some View {
+        Group {
             if isSecure {
                 SecureField(placeholder, text: text)
                     .font(.system(size: 16))
