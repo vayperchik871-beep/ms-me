@@ -61,7 +61,7 @@ struct MessageBubbleView: View {
             if isOwn { Spacer(minLength: 40) }
             VStack(alignment: isOwn ? .trailing : .leading, spacing: 2) {
                 if let reply = message.replyTo { Text((reply.senderName ?? "") + ": ").font(.caption2).bold() + Text(reply.text ?? "").font(.caption2).foregroundColor(theme.textSecondary) }
-                Text(message.text ?? "").padding(.horizontal, 12).padding(.vertical, 8).background(isOwn ? theme.accent : .ultraThinMaterial).foregroundColor(isOwn ? .white : theme.textPrimary).cornerRadius(16).fixedSize(horizontal: false, vertical: true)
+                Text(message.text ?? "").padding(.horizontal, 12).padding(.vertical, 8).background(isOwn ? AnyShapeStyle(theme.accent) : AnyShapeStyle(.ultraThinMaterial)).foregroundColor(isOwn ? .white : theme.textPrimary).cornerRadius(16).fixedSize(horizontal: false, vertical: true)
                 if let reactions = message.reactions, !reactions.isEmpty { HStack(spacing: 2) { ForEach(reactions, id: \.userId) { r in Text(r.emoji).font(.caption2) } } }
             }
             if !isOwn { Spacer(minLength: 40) }
