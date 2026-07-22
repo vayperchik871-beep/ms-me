@@ -67,7 +67,7 @@ struct ContactsListView: View {
         Task {
             do {
                 let resp = try await APIClient.shared.addContact(userId: user.userId)
-                navigateChat = Chat(id: resp.chatId, type: "direct", name: resp.contact.name, peer: Peer(id: resp.contact.id, userId: resp.contact.userId, name: resp.contact.name, isSystem: nil, avatar: nil, profileColor: nil, online: nil, lastSeen: nil), lastMessage: nil, lastTime: nil, unread: nil)
+                navigateChat = Chat(id: resp.chatId, type: "direct", name: resp.contact.name, peer: Peer(id: resp.contact.id, userId: resp.contact.userId, name: resp.contact.name, isSystem: nil, avatar: nil, profileColor: nil, online: nil, lastSeen: nil), lastMessage: nil, lastTime: nil, unread: nil, lastMessageAt: nil)
             } catch { print(error) }
         }
     }
