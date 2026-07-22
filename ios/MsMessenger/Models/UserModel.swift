@@ -18,7 +18,7 @@ struct User: Codable, Identifiable, Hashable {
 }
 
 struct UserResponse: Codable { let user: User }
-struct AuthResponse: Codable { let token: String; let user: User; let needsVerification: Bool?; let needsSetup: Bool? }
+struct AuthResponse: Codable { let token: String?; let user: User?; let needsVerification: Bool?; let needsSetup: Bool? }
 struct ErrorResponse: Codable { let error: String }
 struct AdminCommandResponse: Codable { let output: String }
 struct EmptyResponse: Codable {}
