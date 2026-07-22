@@ -51,7 +51,13 @@ class ThemeManager: ObservableObject {
     var terminalGreen: Color { Color(hex: "#8aff80") }
     var terminalRed: Color { Color(hex: "#ff5555") }
     var chatBg: Color { isDark ? Color(hex: "#0d0d0d") : Color(hex: "#ffffff") }
-    var bubbleOwn: Color { isDark ? accent : accent }
+    var bubbleOwn: Color { accent }
+    var bubbleOwnText: Color {
+        var r: CGFloat = 0, g: CGFloat = 0, b: CGFloat = 0
+        UIColor(accent).getRed(&r, green: &g, blue: &b, alpha: nil)
+        let luminance = 0.299 * r + 0.587 * g + 0.114 * b
+        return luminance > 0.5 ? .black : .white
+    }
     var bubbleOther: Color { isDark ? Color.white.opacity(0.1) : Color(hex: "#e9e9eb") }
     var inputBg: Color { isDark ? Color.white.opacity(0.1) : Color(hex: "#e9e9eb") }
     var inputText: Color { isDark ? .white : .black }

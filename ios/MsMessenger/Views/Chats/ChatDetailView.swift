@@ -175,7 +175,7 @@ struct MessageBubbleView: View {
                     .padding(.horizontal, 14)
                     .padding(.vertical, 10)
                     .background(isOwn ? theme.bubbleOwn : theme.bubbleOther)
-                    .foregroundColor(isOwn ? .white : theme.textPrimary)
+                    .foregroundColor(isOwn ? theme.bubbleOwnText : theme.textPrimary)
                     .cornerRadius(18)
                     .fixedSize(horizontal: false, vertical: true)
                 if let reactions = message.reactions, !reactions.isEmpty {
