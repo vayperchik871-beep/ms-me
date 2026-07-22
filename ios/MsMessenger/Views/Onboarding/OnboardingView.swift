@@ -126,7 +126,7 @@ struct OnboardingView: View {
     private var profileStep: some View {
         VStack(spacing: 24) {
             Text("Заполните профиль").font(.title2).bold().foregroundColor(theme.textPrimary)
-            PhotosPicker(selection: $avatarItem, matching: .image) {
+            PhotosPicker(selection: $avatarItem, matching: .images) {
                 ZStack {
                     if let data = avatarData, let ui = UIImage(data: data) {
                         Image(uiImage: ui).resizable().scaledToFill().frame(width: 88, height: 88).clipShape(Circle())
