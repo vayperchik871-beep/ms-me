@@ -4,44 +4,70 @@ struct ChatsListView: View {
     @State private var chats: [Chat] = []
     @State private var loading = true
     @State private var showCreateGroup = false
+    @State private var searchText = ""
     @ObservedObject private var theme = ThemeManager.shared
 
     var body: some View {
         NavigationStack {
             Group {
-                if loading { ProgressView() }
+                if loading {
+                    ProgressView().tint(Color(hex: "#6C63FF"))
+                }
                 else if chats.isEmpty {
-                    VStack(spacing: 8) {
-                        Image(systemName: "message.slash").font(.largeTitle).foregroundColor(.secondary)
-                        Text("Нет чатов").foregroundColor(.secondary)
+                    VStack(spacing: 12) {
+                        Image(systemName: "message.slash")
+                            .font(.system(size: 48))
+                            .foregroundColor(.white.opacity(0.3))
+                        Text("Нет чатов")
+                            .font(.system(size: 17, weight: .medium))
+                            .foregroundColor(.white.opacity(0.4))
                     }
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
                 }
                 else {
-                    List(chats) { chat in
-                        NavigationLink(destination: ChatDetailView(chat: chat)) {
-                            ChatRowView(chat: chat)
+                    ScrollView {
+                        LazyVStack(spacing: 4) {
+                            ForEach(filteredChats) { chat in
+                                NavigationLink(destination: ChatDetailView(chat: chat)) {
+                                    ChatRowView(chat: chat)
+                                }
+                                .buttonStyle(.plain)
+                            }
                         }
+                        .padding(.horizontal, 12)
                     }
-                    .listStyle(.plain)
                 }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .scrollContentBackground(.hidden)
-            .navigationTitle("Чаты")
+            .background(theme.bgColor.ignoresSafeArea())
+            .searchable(text: $searchText, prompt: Text("Поиск").foregroundColor(.white.opacity(0.4)))
+            .navigationBarTitleDisplayMode(.inline)
             .toolbar {
+                ToolbarItem(placement: .principal) {
+                    Text("Чаты")
+                        .font(.system(size: 17, weight: .semibold))
+                        .foregroundColor(.white)
+                }
                 ToolbarItem(placement: .primaryAction) {
                     Button(action: { showCreateGroup = true }) {
                         Image(systemName: "plus")
+                            .font(.system(size: 17, weight: .medium))
+                            .foregroundColor(Color(hex: "#6C63FF"))
                     }
                 }
             }
+            .toolbarBackground(Color.clear, for: .navigationBar)
+            .toolbarBackground(.visible, for: .navigationBar)
             .refreshable { await load() }
             .task { await load() }
-            .toolbarBackground(.ultraThinMaterial, for: .navigationBar)
-            .toolbarBackground(.visible, for: .navigationBar)
             .sheet(isPresented: $showCreateGroup) { CreateGroupChannelView() }
         }
+        .tint(Color(hex: "#6C63FF"))
+    }
+
+    private var filteredChats: [Chat] {
+        guard !searchText.isEmpty else { return chats }
+        return chats.filter { ($0.name ?? "").localizedCaseInsensitiveContains(searchText) }
     }
 
     private func load() async {
@@ -53,15 +79,74 @@ struct ChatsListView: View {
 
 struct ChatRowView: View {
     let chat: Chat
+
     var body: some View {
         HStack(spacing: 12) {
-            ZStack { Circle().fill(ThemeManager.shared.accent.opacity(0.2)).frame(width: 44, height: 44); Text(chat.name?.prefix(1).uppercased() ?? "?").font(.title3).bold().foregroundColor(ThemeManager.shared.accent) }
-            VStack(alignment: .leading, spacing: 4) {
-                Text(chat.name ?? "Чат").font(.body).fontWeight(.medium)
-                if let last = chat.lastMessage, !last.isEmpty { Text(last).font(.caption).foregroundColor(ThemeManager.shared.textSecondary).lineLimit(1) }
+            ZStack {
+                Circle()
+                    .fill(Color.white.opacity(0.1))
+                    .frame(width: 52, height: 52)
+                if let avatar = chat.avatar, let url = URL(string: avatar) {
+                    AsyncImage(url: url) { img in
+                        img.resizable().scaledToFill()
+                    } placeholder: {
+                        Image(systemName: chat.isGroup == true ? "person.2.fill" : "person.fill")
+                            .foregroundColor(.white.opacity(0.5))
+                    }
+                    .frame(width: 52, height: 52)
+                    .clipShape(Circle())
+                } else {
+                    Text(chat.name?.prefix(1).uppercased() ?? "?")
+                        .font(.system(size: 20, weight: .semibold))
+                        .foregroundColor(Color(hex: "#6C63FF"))
+                }
             }
+
+            VStack(alignment: .leading, spacing: 4) {
+                Text(chat.name ?? "Чат")
+                    .font(.system(size: 16, weight: .medium))
+                    .foregroundColor(.white)
+                if let last = chat.lastMessage, !last.isEmpty {
+                    Text(last)
+                        .font(.system(size: 14))
+                        .foregroundColor(.white.opacity(0.4))
+                        .lineLimit(1)
+                }
+            }
+
             Spacer()
-            if let unread = chat.unreadCount, unread > 0 { Text("\(unread)").font(.caption2).bold().foregroundColor(.white).padding(6).background(ThemeManager.shared.accent).clipShape(Circle()) }
-        }.padding(.vertical, 4)
+
+            VStack(alignment: .trailing, spacing: 6) {
+                Text(chatTime(chat.lastMessageAt))
+                    .font(.system(size: 12))
+                    .foregroundColor(.white.opacity(0.3))
+                if let unread = chat.unreadCount, unread > 0 {
+                    Text("\(unread)")
+                        .font(.system(size: 12, weight: .bold))
+                        .foregroundColor(.white)
+                        .padding(.horizontal, 7)
+                        .padding(.vertical, 3)
+                        .background(Color(hex: "#6C63FF"))
+                        .clipShape(Capsule())
+                }
+            }
+        }
+        .padding(.vertical, 10)
+        .padding(.horizontal, 4)
+        .background(
+            RoundedRectangle(cornerRadius: 16)
+                .fill(Color.white.opacity(0.04))
+        )
+    }
+
+    private func chatTime(_ ts: TimeInterval?) -> String {
+        guard let ts else { return "" }
+        let d = Date(timeIntervalSince1970: ts / 1000)
+        let f = DateFormatter()
+        let cal = Calendar.current
+        if cal.isDateInToday(d) { f.dateFormat = "HH:mm" }
+        else if cal.isDateInYesterday(d) { return "Вчера" }
+        else { f.dateFormat = "dd.MM" }
+        return f.string(from: d)
     }
 }

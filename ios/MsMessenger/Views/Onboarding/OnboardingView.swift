@@ -4,7 +4,8 @@ import PhotosUI
 struct OnboardingView: View {
     var onComplete: () -> Void
     @State private var step = 0
-    @State private var phone = "+777"
+    @State private var phonePrefix = ""
+    @State private var phoneLast = ""
     @State private var userId = ""
     @State private var password = ""
     @State private var name = ""
@@ -16,165 +17,294 @@ struct OnboardingView: View {
     @ObservedObject private var theme = ThemeManager.shared
 
     var body: some View {
-        VStack {
-            header
-            Spacer()
-            if step == 0 { welcomeStep }
-            else if step == 1 { phoneStep }
-            else if step == 2 { credentialsStep }
-            else if step == 3 { profileStep }
-            Spacer()
+        ZStack {
+            theme.bgColor.ignoresSafeArea()
+
+            VStack(spacing: 0) {
+                header
+                Spacer()
+                if step == 0 { welcomeStep }
+                else if step == 1 { phoneStep }
+                else if step == 2 { credentialsStep }
+                else if step == 3 { profileStep }
+                Spacer(minLength: 20)
+            }
         }
-        .background(theme.backgroundColor.ignoresSafeArea())
-        .preferredColorScheme(.dark)
+        .preferredColorScheme(theme.isDark ? .dark : .light)
     }
+
+    // MARK: - Header
 
     private var header: some View {
         HStack {
             if step > 0 {
-                Button(action: { step -= 1 }) {
-                    HStack(spacing: 4) {
-                        Image(systemName: "chevron.left").font(.body)
-                        Text("Назад").font(.subheadline)
+                Button(action: { step -= 1; error = nil }) {
+                    HStack(spacing: 6) {
+                        Image(systemName: "chevron.left")
+                            .font(.system(size: 17, weight: .semibold))
+                        Text("Назад")
+                            .font(.system(size: 17))
                     }
-                    .foregroundColor(theme.accent)
+                    .foregroundColor(Color(hex: "#6C63FF"))
                 }
             }
             Spacer()
-            Button(action: { theme.isDark.toggle() }) {
-                Image(systemName: theme.isDark ? "moon.fill" : "sun.max.fill")
-                    .foregroundColor(theme.isDark ? .yellow : .orange)
-            }
         }
         .padding(.horizontal, 20)
         .padding(.top, 60)
     }
 
+    // MARK: - Step 0: Welcome
+
     private var welcomeStep: some View {
-        VStack(spacing: 32) {
+        VStack(spacing: 36) {
             Spacer()
-            ZStack {
-                RoundedRectangle(cornerRadius: 32)
-                    .fill(Color(hex: "#2c2f33")!)
-                    .frame(width: 130, height: 130)
-                    .shadow(color: .black.opacity(0.4), radius: 12, x: 0, y: 6)
-                Text("MS")
-                    .font(.system(size: 44, weight: .bold, design: .rounded))
-                    .foregroundColor(Color(hex: "#e8e8e8")!)
-                    .offset(y: 2)
+            Image("Logo")
+                .resizable()
+                .scaledToFit()
+                .frame(width: 140, height: 140)
+                .cornerRadius(32)
+                .shadow(color: .black.opacity(0.4), radius: 16, x: 0, y: 8)
+
+            VStack(spacing: 10) {
+                Text("MS Messenger")
+                    .font(.system(size: 32, weight: .bold))
+                    .foregroundColor(theme.textPrimary)
+                Text("Безопасный и быстрый мессенджер")
+                    .font(.system(size: 17))
+                    .foregroundColor(theme.textSecondary)
             }
-            VStack(spacing: 8) {
-                Text("MS Messenger").font(.largeTitle).bold().foregroundColor(theme.textPrimary)
-                Text("Безопасный и быстрый мессенджер").font(.subheadline).foregroundColor(theme.textSecondary)
-            }
+
             Spacer()
+
             Button(action: { step = 1 }) {
-                Text("Начать").font(.headline).bold().frame(maxWidth: .infinity).padding(.vertical, 16)
-                    .background(theme.accent).foregroundColor(.white).cornerRadius(14)
-            }
-            .padding(.horizontal, 40).padding(.bottom, 60)
-        }
-    }
-
-    private var phoneStep: some View {
-        VStack(spacing: 24) {
-            Text("Придумайте уникальный номер").font(.title2).bold().foregroundColor(theme.textPrimary)
-            Text("Номер начинается на +777 и будет\nпривязан к вашему аккаунту навсегда")
-                .font(.subheadline).multilineTextAlignment(.center).foregroundColor(theme.textSecondary)
-            TextField("+777XXXXXXXX", text: $phone)
-                .font(.title2).keyboardType(.phonePad).multilineTextAlignment(.center)
-                .onChange(of: phone) { _, new in
-                    let filtered = new.filter { $0.isNumber || $0 == "+" }
-                    if filtered != new { phone = filtered }
-                    if phone.count > 12 { phone = String(phone.prefix(12)) }
-                    if !phone.hasPrefix("+777") && !phone.isEmpty { phone = "+777" }
-                }
-                .padding().background(theme.surfaceColor).cornerRadius(12)
-                .overlay(RoundedRectangle(cornerRadius: 12).stroke(theme.borderColor, lineWidth: 1))
-                .padding(.horizontal, 40)
-            if let error { Text(error).font(.caption).foregroundColor(theme.error) }
-            Button(action: { error = nil; step = 2 }) {
-                Text("Готово").font(.headline).bold().frame(maxWidth: .infinity).padding(.vertical, 16)
-                    .background(phoneValid ? theme.accent : theme.borderColor)
-                    .foregroundColor(phoneValid ? .white : theme.textSecondary).cornerRadius(14)
-            }
-            .disabled(!phoneValid).padding(.horizontal, 40)
-        }
-    }
-
-    private var credentialsStep: some View {
-        VStack(spacing: 24) {
-            Text("Создайте ID и пароль").font(.title2).bold().foregroundColor(theme.textPrimary)
-            VStack(spacing: 16) {
-                VStack(alignment: .leading, spacing: 4) {
-                    Text("Уникальный ID").font(.caption).foregroundColor(theme.textSecondary).padding(.leading, 4)
-                    TextField("your_id", text: $userId)
-                        .autocapitalization(.none).disableAutocorrection(true)
-                        .padding().background(theme.surfaceColor).cornerRadius(12)
-                        .overlay(RoundedRectangle(cornerRadius: 12).stroke(theme.borderColor, lineWidth: 1))
-                }
-                VStack(alignment: .leading, spacing: 4) {
-                    Text("Пароль").font(.caption).foregroundColor(theme.textSecondary).padding(.leading, 4)
-                    SecureField("минимум 6 символов", text: $password)
-                        .padding().background(theme.surfaceColor).cornerRadius(12)
-                        .overlay(RoundedRectangle(cornerRadius: 12).stroke(theme.borderColor, lineWidth: 1))
-                }
+                Text("Начать")
+                    .font(.system(size: 17, weight: .semibold))
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 16)
+                    .background(Color(hex: "#6C63FF"))
+                    .foregroundColor(.white)
+                    .cornerRadius(14)
             }
             .padding(.horizontal, 40)
-            if let error { Text(error).font(.caption).foregroundColor(theme.error) }
-            Button(action: { step = 3 }) {
-                Text("Готово").font(.headline).bold().frame(maxWidth: .infinity).padding(.vertical, 16)
-                    .background((!userId.isEmpty && password.count >= 6) ? theme.accent : theme.borderColor)
-                    .foregroundColor((!userId.isEmpty && password.count >= 6) ? .white : theme.textSecondary).cornerRadius(14)
-            }
-            .disabled(userId.isEmpty || password.count < 6).padding(.horizontal, 40)
+            .padding(.bottom, 60)
         }
     }
 
+    // MARK: - Step 1: Phone
+
+    private var phoneStep: some View {
+        VStack(spacing: 28) {
+            VStack(spacing: 8) {
+                Text("Придумайте номер")
+                    .font(.system(size: 24, weight: .bold))
+                    .foregroundColor(theme.textPrimary)
+                Text("Номер начинается на +777 и будет\nпривязан к вашему аккаунту навсегда")
+                    .font(.system(size: 15))
+                    .multilineTextAlignment(.center)
+                    .foregroundColor(theme.textSecondary)
+            }
+
+            phoneInput
+
+            if let error {
+                Text(error)
+                    .font(.system(size: 13))
+                    .foregroundColor(Color(hex: "#FF453A"))
+            }
+
+            Button(action: { error = nil; step = 2 }) {
+                Text("Готово")
+                    .font(.system(size: 17, weight: .semibold))
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 16)
+                    .background(phoneValid ? Color(hex: "#6C63FF") : Color.white.opacity(0.15))
+                    .foregroundColor(phoneValid ? .white : .white.opacity(0.3))
+                    .cornerRadius(14)
+            }
+            .disabled(!phoneValid)
+            .padding(.horizontal, 40)
+        }
+    }
+
+    private var phoneInput: some View {
+        HStack(spacing: 6) {
+            Text("+777")
+                .font(.system(size: 22, weight: .semibold, design: .monospaced))
+                .foregroundColor(Color(hex: "#6C63FF"))
+                .padding(.horizontal, 14)
+                .padding(.vertical, 14)
+                .background(Color.white.opacity(0.08))
+                .cornerRadius(12)
+
+            TextField("XXX", text: $phonePrefix)
+                .font(.system(size: 22, weight: .medium, design: .monospaced))
+                .keyboardType(.numberPad)
+                .multilineTextAlignment(.center)
+                .foregroundColor(.white)
+                .tint(Color(hex: "#6C63FF"))
+                .padding(.vertical, 14)
+                .frame(width: 70)
+                .background(Color.white.opacity(0.08))
+                .cornerRadius(12)
+                .onChange(of: phonePrefix) { _, new in
+                    let filtered = new.filter(\.isNumber)
+                    phonePrefix = String(filtered.prefix(3))
+                }
+
+            Text(" ")
+                .font(.system(size: 22, weight: .bold))
+                .foregroundColor(.white.opacity(0.3))
+
+            TextField("XXXX", text: $phoneLast)
+                .font(.system(size: 22, weight: .medium, design: .monospaced))
+                .keyboardType(.numberPad)
+                .multilineTextAlignment(.center)
+                .foregroundColor(.white)
+                .tint(Color(hex: "#6C63FF"))
+                .padding(.vertical, 14)
+                .frame(width: 80)
+                .background(Color.white.opacity(0.08))
+                .cornerRadius(12)
+                .onChange(of: phoneLast) { _, new in
+                    let filtered = new.filter(\.isNumber)
+                    phoneLast = String(filtered.prefix(4))
+                }
+        }
+        .padding(.horizontal, 40)
+    }
+
+    private var fullPhone: String { "+777\(phonePrefix)\(phoneLast)" }
+    private var phoneValid: Bool { phonePrefix.count == 3 && phoneLast.count == 4 }
+
+    // MARK: - Step 2: Credentials
+
+    private var credentialsStep: some View {
+        VStack(spacing: 28) {
+            VStack(spacing: 8) {
+                Text("Создайте ID и пароль")
+                    .font(.system(size: 24, weight: .bold))
+                    .foregroundColor(theme.textPrimary)
+                Text("Уникальный ID для входа в приложение")
+                    .font(.system(size: 15))
+                    .foregroundColor(theme.textSecondary)
+            }
+
+            VStack(spacing: 16) {
+                onboardingField(icon: "at", placeholder: "your_id", text: $userId, isSecure: false)
+                onboardingField(icon: "lock", placeholder: "минимум 6 символов", text: $password, isSecure: true)
+            }
+            .padding(.horizontal, 40)
+
+            if let error {
+                Text(error)
+                    .font(.system(size: 13))
+                    .foregroundColor(Color(hex: "#FF453A"))
+            }
+
+            Button(action: { step = 3 }) {
+                Text("Далее")
+                    .font(.system(size: 17, weight: .semibold))
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 16)
+                    .background((!userId.isEmpty && password.count >= 6) ? Color(hex: "#6C63FF") : Color.white.opacity(0.15))
+                    .foregroundColor((!userId.isEmpty && password.count >= 6) ? .white : .white.opacity(0.3))
+                    .cornerRadius(14)
+            }
+            .disabled(userId.isEmpty || password.count < 6)
+            .padding(.horizontal, 40)
+        }
+    }
+
+    // MARK: - Step 3: Profile
+
     private var profileStep: some View {
-        VStack(spacing: 24) {
-            Text("Заполните профиль").font(.title2).bold().foregroundColor(theme.textPrimary)
+        VStack(spacing: 28) {
+            VStack(spacing: 8) {
+                Text("Заполните профиль")
+                    .font(.system(size: 24, weight: .bold))
+                    .foregroundColor(theme.textPrimary)
+                Text("Расскажите о себе")
+                    .font(.system(size: 15))
+                    .foregroundColor(theme.textSecondary)
+            }
+
             PhotosPicker(selection: $avatarItem, matching: .images) {
                 ZStack {
                     if let data = avatarData, let ui = UIImage(data: data) {
-                        Image(uiImage: ui).resizable().scaledToFill().frame(width: 88, height: 88).clipShape(Circle())
+                        Image(uiImage: ui)
+                            .resizable()
+                            .scaledToFill()
+                            .frame(width: 96, height: 96)
+                            .clipShape(Circle())
                     } else {
-                        Circle().fill(theme.accent.opacity(0.2)).frame(width: 88, height: 88)
-                        Image(systemName: "camera.fill").font(.title2).foregroundColor(theme.accent)
+                        Circle()
+                            .fill(Color.white.opacity(0.08))
+                            .frame(width: 96, height: 96)
+                        Image(systemName: "camera.fill")
+                            .font(.system(size: 28))
+                            .foregroundColor(Color(hex: "#6C63FF"))
                     }
                 }
             }
             .onChange(of: avatarItem) { _, _ in
                 Task { if let data = try? await avatarItem?.loadTransferable(type: Data.self) { avatarData = data } }
             }
+
             VStack(spacing: 16) {
-                VStack(alignment: .leading, spacing: 4) {
-                    Text("Имя").font(.caption).foregroundColor(theme.textSecondary).padding(.leading, 4)
-                    TextField("Как вас зовут?", text: $name)
-                        .padding().background(theme.surfaceColor).cornerRadius(12)
-                        .overlay(RoundedRectangle(cornerRadius: 12).stroke(theme.borderColor, lineWidth: 1))
-                }
-                VStack(alignment: .leading, spacing: 4) {
-                    Text("О себе").font(.caption).foregroundColor(theme.textSecondary).padding(.leading, 4)
-                    TextField("Расскажите о себе (необязательно)", text: $bio)
-                        .padding().background(theme.surfaceColor).cornerRadius(12)
-                        .overlay(RoundedRectangle(cornerRadius: 12).stroke(theme.borderColor, lineWidth: 1))
-                }
+                onboardingField(icon: "person", placeholder: "Как вас зовут?", text: $name, isSecure: false)
+                onboardingField(icon: "text.word.spacing", placeholder: "О себе (необязательно)", text: $bio, isSecure: false)
             }
             .padding(.horizontal, 40)
-            if let error { Text(error).font(.caption).foregroundColor(theme.error) }
+
+            if let error {
+                Text(error)
+                    .font(.system(size: 13))
+                    .foregroundColor(Color(hex: "#FF453A"))
+            }
+
             Button(action: register) {
                 if loading { ProgressView().tint(.white) }
-                else { Text("Зарегистрироваться").font(.headline).bold() }
+                else {
+                    Text("Зарегистрироваться")
+                        .font(.system(size: 17, weight: .semibold))
+                }
             }
-            .frame(maxWidth: .infinity).padding(.vertical, 16)
-            .background(name.isEmpty ? theme.borderColor : theme.accent)
-            .foregroundColor(name.isEmpty ? theme.textSecondary : .white).cornerRadius(14)
-            .disabled(name.isEmpty || loading).padding(.horizontal, 40)
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 16)
+            .background(name.isEmpty ? Color.white.opacity(0.15) : Color(hex: "#6C63FF"))
+            .foregroundColor(name.isEmpty ? .white.opacity(0.3) : .white)
+            .cornerRadius(14)
+            .disabled(name.isEmpty || loading)
+            .padding(.horizontal, 40)
         }
     }
 
-    private var phoneValid: Bool { phone.count == 12 && phone.hasPrefix("+777") }
+    // MARK: - Shared Components
+
+    private func onboardingField(icon: String, placeholder: String, text: Binding<String>, isSecure: Bool) -> some View {
+        HStack(spacing: 12) {
+            Image(systemName: icon)
+                .font(.system(size: 16))
+                .foregroundColor(Color(hex: "#6C63FF"))
+                .frame(width: 24)
+            if isSecure {
+                SecureField(placeholder, text: text)
+                    .font(.system(size: 16))
+                    .foregroundColor(.white)
+            } else {
+                TextField(placeholder, text: text)
+                    .font(.system(size: 16))
+                    .foregroundColor(.white)
+            }
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 14)
+        .background(Color.white.opacity(0.08))
+        .cornerRadius(12)
+    }
+
+    // MARK: - Register
 
     private func register() {
         loading = true; error = nil
@@ -183,7 +313,7 @@ struct OnboardingView: View {
                 let deviceId = UIDevice.current.identifierForVendor?.uuidString ?? UUID().uuidString
                 let resp = try await APIClient.shared.register(
                     userId: userId, name: name, password: password, deviceId: deviceId,
-                    phone: phone, bio: bio.isEmpty ? nil : bio, avatarData: avatarData
+                    phone: fullPhone, bio: bio.isEmpty ? nil : bio, avatarData: avatarData
                 )
                 APIClient.shared.token = resp.token; onComplete()
             } catch { self.error = error.localizedDescription }

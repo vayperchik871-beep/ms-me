@@ -2,18 +2,39 @@ import SwiftUI
 
 class ThemeManager: ObservableObject {
     static let shared = ThemeManager()
-    @Published var isDark: Bool {
-        didSet { UserDefaults.standard.set(isDark, forKey: "dark_mode") }
-    }
-    private init() { isDark = UserDefaults.standard.object(forKey: "dark_mode") as? Bool ?? true }
 
-    var backgroundColor: Color { isDark ? Color(hex: "#0d0d0d")! : .white }
-    var surfaceColor: Color { isDark ? Color(hex: "#1a1d23")! : Color(hex: "#f5f5f5")! }
-    var cardColor: Color { isDark ? Color(hex: "#22252b")! : .white }
+    enum ThemeMode: String, CaseIterable {
+        case system
+        case dark
+        case light
+    }
+
+    @Published var themeMode: ThemeMode {
+        didSet { UserDefaults.standard.set(themeMode.rawValue, forKey: "theme_mode") }
+    }
+
+    var isDark: Bool {
+        switch themeMode {
+        case .system:
+            return UIScreen.main.traitCollection.userInterfaceStyle == .dark
+        case .dark: return true
+        case .light: return false
+        }
+    }
+
+    private init() {
+        let raw = UserDefaults.standard.string(forKey: "theme_mode") ?? "dark"
+        themeMode = ThemeMode(rawValue: raw) ?? .dark
+    }
+
+    var bgColor: Color { isDark ? Color(hex: "#0d0d0d")! : Color(hex: "#f2f2f7")! }
+    var backgroundColor: Color { bgColor }
+    var surfaceColor: Color { isDark ? Color(hex: "#1c1c1e")! : .white }
+    var cardColor: Color { isDark ? Color(hex: "#2c2c2e")! : .white }
     var textPrimary: Color { isDark ? .white : .black }
-    var textSecondary: Color { isDark ? Color(hex: "#a0a0a0")! : .gray }
-    var accent: Color { Color(hex: "#7c3aed")! }
-    var borderColor: Color { isDark ? Color(hex: "#333333")! : Color(hex: "#e0e0e0")! }
+    var textSecondary: Color { isDark ? Color(hex: "#8e8e93")! : Color(hex: "#636366")! }
+    var accent: Color { Color(hex: "#6C63FF")! }
+    var borderColor: Color { isDark ? Color(hex: "#38383a")! : Color(hex: "#d1d1d6")! }
     var success: Color { .green }
     var error: Color { .red }
     var terminalBg: Color { Color(hex: "#0d0d0d")! }

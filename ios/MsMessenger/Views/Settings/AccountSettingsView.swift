@@ -7,45 +7,91 @@ struct AccountSettingsView: View {
     @State private var currentUserId: String?
 
     var body: some View {
-        List {
-            Section("Мои аккаунты") {
+        ScrollView {
+            VStack(spacing: 16) {
                 ForEach(accounts) { account in
                     Button(action: { switchTo(account) }) {
-                        HStack {
+                        HStack(spacing: 14) {
                             ZStack {
-                                Circle().fill(theme.accent.opacity(0.2)).frame(width: 40, height: 40)
-                                Text(account.name.prefix(1).uppercased()).font(.headline).foregroundColor(theme.accent)
+                                Circle()
+                                    .fill(Color.white.opacity(0.1))
+                                    .frame(width: 48, height: 48)
+                                Text(account.name.prefix(1).uppercased())
+                                    .font(.system(size: 18, weight: .semibold))
+                                    .foregroundColor(Color(hex: "#6C63FF"))
                             }
-                            VStack(alignment: .leading, spacing: 2) {
-                                Text(account.name).font(.body).foregroundColor(theme.textPrimary)
-                                Text("@\(account.userId)").font(.caption).foregroundColor(theme.textSecondary)
+
+                            VStack(alignment: .leading, spacing: 3) {
+                                Text(account.name)
+                                    .font(.system(size: 16, weight: .medium))
+                                    .foregroundColor(.white)
+                                Text("@\(account.userId)")
+                                    .font(.system(size: 14))
+                                    .foregroundColor(.white.opacity(0.4))
                             }
+
                             Spacer()
+
                             if account.userId == currentUserId {
-                                Image(systemName: "checkmark.circle.fill").foregroundColor(theme.accent)
+                                Image(systemName: "checkmark.circle.fill")
+                                    .font(.system(size: 20))
+                                    .foregroundColor(Color(hex: "#6C63FF"))
+                            } else {
+                                Image(systemName: "arrow.right")
+                                    .font(.system(size: 14))
+                                    .foregroundColor(.white.opacity(0.2))
                             }
                         }
-                    }
+                        .padding(14)
+                        .background(Color.white.opacity(0.06))
+                        .cornerRadius(12)
+                    }.buttonStyle(.plain)
                 }
+
                 if accounts.count < 5 {
                     Button(action: { showCreate = true }) {
-                        Label("Создать аккаунт", systemImage: "plus.circle").foregroundColor(theme.accent)
-                    }
+                        HStack {
+                            Image(systemName: "plus.circle")
+                                .font(.system(size: 18))
+                            Text("Создать аккаунт")
+                                .font(.system(size: 16, weight: .medium))
+                        }
+                        .foregroundColor(Color(hex: "#6C63FF"))
+                        .frame(maxWidth: .infinity)
+                        .padding(14)
+                        .background(Color.white.opacity(0.06))
+                        .cornerRadius(12)
+                    }.buttonStyle(.plain)
                 }
-            }
-            Section {
+
                 Button(action: logoutCurrent) {
-                    Label("Выйти из аккаунта", systemImage: "arrow.right.square")
-                        .foregroundColor(theme.error)
-                }
+                    HStack {
+                        Image(systemName: "arrow.right.square")
+                            .font(.system(size: 18))
+                        Text("Выйти из аккаунта")
+                            .font(.system(size: 16, weight: .medium))
+                    }
+                    .foregroundColor(Color(hex: "#FF453A"))
+                    .frame(maxWidth: .infinity)
+                    .padding(14)
+                    .background(Color.white.opacity(0.06))
+                    .cornerRadius(12)
+                }.buttonStyle(.plain)
             }
+            .padding(.horizontal, 16)
+            .padding(.top, 16)
         }
-        .listStyle(.insetGrouped)
-        .scrollContentBackground(.hidden)
-        .background(theme.backgroundColor)
+        .background(theme.bgColor.ignoresSafeArea())
         .navigationTitle("Аккаунт")
         .navigationBarTitleDisplayMode(.inline)
-        .toolbarBackground(.ultraThinMaterial, for: .navigationBar)
+        .toolbar {
+            ToolbarItem(placement: .principal) {
+                Text("Аккаунт")
+                    .font(.system(size: 17, weight: .semibold))
+                    .foregroundColor(.white)
+            }
+        }
+        .toolbarBackground(Color.clear, for: .navigationBar)
         .toolbarBackground(.visible, for: .navigationBar)
         .task { loadAccounts() }
         .sheet(isPresented: $showCreate) { CreateAccountView { loadAccounts() } }
@@ -94,46 +140,78 @@ struct CreateAccountView: View {
 
     var body: some View {
         NavigationStack {
-            VStack(spacing: 24) {
-                Text("Создать дополнительный аккаунт")
-                    .font(.title2).bold()
-                    .foregroundColor(theme.textPrimary)
+            VStack(spacing: 28) {
+                Spacer()
+                VStack(spacing: 8) {
+                    Text("Создать аккаунт")
+                        .font(.system(size: 22, weight: .bold))
+                        .foregroundColor(.white)
+                    Text("Войдите с другим ID")
+                        .font(.system(size: 15))
+                        .foregroundColor(.white.opacity(0.4))
+                }
+
                 VStack(spacing: 16) {
-                    TextField("ID", text: $userId)
-                        .textFieldStyle(.plain)
-                        .autocapitalization(.none)
-                        .disableAutocorrection(true)
-                        .padding()
-                        .background(theme.surfaceColor)
-                        .cornerRadius(12)
-                        .overlay(RoundedRectangle(cornerRadius: 12).stroke(theme.borderColor, lineWidth: 1))
-                    SecureField("Пароль", text: $password)
-                        .textFieldStyle(.plain)
-                        .padding()
-                        .background(theme.surfaceColor)
-                        .cornerRadius(12)
-                        .overlay(RoundedRectangle(cornerRadius: 12).stroke(theme.borderColor, lineWidth: 1))
+                    HStack(spacing: 12) {
+                        Image(systemName: "at")
+                            .font(.system(size: 16))
+                            .foregroundColor(Color(hex: "#6C63FF"))
+                            .frame(width: 24)
+                        TextField("ID", text: $userId)
+                            .font(.system(size: 16))
+                            .foregroundColor(.white)
+                            .autocapitalization(.none)
+                            .disableAutocorrection(true)
+                    }
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 14)
+                    .background(Color.white.opacity(0.08))
+                    .cornerRadius(12)
+
+                    HStack(spacing: 12) {
+                        Image(systemName: "lock")
+                            .font(.system(size: 16))
+                            .foregroundColor(Color(hex: "#6C63FF"))
+                            .frame(width: 24)
+                        SecureField("Пароль", text: $password)
+                            .font(.system(size: 16))
+                            .foregroundColor(.white)
+                    }
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 14)
+                    .background(Color.white.opacity(0.08))
+                    .cornerRadius(12)
                 }
                 .padding(.horizontal, 40)
-                if let error { Text(error).font(.caption).foregroundColor(theme.error) }
+
+                if let error {
+                    Text(error)
+                        .font(.system(size: 13))
+                        .foregroundColor(Color(hex: "#FF453A"))
+                }
+
                 Button(action: login) {
                     if loading { ProgressView().tint(.white) }
-                    else { Text("Войти").font(.headline).bold() }
+                    else { Text("Войти").font(.system(size: 17, weight: .semibold)) }
                 }
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 16)
-                .background((!userId.isEmpty && !password.isEmpty) ? theme.accent : theme.borderColor)
-                .foregroundColor((!userId.isEmpty && !password.isEmpty) ? .white : theme.textSecondary)
+                .background((!userId.isEmpty && !password.isEmpty) ? Color(hex: "#6C63FF") : Color.white.opacity(0.15))
+                .foregroundColor((!userId.isEmpty && !password.isEmpty) ? .white : .white.opacity(0.3))
                 .cornerRadius(14)
                 .disabled(userId.isEmpty || password.isEmpty || loading)
                 .padding(.horizontal, 40)
-                Spacer()
+
+                Spacer(minLength: 40)
             }
-            .padding(.top, 40)
-            .background(theme.backgroundColor)
-            .navigationTitle("Новый аккаунт")
+            .background(theme.bgColor.ignoresSafeArea())
             .navigationBarTitleDisplayMode(.inline)
-            .toolbar { ToolbarItem(placement: .cancellationAction) { Button("Отмена") { dismiss() } } }
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Отмена") { dismiss() }
+                        .foregroundColor(Color(hex: "#6C63FF"))
+                }
+            }
         }
         .preferredColorScheme(theme.isDark ? .dark : .light)
     }

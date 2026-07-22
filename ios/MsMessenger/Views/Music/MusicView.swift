@@ -16,39 +16,68 @@ struct MusicView: View {
     @State private var tracks: [MusicTrack] = []
     @State private var showPicker = false
     @State private var audioPlayer: AVAudioPlayer?
+    @State private var playing: String?
 
     var body: some View {
         NavigationStack {
             VStack(spacing: 0) {
-                Picker("", selection: $tab) {
-                    Text("Главная").tag("main")
-                    Text("Избранное").tag("favorites")
-                    Text("Загрузки").tag("downloads")
-                }
-                .pickerStyle(.segmented)
-                .padding()
-
+                tabBar
                 if tab == "favorites" {
                     listView(filterFavorites)
                 } else {
                     listView(filterAll)
                 }
             }
-            .background(theme.backgroundColor)
-            .navigationTitle("Музыка")
-            .toolbarBackground(.ultraThinMaterial, for: .navigationBar)
-            .toolbarBackground(.visible, for: .navigationBar)
+            .background(theme.bgColor.ignoresSafeArea())
+            .navigationBarTitleDisplayMode(.inline)
             .toolbar {
+                ToolbarItem(placement: .principal) {
+                    Text("Музыка")
+                        .font(.system(size: 17, weight: .semibold))
+                        .foregroundColor(.white)
+                }
                 ToolbarItem(placement: .primaryAction) {
                     Button(action: { showPicker = true }) {
                         Image(systemName: "plus")
+                            .font(.system(size: 17, weight: .medium))
+                            .foregroundColor(Color(hex: "#6C63FF"))
                     }
                 }
             }
+            .toolbarBackground(Color.clear, for: .navigationBar)
+            .toolbarBackground(.visible, for: .navigationBar)
             .fileImporter(isPresented: $showPicker, allowedContentTypes: [.mp3, .wav, .audio, .mpeg4Audio]) { result in
                 if case .success(let url) = result { importTrack(url) }
             }
+            .onAppear { loadTracks() }
         }
+        .tint(Color(hex: "#6C63FF"))
+    }
+
+    private var tabBar: some View {
+        HStack(spacing: 4) {
+            ForEach([("main", "Главная"), ("favorites", "Избранное"), ("downloads", "Загрузки")], id: \.0) { id, title in
+                Button(action: { withAnimation(.easeInOut(duration: 0.2)) { tab = id } }) {
+                    Text(title)
+                        .font(.system(size: 14, weight: tab == id ? .semibold : .regular))
+                        .foregroundColor(tab == id ? .white : .white.opacity(0.4))
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 8)
+                        .background(
+                            tab == id
+                                ? RoundedRectangle(cornerRadius: 20).fill(Color.white.opacity(0.1))
+                                : nil
+                        )
+                }.buttonStyle(.plain)
+            }
+        }
+        .padding(4)
+        .background(
+            RoundedRectangle(cornerRadius: 24)
+                .fill(Color.white.opacity(0.06))
+        )
+        .padding(.horizontal, 16)
+        .padding(.vertical, 8)
     }
 
     private var filterAll: [MusicTrack] { tracks }
@@ -57,33 +86,64 @@ struct MusicView: View {
     private func listView(_ list: [MusicTrack]) -> some View {
         Group {
             if list.isEmpty {
-                VStack(spacing: 8) {
-                    Image(systemName: "music.note.list").font(.largeTitle).foregroundColor(theme.textSecondary)
-                    Text("Нет треков").foregroundColor(theme.textSecondary)
+                VStack(spacing: 12) {
+                    Image(systemName: "music.note.list")
+                        .font(.system(size: 48))
+                        .foregroundColor(.white.opacity(0.2))
+                    Text("Нет треков")
+                        .font(.system(size: 17, weight: .medium))
+                        .foregroundColor(.white.opacity(0.3))
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
             } else {
-                List(list) { track in
-                    Button(action: { playTrack(track) }) {
-                        HStack {
-                            ZStack {
-                                Circle().fill(theme.accent.opacity(0.2)).frame(width: 40, height: 40)
-                                Image(systemName: "music.note").foregroundColor(theme.accent)
-                            }
-                            VStack(alignment: .leading, spacing: 2) {
-                                Text(track.title).font(.body).foregroundColor(theme.textPrimary)
-                                Text(track.artist).font(.caption).foregroundColor(theme.textSecondary)
-                            }
-                            Spacer()
-                            Button(action: { toggleFavorite(track) }) {
-                                Image(systemName: track.isFavorite ? "heart.fill" : "heart")
-                                    .foregroundColor(track.isFavorite ? .red : theme.textSecondary)
-                            }
+                ScrollView {
+                    LazyVStack(spacing: 2) {
+                        ForEach(list) { track in
+                            Button(action: { playTrack(track) }) {
+                                HStack(spacing: 12) {
+                                    ZStack {
+                                        Circle()
+                                            .fill(Color.white.opacity(0.1))
+                                            .frame(width: 48, height: 8)
+                                        if playing == track.id {
+                                            Image(systemName: "speaker.wave.2.fill")
+                                                .font(.system(size: 16))
+                                                .foregroundColor(Color(hex: "#6C63FF"))
+                                        } else {
+                                            Image(systemName: "music.note")
+                                                .font(.system(size: 16))
+                                                .foregroundColor(.white.opacity(0.5))
+                                        }
+                                    }
+                                    .frame(width: 48, height: 48)
+
+                                    VStack(alignment: .leading, spacing: 3) {
+                                        Text(track.title)
+                                            .font(.system(size: 16, weight: .medium))
+                                            .foregroundColor(.white)
+                                        Text(track.artist)
+                                            .font(.system(size: 14))
+                                            .foregroundColor(.white.opacity(0.4))
+                                    }
+
+                                    Spacer()
+
+                                    Button(action: { toggleFavorite(track) }) {
+                                        Image(systemName: track.isFavorite ? "heart.fill" : "heart")
+                                            .font(.system(size: 18))
+                                            .foregroundColor(track.isFavorite ? .red : .white.opacity(0.3))
+                                    }.buttonStyle(.plain)
+                                }
+                                .padding(.vertical, 10)
+                                .padding(.horizontal, 4)
+                                .background(
+                                    RoundedRectangle(cornerRadius: 16)
+                                        .fill(playing == track.id ? Color.white.opacity(0.08) : Color.clear)
+                                )
+                            }.buttonStyle(.plain)
                         }
-                    }
+                    }.padding(.horizontal, 12)
                 }
-                .listStyle(.plain)
-                .scrollContentBackground(.hidden)
             }
         }
     }
@@ -110,11 +170,17 @@ struct MusicView: View {
     }
 
     private func playTrack(_ track: MusicTrack) {
+        if playing == track.id {
+            audioPlayer?.stop()
+            playing = nil
+            return
+        }
         let docs = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!
         let url = docs.appendingPathComponent(track.fileName)
         guard FileManager.default.fileExists(atPath: url.path) else { return }
         audioPlayer = try? AVAudioPlayer(contentsOf: url)
         audioPlayer?.play()
+        playing = track.id
     }
 
     private func toggleFavorite(_ track: MusicTrack) {

@@ -11,65 +11,109 @@ struct CreateGroupChannelView: View {
 
     var body: some View {
         NavigationStack {
-            VStack(spacing: 24) {
-                Picker("Тип", selection: $isChannel) {
-                    Text("Группа").tag(false)
-                    Text("Канал").tag(true)
+            VStack(spacing: 28) {
+                VStack(spacing: 8) {
+                    Text(isChannel ? "Создать канал" : "Создать группу")
+                        .font(.system(size: 22, weight: .bold))
+                        .foregroundColor(.white)
+                    Text(isChannel ? "Канал для публикаций" : "Группа для общения")
+                        .font(.system(size: 15))
+                        .foregroundColor(.white.opacity(0.4))
                 }
-                .pickerStyle(.segmented)
-                .padding(.horizontal)
+
+                HStack(spacing: 4) {
+                    Button(action: { withAnimation { isChannel = false } }) {
+                        Text("Группа")
+                            .font(.system(size: 15, weight: isChannel ? .regular : .semibold))
+                            .foregroundColor(isChannel ? .white.opacity(0.4) : .white)
+                            .padding(.vertical, 10)
+                            .padding(.horizontal, 24)
+                            .background(!isChannel ? Color.white.opacity(0.1) : Color.clear)
+                            .cornerRadius(20)
+                    }.buttonStyle(.plain)
+
+                    Button(action: { withAnimation { isChannel = true } }) {
+                        Text("Канал")
+                            .font(.system(size: 15, weight: isChannel ? .semibold : .regular))
+                            .foregroundColor(isChannel ? .white : .white.opacity(0.4))
+                            .padding(.vertical, 10)
+                            .padding(.horizontal, 24)
+                            .background(isChannel ? Color.white.opacity(0.1) : Color.clear)
+                            .cornerRadius(20)
+                    }.buttonStyle(.plain)
+                }
 
                 VStack(spacing: 16) {
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text("Название").font(.caption).foregroundColor(theme.textSecondary)
-                        TextField("Название \(isChannel ? "канала" : "группы")", text: $name)
-                            .textFieldStyle(.plain)
-                            .padding()
-                            .background(theme.surfaceColor)
-                            .cornerRadius(12)
-                            .overlay(RoundedRectangle(cornerRadius: 12).stroke(theme.borderColor, lineWidth: 1))
+                    HStack(spacing: 12) {
+                        Image(systemName: "textformat")
+                            .font(.system(size: 16))
+                            .foregroundColor(Color(hex: "#6C63FF"))
+                            .frame(width: 24)
+                        TextField("Название", text: $name)
+                            .font(.system(size: 16))
+                            .foregroundColor(.white)
                     }
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text("Описание").font(.caption).foregroundColor(theme.textSecondary)
-                        TextField("Описание (необязательно)", text: $about)
-                            .textFieldStyle(.plain)
-                            .padding()
-                            .background(theme.surfaceColor)
-                            .cornerRadius(12)
-                            .overlay(RoundedRectangle(cornerRadius: 12).stroke(theme.borderColor, lineWidth: 1))
-                    }
-                }
-                .padding(.horizontal)
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 14)
+                    .background(Color.white.opacity(0.08))
+                    .cornerRadius(12)
 
-                if let error { Text(error).font(.caption).foregroundColor(theme.error) }
+                    HStack(spacing: 12) {
+                        Image(systemName: "text.word.spacing")
+                            .font(.system(size: 16))
+                            .foregroundColor(Color(hex: "#6C63FF"))
+                            .frame(width: 24)
+                        TextField("Описание (необязательно)", text: $about)
+                            .font(.system(size: 16))
+                            .foregroundColor(.white)
+                    }
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 14)
+                    .background(Color.white.opacity(0.08))
+                    .cornerRadius(12)
+                }
+                .padding(.horizontal, 40)
+
+                if let error {
+                    Text(error)
+                        .font(.system(size: 13))
+                        .foregroundColor(Color(hex: "#FF453A"))
+                }
 
                 Button(action: create) {
                     if loading { ProgressView().tint(.white) }
-                    else { Text("Создать \(isChannel ? "канал" : "группу")").font(.headline).bold() }
+                    else {
+                        Text("Создать")
+                            .font(.system(size: 17, weight: .semibold))
+                    }
                 }
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 16)
-                .background(name.isEmpty ? theme.borderColor : theme.accent)
-                .foregroundColor(name.isEmpty ? theme.textSecondary : .white)
+                .background(name.isEmpty ? Color.white.opacity(0.15) : Color(hex: "#6C63FF"))
+                .foregroundColor(name.isEmpty ? .white.opacity(0.3) : .white)
                 .cornerRadius(14)
                 .disabled(name.isEmpty || loading)
-                .padding(.horizontal)
+                .padding(.horizontal, 40)
 
-                Spacer()
+                Spacer(minLength: 40)
             }
-            .padding(.top, 24)
-            .background(theme.backgroundColor)
-            .navigationTitle(isChannel ? "Создать канал" : "Создать группу")
+            .background(theme.bgColor.ignoresSafeArea())
             .navigationBarTitleDisplayMode(.inline)
-            .toolbar { ToolbarItem(placement: .cancellationAction) { Button("Отмена") { dismiss() } } }
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Отмена") { dismiss() }
+                        .foregroundColor(Color(hex: "#6C63FF"))
+                }
+            }
         }
+        .preferredColorScheme(theme.isDark ? .dark : .light)
     }
 
     private func create() {
         loading = true; error = nil
         Task {
             do {
-                let resp: EmptyResponse = try await APIClient.shared.request(
+                let _: EmptyResponse = try await APIClient.shared.request(
                     isChannel ? "/channels" : "/groups",
                     method: "POST",
                     body: try JSONEncoder().encode(["name": name, "about": about.isEmpty ? nil : about])
