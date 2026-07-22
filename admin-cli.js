@@ -34,7 +34,7 @@ async function run() {
 
   if (!password) {
     const rl = createInterface({ input: process.stdin, output: process.stdout })
-    const pw = await new Promise(r => rl.question('Пароль: ', r, { hideEchoBack: true }))
+    const pw = await new Promise(r => rl.question('Пароль (будет виден при вводе): ', r))
     rl.close()
     process.argv[3] = pw
     return run()
