@@ -4,10 +4,10 @@ const API = process.env.API_URL || 'https://ms-messenger-server.onrender.com'
 
 let token = null
 
-async function api(method, path, body) {
+async function api(method, path, body, extraHeaders = {}) {
   const res = await fetch(`${API}${path}`, {
     method,
-    headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+    headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}), ...extraHeaders },
     body: body ? JSON.stringify(body) : undefined,
   })
   const data = await res.json()
@@ -16,7 +16,7 @@ async function api(method, path, body) {
 }
 
 async function login(username, password) {
-  const data = await api('POST', '/api/auth/login', { userId: username, password, deviceId: 'admin-cli' })
+  const data = await api('POST', '/api/auth/login', { userId: username, password, deviceId: 'admin-cli' }, { 'x-admin-app': 'true' })
   if (data.needsVerification) {
     const rl = createInterface({ input: process.stdin, output: process.stdout })
     const code = await new Promise(r => rl.question('Код подтверждения (из чата с ботом): ', r))
