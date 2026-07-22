@@ -8,8 +8,11 @@ struct Chat: Codable, Identifiable, Hashable {
     let lastMessage: String?
     let lastTime: String?
     let unread: Int?
+    let lastMessageAt: TimeInterval?
 
     var unreadCount: Int? { unread }
+    var avatar: String? { peer?.avatar }
+    var isGroup: Bool? { type == "group" || type == "channel" }
 }
 
 struct Peer: Codable, Hashable {

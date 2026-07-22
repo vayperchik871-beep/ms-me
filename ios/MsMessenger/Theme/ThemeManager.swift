@@ -16,7 +16,7 @@ class ThemeManager: ObservableObject {
     var isDark: Bool {
         switch themeMode {
         case .system:
-            return UIScreen.main.traitCollection.userInterfaceStyle == .dark
+            return UITraitCollection.current.userInterfaceStyle == .dark
         case .dark: return true
         case .light: return false
         }

@@ -48,14 +48,14 @@ struct SettingsView: View {
                     } placeholder: {
                         Text(user?.name.prefix(1).uppercased() ?? "?")
                             .font(.system(size: 24, weight: .semibold))
-                            .foregroundColor(Color(hex: "#6C63FF"))
+                            .foregroundColor(Color(hex: "#6C63FF") ?? .blue)
                     }
                     .frame(width: 60, height: 60)
                     .clipShape(Circle())
                 } else {
                     Text(user?.name.prefix(1).uppercased() ?? "?")
                         .font(.system(size: 24, weight: .semibold))
-                        .foregroundColor(Color(hex: "#6C63FF"))
+                        .foregroundColor(Color(hex: "#6C63FF") ?? .blue)
                 }
             }
 
@@ -81,72 +81,67 @@ struct SettingsView: View {
 
     private var sections: some View {
         VStack(spacing: 12) {
-            settingsSection(title: "Оформление", items: [
-                SettingsItem(icon: "paintbrush.fill", label: "Навигация и тема") { AppearanceSettingsView() }
-            ])
-            settingsSection(title: "Конфиденциальность", items: [
-                SettingsItem(icon: "hand.raised.fill", label: "Политика конфиденциальности") { PrivacyPolicyView() }
-            ])
-            settingsSection(title: "Аккаунт", items: [
-                SettingsItem(icon: "person.2.fill", label: "Мои аккаунты") { AccountSettingsView() },
-                SettingsItem(icon: "person.circle", label: "Профиль") { ProfileView(user: user!) }
-            ], extras: {
-                Button(action: logout) {
-                    HStack {
-                        Image(systemName: "arrow.right.square")
-                        Text("Выйти из аккаунта")
+            settingsSection(title: "Оформление") {
+                NavigationLink { AppearanceSettingsView() } label: {
+                    settingsRow(icon: "paintbrush.fill", label: "Навигация и тема")
+                }
+            }
+            settingsSection(title: "Конфиденциальность") {
+                NavigationLink { PrivacyPolicyView() } label: {
+                    settingsRow(icon: "hand.raised.fill", label: "Политика конфиденциальности")
+                }
+            }
+            settingsSection(title: "Аккаунт") {
+                if let user {
+                    NavigationLink { ProfileView(user: user) } label: {
+                        settingsRow(icon: "person.circle", label: "Профиль")
                     }
-                    .foregroundColor(Color(hex: "#FF453A"))
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding(14)
-                    .background(Color.white.opacity(0.06))
-                    .cornerRadius(12)
-                }.buttonStyle(.plain)
-            })
+                }
+                NavigationLink { AccountSettingsView() } label: {
+                    settingsRow(icon: "person.2.fill", label: "Мои аккаунты")
+                }
+                Button(action: logout) {
+                    settingsRow(icon: "arrow.right.square", label: "Выйти из аккаунта", tint: Color(hex: "#FF453A") ?? .red)
+                }
+            }
 
             if let user, user.isAdmin == true {
-                settingsSection(title: "Администрирование", items: [
-                    SettingsItem(icon: "shield.fill", label: "Админ-панель") { AdminTerminalView() }
-                ])
+                settingsSection(title: "Администрирование") {
+                    Button(action: { showAdmin = true }) {
+                        settingsRow(icon: "shield.fill", label: "Админ-панель")
+                    }
+                }
             }
         }
     }
 
-    private func settingsSection<Extra: View>(
-        title: String,
-        items: [SettingsItem],
-        @ViewBuilder extras: () -> Extra = { EmptyView() }
-    ) -> some View {
+    private func settingsSection<Content: View>(title: String, @ViewBuilder content: () -> Content) -> some View {
         VStack(alignment: .leading, spacing: 8) {
             Text(title)
                 .font(.system(size: 13, weight: .medium))
                 .foregroundColor(.white.opacity(0.4))
                 .padding(.leading, 4)
-
-            VStack(spacing: 1) {
-                ForEach(Array(items.enumerated()), id: \.offset) { idx, item in
-                    NavigationLink(destination: item.destination) {
-                        HStack(spacing: 12) {
-                            Image(systemName: item.icon)
-                                .font(.system(size: 16))
-                                .foregroundColor(Color(hex: "#6C63FF"))
-                                .frame(width: 24)
-                            Text(item.label)
-                                .font(.system(size: 16))
-                                .foregroundColor(.white)
-                            Spacer()
-                            Image(systemName: "chevron.right")
-                                .font(.system(size: 13))
-                                .foregroundColor(.white.opacity(0.2))
-                        }
-                        .padding(14)
-                        .background(Color.white.opacity(0.06))
-                    }.buttonStyle(.plain)
-                }
-                extras()
-            }
-            .cornerRadius(12)
+            VStack(spacing: 1) { content() }
+                .background(Color.white.opacity(0.06))
+                .cornerRadius(12)
         }
+    }
+
+    private func settingsRow(icon: String, label: String, tint: Color? = nil) -> some View {
+        HStack(spacing: 12) {
+            Image(systemName: icon)
+                .font(.system(size: 16))
+                .foregroundColor(tint ?? (Color(hex: "#6C63FF") ?? .blue))
+                .frame(width: 24)
+            Text(label)
+                .font(.system(size: 16))
+                .foregroundColor(.white)
+            Spacer()
+            Image(systemName: "chevron.right")
+                .font(.system(size: 13))
+                .foregroundColor(.white.opacity(0.2))
+        }
+        .padding(14)
     }
 
     private func loadUser() async {
@@ -165,10 +160,4 @@ struct SettingsView: View {
             window.rootViewController = UIHostingController(rootView: OnboardingView(onComplete: {}))
         }
     }
-}
-
-struct SettingsItem {
-    let icon: String
-    let label: String
-    @ViewBuilder let destination: () -> any View
 }

@@ -198,7 +198,7 @@ struct MessageBubbleView: View {
                     .padding(.vertical, 10)
                     .background(
                         isOwn
-                            ? AnyShapeStyle(Color(hex: "#6C63FF"))
+                            ? AnyShapeStyle(Color(hex: "#6C63FF") ?? .blue)
                             : AnyShapeStyle(Color.white.opacity(0.1))
                     )
                     .foregroundColor(isOwn ? .white : theme.textPrimary)
