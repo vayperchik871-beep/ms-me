@@ -82,8 +82,10 @@ struct OnboardingView: View {
             TextField("+777XXXXXXXX", text: $phone)
                 .font(.title2).keyboardType(.phonePad).multilineTextAlignment(.center)
                 .onChange(of: phone) { _, new in
-                    if new.count > 12 { phone = String(new.prefix(12)) }
-                    else if !new.isEmpty && !new.hasPrefix("+777") { phone = "+777" }
+                    let filtered = new.filter { $0.isNumber || $0 == "+" }
+                    if filtered != new { phone = filtered }
+                    if phone.count > 12 { phone = String(phone.prefix(12)) }
+                    if !phone.hasPrefix("+777") && !phone.isEmpty { phone = "+777" }
                 }
                 .padding().background(theme.surfaceColor).cornerRadius(12)
                 .overlay(RoundedRectangle(cornerRadius: 12).stroke(theme.borderColor, lineWidth: 1))
