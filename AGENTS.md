@@ -26,6 +26,12 @@ Client IDs:
 - **Android**: `202627330294-i3glf16hem9j85of1ma9gq9h5vg3cvl4.apps.googleusercontent.com`
 - **SHA-1** (release.keystore): `F6:EF:F6:CA:17:D3:93:E7:8F:F5:BE:91:7A:8C:63:69:C5:4B:1A:68`
 
+## Админ CLI (терминал для ПК)
+```bash
+node admin-cli.js admin asfghyu78
+```
+Без пароля — запросит интерактивно. Поддерживает все команды (help, stats, ban и т.д.)
+
 ## Файлы
 - `.env` — VITE_API_BASE_URL, VITE_GOOGLE_WEB_CLIENT_ID
 - `server/.env` — GOOGLE_CLIENT_ID (web), JWT_SECRET
