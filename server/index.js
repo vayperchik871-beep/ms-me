@@ -539,6 +539,9 @@ app.post('/api/admin/command', authMiddleware, adminMiddleware, async (req, res)
           '  online         — список онлайн пользователей',
           '  bc <text>      — отправить сообщение всем чатам (broadcast)',
           '  say <id> <msg> — написать от имени бота в личный чат с пользователем',
+          '  verifys        — список заявок на верификацию',
+          '  verify <id>    — одобрить заявку',
+          '  reject <id>    — отклонить заявку',
           '  clear          — очистить терминал',
           '  purge          — удалить ВСЕ аккаунты (кроме системного)',
           '  help           — эта справка',
@@ -709,6 +712,36 @@ app.post('/api/admin/command', authMiddleware, adminMiddleware, async (req, res)
           await dbExec('PRAGMA foreign_keys = ON')
         }
         return res.json(say(`Очищено аккаунтов: ${count.c}. Все данные удалены.`))
+      }
+      case 'verifys': {
+        const requests = await dbAll(`
+          SELECT vr.*, u.username, u.email, u.phone, u.name
+          FROM verification_requests vr
+          JOIN users u ON u.id = vr.user_id
+          ORDER BY vr.created_at DESC
+        `)
+        if (requests.length === 0) return res.json(say('Нет заявок на верификацию'))
+        const lines = requests.map((r) =>
+          `#${r.id} | @${r.username} (${r.name || '—'}) | тип: ${r.verify_type || 'user'} | статус: ${r.status}`
+        )
+        return res.json(say(lines.join('\n')))
+      }
+      case 'verify': {
+        const id = args[0]
+        if (!id) return res.json(say('Укажите ID заявки: verify <id>'))
+        const row = await dbGet('SELECT user_id, verify_type FROM verification_requests WHERE id = ?', [id])
+        if (!row) return res.json(say('Заявка не найдена'))
+        await dbRun("UPDATE users SET is_verified = 1, verify_type = ? WHERE id = ?", row.verify_type || 'msm', row.user_id)
+        await dbRun('UPDATE verification_requests SET status = ?, reviewed_at = ?, reviewed_by = ? WHERE id = ?', 'approved', Date.now(), req.user.id, id)
+        return res.json(say(`Заявка #${id} одобрена`))
+      }
+      case 'reject': {
+        const id = args[0]
+        if (!id) return res.json(say('Укажите ID заявки: reject <id>'))
+        const row = await dbGet('SELECT user_id FROM verification_requests WHERE id = ?', [id])
+        if (!row) return res.json(say('Заявка не найдена'))
+        await dbRun('UPDATE verification_requests SET status = ?, reviewed_at = ?, reviewed_by = ? WHERE id = ?', 'rejected', Date.now(), req.user.id, id)
+        return res.json(say(`Заявка #${id} отклонена`))
       }
       default:
         return res.json(say(`Неизвестная команда: ${cmd}. Введите help для списка команд`))
