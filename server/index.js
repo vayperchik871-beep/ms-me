@@ -51,7 +51,7 @@ const frontendDistDir = path.join(rootDir, 'dist')
 const indexHtmlPath = path.join(frontendDistDir, 'index.html')
 
 app.use(cors())
-app.use(express.json())
+app.use(express.json({ limit: '10mb' }))
 app.use(express.static(frontendDistDir))
 app.use('/uploads', express.static(path.join(rootDir, 'uploads')))
 
@@ -212,8 +212,8 @@ app.post('/api/auth/register', async (req, res) => {
 
   if (phone) {
     const cleanPhone = phone.trim()
-    if (!/^\+777\d{7,11}$/.test(cleanPhone)) {
-      return res.status(400).json({ error: 'Номер должен начинаться на +777' })
+    if (!/^\+777\d{8}$/.test(cleanPhone)) {
+      return res.status(400).json({ error: 'Номер должен быть в формате +777XXXXXXXX (12 символов)' })
     }
     const phoneExist = await dbGet('SELECT id FROM users WHERE phone = ?', cleanPhone)
     if (phoneExist) return res.status(409).json({ error: 'Этот номер уже занят' })

@@ -81,6 +81,10 @@ struct OnboardingView: View {
                 .font(.subheadline).multilineTextAlignment(.center).foregroundColor(theme.textSecondary)
             TextField("+777XXXXXXXX", text: $phone)
                 .font(.title2).keyboardType(.phonePad).multilineTextAlignment(.center)
+                .onChange(of: phone) { _, new in
+                    if new.count > 12 { phone = String(new.prefix(12)) }
+                    else if !new.isEmpty && !new.hasPrefix("+777") { phone = "+777" }
+                }
                 .padding().background(theme.surfaceColor).cornerRadius(12)
                 .overlay(RoundedRectangle(cornerRadius: 12).stroke(theme.borderColor, lineWidth: 1))
                 .padding(.horizontal, 40)
@@ -166,7 +170,7 @@ struct OnboardingView: View {
         }
     }
 
-    private var phoneValid: Bool { phone.count >= 11 && phone.hasPrefix("+777") }
+    private var phoneValid: Bool { phone.count == 12 && phone.hasPrefix("+777") }
 
     private func register() {
         loading = true; error = nil
