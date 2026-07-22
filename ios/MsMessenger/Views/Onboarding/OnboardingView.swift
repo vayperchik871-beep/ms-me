@@ -54,12 +54,14 @@ struct OnboardingView: View {
         VStack(spacing: 32) {
             Spacer()
             ZStack {
-                Circle()
-                    .fill(LinearGradient(colors: [theme.accent, .purple, .blue], startPoint: .topLeading, endPoint: .bottomTrailing))
-                    .frame(width: 120, height: 120)
-                Image(systemName: "bubble.left.and.bubble.right.fill")
-                    .font(.system(size: 52))
-                    .foregroundColor(.white)
+                RoundedRectangle(cornerRadius: 32)
+                    .fill(Color(hex: "#2c2f33")!)
+                    .frame(width: 130, height: 130)
+                    .shadow(color: .black.opacity(0.4), radius: 12, x: 0, y: 6)
+                Text("MS")
+                    .font(.system(size: 44, weight: .bold, design: .rounded))
+                    .foregroundColor(Color(hex: "#e8e8e8")!)
+                    .offset(y: 2)
             }
             VStack(spacing: 8) {
                 Text("MS Messenger").font(.largeTitle).bold().foregroundColor(theme.textPrimary)

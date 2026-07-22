@@ -13,7 +13,7 @@ class ThemeManager: ObservableObject {
     var textPrimary: Color { isDark ? .white : .black }
     var textSecondary: Color { isDark ? Color(hex: "#a0a0a0")! : .gray }
     var accent: Color { Color(hex: "#7c3aed")! }
-    var borderColor: Color { isDark ? Color(hex: "#333")! : Color(hex: "#e0e0e0")! }
+    var borderColor: Color { isDark ? Color(hex: "#333333")! : Color(hex: "#e0e0e0")! }
     var success: Color { .green }
     var error: Color { .red }
     var terminalBg: Color { Color(hex: "#0d0d0d")! }
@@ -24,7 +24,8 @@ class ThemeManager: ObservableObject {
 
 extension Color {
     init?(hex: String) {
-        let hex = hex.trimmingCharacters(in: .alphanumerics.inverted)
+        var hex = hex.trimmingCharacters(in: .alphanumerics.inverted)
+        if hex.count == 3 { hex = String(hex.map { "\($0)\($0)" }.joined()) }
         var int: UInt64 = 0
         Scanner(string: hex).scanHexInt64(&int)
         let a, r, g, b: UInt64
