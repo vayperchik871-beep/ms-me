@@ -9,16 +9,15 @@ struct ChatDetailView: View {
     @FocusState private var isInputFocused: Bool
     @Environment(\.dismiss) private var dismiss
 
+    private let ownUUID = UserDefaults.standard.string(forKey: "user_uuid") ?? ""
+
     var body: some View {
         VStack(spacing: 0) {
-            header
-            Divider().background(Color.white.opacity(0.08))
-
             ScrollViewReader { proxy in
                 ScrollView {
                     LazyVStack(spacing: 4) {
                         ForEach(messages) { msg in
-                            MessageBubbleView(message: msg, isOwn: msg.senderId == UserDefaults.standard.string(forKey: "user_id")).id(msg.id)
+                            MessageBubbleView(message: msg, isOwn: msg.senderId == ownUUID).id(msg.id)
                         }
                     }.padding(.horizontal, 12).padding(.top, 8)
                 }
@@ -30,71 +29,54 @@ struct ChatDetailView: View {
 
             messageInput
         }
-        .background(theme.bgColor.ignoresSafeArea())
-        .navigationBarHidden(true)
+        .background(theme.chatBg.ignoresSafeArea())
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbarBackground(Color.clear, for: .navigationBar)
+        .toolbarBackground(.visible, for: .navigationBar)
+        .toolbar {
+            ToolbarItem(placement: .navigationBarLeading) {
+                Button(action: { dismiss() }) {
+                    Image(systemName: "chevron.left")
+                        .font(.system(size: 17, weight: .semibold))
+                        .foregroundColor(theme.textPrimary)
+                }
+            }
+            ToolbarItem(placement: .principal) {
+                HStack(spacing: 10) {
+                    if let avatar = chat.avatar, let url = URL(string: avatar) {
+                        AsyncImage(url: url) { img in
+                            img.resizable().scaledToFill()
+                        } placeholder: {
+                            Image(systemName: chat.isGroup == true ? "person.2.fill" : "person.fill")
+                                .foregroundColor(theme.textPrimary)
+                        }
+                        .frame(width: 32, height: 32)
+                        .clipShape(Circle())
+                    } else {
+                        Image(systemName: chat.isGroup == true ? "person.2.fill" : "person.fill")
+                            .font(.system(size: 14))
+                            .foregroundColor(theme.textPrimary)
+                            .frame(width: 32, height: 32)
+                            .background(theme.inputBg)
+                            .clipShape(Circle())
+                    }
+                    VStack(alignment: .leading, spacing: 1) {
+                        Text(chat.name ?? "Чат")
+                            .font(.system(size: 16, weight: .semibold))
+                            .foregroundColor(theme.textPrimary)
+                            .lineLimit(1)
+                        Text(ws.isConnected ? "online" : "offline")
+                            .font(.system(size: 11))
+                            .foregroundColor(ws.isConnected ? theme.success : theme.textSecondary)
+                    }
+                }
+            }
+        }
         .task { await load() }
         .onReceive(ws.$newMessage) { msg in
             guard let msg, msg.chatId == chat.id else { return }
             if !messages.contains(where: { $0.id == msg.id }) { messages.append(msg) }
         }
-    }
-
-    // MARK: - Header
-
-    private var header: some View {
-        HStack(spacing: 12) {
-            Button { dismiss() } label: {
-                HStack(spacing: 4) {
-                    Image(systemName: "chevron.left").font(.system(size: 17, weight: .semibold))
-                    if messages.count > 0 {
-                        Text("\(messages.count)")
-                            .font(.system(size: 14, weight: .medium))
-                            .padding(.horizontal, 8)
-                            .padding(.vertical, 4)
-                            .background(Color.white.opacity(0.12))
-                            .cornerRadius(12)
-                    }
-                }.foregroundColor(.white)
-            }
-
-            VStack(alignment: .leading, spacing: 2) {
-                Text(chat.name ?? "Чат")
-                    .font(.system(size: 17, weight: .semibold))
-                    .foregroundColor(.white)
-                Text(ws.isConnected ? "в сети" : "не в сети")
-                    .font(.system(size: 13))
-                    .foregroundColor(ws.isConnected ? Color.green : Color.gray)
-            }
-
-            Spacer()
-
-            if let avatar = chat.avatar, let url = URL(string: avatar) {
-                AsyncImage(url: url) { img in
-                    img.resizable().scaledToFill()
-                } placeholder: {
-                    Image(systemName: chat.isGroup == true ? "person.2.fill" : "person.fill")
-                        .foregroundColor(.white)
-                }
-                .frame(width: 36, height: 36)
-                .clipShape(Circle())
-            } else {
-                Image(systemName: chat.isGroup == true ? "person.2.fill" : "person.fill")
-                    .font(.system(size: 16))
-                    .foregroundColor(.white)
-                    .frame(width: 36, height: 36)
-                    .background(Color.white.opacity(0.15))
-                    .clipShape(Circle())
-            }
-        }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 10)
-        .background(
-            RoundedRectangle(cornerRadius: 20)
-                .fill(Color.white.opacity(0.06))
-                .padding(.horizontal, 8)
-        )
-        .padding(.horizontal, 4)
-        .padding(.top, 8)
     }
 
     // MARK: - Message Input
@@ -103,55 +85,49 @@ struct ChatDetailView: View {
         HStack(spacing: 10) {
             Button(action: {}) {
                 Image(systemName: "paperclip")
-                    .font(.system(size: 22))
-                    .foregroundColor(.white.opacity(0.6))
+                    .font(.system(size: 20))
+                    .foregroundColor(theme.textSecondary)
             }
 
-            HStack {
+            HStack(spacing: 0) {
                 TextField("", text: $text)
                     .focused($isInputFocused)
-                    .foregroundColor(.white)
-                    .tint(Color(hex: "#6C63FF"))
-                if text.isEmpty && !isInputFocused {
-                    Text("Сообщение")
-                        .foregroundColor(.white.opacity(0.3))
-                        .allowsHitTesting(false)
-                }
+                    .foregroundColor(theme.inputText)
+                    .tint(theme.accent)
+                    .placeholder(when: text.isEmpty && !isInputFocused) {
+                        Text("Message")
+                            .foregroundColor(theme.textSecondary)
+                            .allowsHitTesting(false)
+                    }
             }
             .padding(.horizontal, 14)
-            .padding(.vertical, 10)
-            .background(Color.white.opacity(0.1))
-            .cornerRadius(22)
+            .padding(.vertical, 9)
+            .background(theme.inputBg)
+            .cornerRadius(20)
 
             Button(action: {}) {
                 Image(systemName: "face.smiling")
-                    .font(.system(size: 22))
-                    .foregroundColor(.white.opacity(0.6))
+                    .font(.system(size: 20))
+                    .foregroundColor(theme.textSecondary)
             }
 
             if text.trimmingCharacters(in: .whitespaces).isEmpty {
                 Button(action: {}) {
                     Image(systemName: "mic.fill")
                         .font(.system(size: 20))
-                        .foregroundColor(.white.opacity(0.6))
+                        .foregroundColor(theme.textSecondary)
                 }
             } else {
                 Button(action: send) {
                     Image(systemName: "arrow.up.circle.fill")
-                        .font(.system(size: 32))
-                        .foregroundColor(Color(hex: "#6C63FF"))
+                        .font(.system(size: 30))
+                        .foregroundColor(theme.accent)
                 }
             }
         }
-        .padding(.horizontal, 14)
+        .padding(.horizontal, 12)
         .padding(.vertical, 10)
-        .background(
-            RoundedRectangle(cornerRadius: 20)
-                .fill(Color.white.opacity(0.06))
-                .padding(.horizontal, 8)
-        )
-        .padding(.horizontal, 4)
-        .padding(.bottom, 8)
+        .background(theme.surfaceColor)
     }
 
     // MARK: - Helpers
@@ -183,7 +159,6 @@ struct MessageBubbleView: View {
     let message: Message
     let isOwn: Bool
     @ObservedObject private var theme = ThemeManager.shared
-    @Environment(\.dynamicTypeSize) private var typeSize
 
     var body: some View {
         HStack {
@@ -196,11 +171,7 @@ struct MessageBubbleView: View {
                     .font(.system(size: 16))
                     .padding(.horizontal, 14)
                     .padding(.vertical, 10)
-                    .background(
-                        isOwn
-                            ? AnyShapeStyle(Color(hex: "#6C63FF") ?? .blue)
-                            : AnyShapeStyle(Color.white.opacity(0.1))
-                    )
+                    .background(isOwn ? theme.bubbleOwn : theme.bubbleOther)
                     .foregroundColor(isOwn ? .white : theme.textPrimary)
                     .cornerRadius(18)
                     .fixedSize(horizontal: false, vertical: true)
@@ -214,5 +185,16 @@ struct MessageBubbleView: View {
             }
             if !isOwn { Spacer(minLength: 40) }
         }.padding(.horizontal, 8)
+    }
+}
+
+// MARK: - TextField Placeholder
+
+extension View {
+    func placeholder<Content: View>(when condition: Bool, @ViewBuilder content: () -> Content) -> some View {
+        ZStack(alignment: .leading) {
+            if condition { content() }
+            self
+        }
     }
 }

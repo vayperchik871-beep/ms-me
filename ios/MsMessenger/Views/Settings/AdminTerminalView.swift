@@ -22,7 +22,7 @@ struct AdminTerminalView: View {
                     Text(">").font(.system(.body, design: .monospaced)).foregroundColor(theme.terminalGreen)
                     TextField("введите команду...", text: $command).font(.system(.body, design: .monospaced)).foregroundColor(theme.terminalText).autocapitalization(.none).disableAutocorrection(true).focused($isInputFocused).onSubmit(submit)
                     if loading { ProgressView().scaleEffect(0.7) }
-                }.padding(12).background(Color(hex: "#1a1a1a")!)
+                }.padding(12).background(Color(hex: "#1a1a1a"))
             }
             .navigationTitle("Терминал").navigationBarTitleDisplayMode(.inline)
             .toolbar { ToolbarItem(placement: .cancellationAction) { Button("Закрыть") { dismiss() } } }
@@ -31,7 +31,7 @@ struct AdminTerminalView: View {
     }
 
     private func colorFor(_ type: String) -> Color {
-        switch type { case "input": return theme.terminalGreen; case "error": return theme.terminalRed; case "system": return Color(hex: "#6272a4")!; default: return theme.terminalText }
+        switch type { case "input": return theme.terminalGreen; case "error": return theme.terminalRed; case "system": return Color(hex: "#6272a4"); default: return theme.terminalText }
     }
 
     private func submit() {

@@ -15,17 +15,17 @@ struct CreateGroupChannelView: View {
                 VStack(spacing: 8) {
                     Text(isChannel ? "Создать канал" : "Создать группу")
                         .font(.system(size: 22, weight: .bold))
-                        .foregroundColor(.white)
+                        .foregroundColor(theme.textPrimary)
                     Text(isChannel ? "Канал для публикаций" : "Группа для общения")
                         .font(.system(size: 15))
-                        .foregroundColor(.white.opacity(0.4))
+                        .foregroundColor(theme.textSecondary)
                 }
 
                 HStack(spacing: 4) {
                     Button(action: { withAnimation { isChannel = false } }) {
                         Text("Группа")
                             .font(.system(size: 15, weight: isChannel ? .regular : .semibold))
-                            .foregroundColor(isChannel ? .white.opacity(0.4) : .white)
+                            .foregroundColor(isChannel ? theme.textSecondary : theme.textPrimary)
                             .padding(.vertical, 10)
                             .padding(.horizontal, 24)
                             .background(!isChannel ? Color.white.opacity(0.1) : Color.clear)
@@ -35,7 +35,7 @@ struct CreateGroupChannelView: View {
                     Button(action: { withAnimation { isChannel = true } }) {
                         Text("Канал")
                             .font(.system(size: 15, weight: isChannel ? .semibold : .regular))
-                            .foregroundColor(isChannel ? .white : .white.opacity(0.4))
+                            .foregroundColor(isChannel ? theme.textPrimary : theme.textSecondary)
                             .padding(.vertical, 10)
                             .padding(.horizontal, 24)
                             .background(isChannel ? Color.white.opacity(0.1) : Color.clear)
@@ -51,11 +51,11 @@ struct CreateGroupChannelView: View {
                             .frame(width: 24)
                         TextField("Название", text: $name)
                             .font(.system(size: 16))
-                            .foregroundColor(.white)
+                            .foregroundColor(theme.inputText)
                     }
                     .padding(.horizontal, 16)
                     .padding(.vertical, 14)
-                    .background(Color.white.opacity(0.08))
+                    .background(theme.inputBg)
                     .cornerRadius(12)
 
                     HStack(spacing: 12) {
@@ -65,11 +65,11 @@ struct CreateGroupChannelView: View {
                             .frame(width: 24)
                         TextField("Описание (необязательно)", text: $about)
                             .font(.system(size: 16))
-                            .foregroundColor(.white)
+                            .foregroundColor(theme.inputText)
                     }
                     .padding(.horizontal, 16)
                     .padding(.vertical, 14)
-                    .background(Color.white.opacity(0.08))
+                    .background(theme.inputBg)
                     .cornerRadius(12)
                 }
                 .padding(.horizontal, 40)

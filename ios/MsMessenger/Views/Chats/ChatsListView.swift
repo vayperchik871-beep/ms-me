@@ -17,10 +17,10 @@ struct ChatsListView: View {
                     VStack(spacing: 12) {
                         Image(systemName: "message.slash")
                             .font(.system(size: 48))
-                            .foregroundColor(.white.opacity(0.3))
+                            .foregroundColor(theme.textSecondary.opacity(0.5))
                         Text("Нет чатов")
                             .font(.system(size: 17, weight: .medium))
-                            .foregroundColor(.white.opacity(0.4))
+                            .foregroundColor(theme.textSecondary)
                     }
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
                 }
@@ -40,13 +40,13 @@ struct ChatsListView: View {
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .background(theme.bgColor.ignoresSafeArea())
-            .searchable(text: $searchText, prompt: Text("Поиск").foregroundColor(.white.opacity(0.4)))
+            .searchable(text: $searchText, prompt: Text("Поиск").foregroundColor(theme.textSecondary))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .principal) {
                     Text("Чаты")
                         .font(.system(size: 17, weight: .semibold))
-                        .foregroundColor(.white)
+                        .foregroundColor(theme.textPrimary)
                 }
                 ToolbarItem(placement: .primaryAction) {
                     Button(action: { showCreateGroup = true }) {
@@ -79,19 +79,20 @@ struct ChatsListView: View {
 
 struct ChatRowView: View {
     let chat: Chat
+    @ObservedObject private var theme = ThemeManager.shared
 
     var body: some View {
         HStack(spacing: 12) {
             ZStack {
                 Circle()
-                    .fill(Color.white.opacity(0.1))
+                    .fill(theme.cardColor)
                     .frame(width: 52, height: 52)
                 if let avatar = chat.avatar, let url = URL(string: avatar) {
                     AsyncImage(url: url) { img in
                         img.resizable().scaledToFill()
                     } placeholder: {
                         Image(systemName: chat.isGroup == true ? "person.2.fill" : "person.fill")
-                            .foregroundColor(.white.opacity(0.5))
+                            .foregroundColor(theme.textSecondary)
                     }
                     .frame(width: 52, height: 52)
                     .clipShape(Circle())
@@ -103,13 +104,13 @@ struct ChatRowView: View {
             }
 
             VStack(alignment: .leading, spacing: 4) {
-                Text(chat.name ?? "Чат")
-                    .font(.system(size: 16, weight: .medium))
-                    .foregroundColor(.white)
+                    Text(chat.name ?? "Чат")
+                        .font(.system(size: 16, weight: .medium))
+                        .foregroundColor(theme.textPrimary)
                 if let last = chat.lastMessage, !last.isEmpty {
                     Text(last)
                         .font(.system(size: 14))
-                        .foregroundColor(.white.opacity(0.4))
+                        .foregroundColor(theme.textSecondary)
                         .lineLimit(1)
                 }
             }
@@ -119,7 +120,7 @@ struct ChatRowView: View {
             VStack(alignment: .trailing, spacing: 6) {
                 Text(chatTime(chat.lastMessageAt))
                     .font(.system(size: 12))
-                    .foregroundColor(.white.opacity(0.3))
+                    .foregroundColor(theme.textSecondary)
                 if let unread = chat.unreadCount, unread > 0 {
                     Text("\(unread)")
                         .font(.system(size: 12, weight: .bold))

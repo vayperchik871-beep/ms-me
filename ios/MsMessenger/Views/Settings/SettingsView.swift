@@ -23,7 +23,7 @@ struct SettingsView: View {
                 ToolbarItem(placement: .principal) {
                     Text("Настройки")
                         .font(.system(size: 17, weight: .semibold))
-                        .foregroundColor(.white)
+                        .foregroundColor(theme.textPrimary)
                 }
             }
             .toolbarBackground(Color.clear, for: .navigationBar)
@@ -46,26 +46,26 @@ struct SettingsView: View {
                     AsyncImage(url: url) { img in
                         img.resizable().scaledToFill()
                     } placeholder: {
-                        Text(user?.name.prefix(1).uppercased() ?? "?")
-                            .font(.system(size: 24, weight: .semibold))
-                            .foregroundColor(Color(hex: "#6C63FF") ?? .blue)
+                    Text(user?.name.prefix(1).uppercased() ?? "?")
+                             .font(.system(size: 24, weight: .semibold))
+                             .foregroundColor(Color(hex: "#6C63FF"))
                     }
                     .frame(width: 60, height: 60)
                     .clipShape(Circle())
                 } else {
                     Text(user?.name.prefix(1).uppercased() ?? "?")
                         .font(.system(size: 24, weight: .semibold))
-                        .foregroundColor(Color(hex: "#6C63FF") ?? .blue)
+                        .foregroundColor(Color(hex: "#6C63FF"))
                 }
             }
 
             VStack(alignment: .leading, spacing: 4) {
                 Text(user?.name ?? "...")
                     .font(.system(size: 20, weight: .semibold))
-                    .foregroundColor(.white)
+                    .foregroundColor(theme.textPrimary)
                 Text("@\(user?.userId ?? "")")
                     .font(.system(size: 14))
-                    .foregroundColor(.white.opacity(0.4))
+                    .foregroundColor(theme.textSecondary)
             }
 
             Spacer()
@@ -101,7 +101,7 @@ struct SettingsView: View {
                     settingsRow(icon: "person.2.fill", label: "Мои аккаунты")
                 }
                 Button(action: logout) {
-                    settingsRow(icon: "arrow.right.square", label: "Выйти из аккаунта", tint: Color(hex: "#FF453A") ?? .red)
+                    settingsRow(icon: "arrow.right.square", label: "Выйти из аккаунта", tint: Color(hex: "#FF453A"))
                 }
             }
 
@@ -119,7 +119,7 @@ struct SettingsView: View {
         VStack(alignment: .leading, spacing: 8) {
             Text(title)
                 .font(.system(size: 13, weight: .medium))
-                .foregroundColor(.white.opacity(0.4))
+                .foregroundColor(theme.textSecondary)
                 .padding(.leading, 4)
             VStack(spacing: 1) { content() }
                 .background(Color.white.opacity(0.06))
@@ -131,15 +131,15 @@ struct SettingsView: View {
         HStack(spacing: 12) {
             Image(systemName: icon)
                 .font(.system(size: 16))
-                .foregroundColor(tint ?? (Color(hex: "#6C63FF") ?? .blue))
+                .foregroundColor(tint ?? Color(hex: "#6C63FF"))
                 .frame(width: 24)
             Text(label)
                 .font(.system(size: 16))
-                .foregroundColor(.white)
+                .foregroundColor(theme.textPrimary)
             Spacer()
             Image(systemName: "chevron.right")
                 .font(.system(size: 13))
-                .foregroundColor(.white.opacity(0.2))
+                .foregroundColor(theme.textSecondary.opacity(0.6))
         }
         .padding(14)
     }
@@ -149,6 +149,7 @@ struct SettingsView: View {
             let resp = try await APIClient.shared.me()
             user = resp.user
             UserDefaults.standard.set(resp.user.userId, forKey: "user_id")
+            UserDefaults.standard.set(resp.user.id, forKey: "user_uuid")
         } catch { print(error) }
     }
 

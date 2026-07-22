@@ -33,10 +33,10 @@ struct ProfileView: View {
                 VStack(spacing: 4) {
                     Text(user.name)
                         .font(.system(size: 22, weight: .semibold))
-                        .foregroundColor(.white)
+                        .foregroundColor(theme.textPrimary)
                     Text("@\(user.userId)")
                         .font(.system(size: 15))
-                        .foregroundColor(.white.opacity(0.4))
+                        .foregroundColor(theme.textSecondary)
                 }
 
                 VStack(spacing: 12) {
@@ -47,12 +47,12 @@ struct ProfileView: View {
                             .frame(width: 24)
                         TextField("Имя", text: $newName)
                             .font(.system(size: 16))
-                            .foregroundColor(.white)
+                            .foregroundColor(theme.inputText)
                             .onAppear { newName = user.name }
                     }
                     .padding(.horizontal, 16)
                     .padding(.vertical, 14)
-                    .background(Color.white.opacity(0.08))
+                    .background(theme.inputBg)
                     .cornerRadius(12)
 
                     Button(action: save) {
@@ -78,7 +78,7 @@ struct ProfileView: View {
                             .font(.system(size: 20))
                         Text("\(mcoins) MCoins")
                             .font(.system(size: 16, weight: .medium))
-                            .foregroundColor(.white)
+                            .foregroundColor(theme.textPrimary)
                         Spacer()
                     }
                     .padding(16)
@@ -96,7 +96,7 @@ struct ProfileView: View {
             ToolbarItem(placement: .principal) {
                 Text("Профиль")
                     .font(.system(size: 17, weight: .semibold))
-                    .foregroundColor(.white)
+                    .foregroundColor(theme.textPrimary)
             }
         }
         .toolbarBackground(Color.clear, for: .navigationBar)

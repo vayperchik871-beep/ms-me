@@ -34,7 +34,7 @@ struct MusicView: View {
                 ToolbarItem(placement: .principal) {
                     Text("Музыка")
                         .font(.system(size: 17, weight: .semibold))
-                        .foregroundColor(.white)
+                        .foregroundColor(theme.textPrimary)
                 }
                 ToolbarItem(placement: .primaryAction) {
                     Button(action: { showPicker = true }) {
@@ -60,7 +60,7 @@ struct MusicView: View {
                 Button(action: { withAnimation(.easeInOut(duration: 0.2)) { tab = id } }) {
                     Text(title)
                         .font(.system(size: 14, weight: tab == id ? .semibold : .regular))
-                        .foregroundColor(tab == id ? .white : .white.opacity(0.4))
+                        .foregroundColor(tab == id ? theme.textPrimary : theme.textSecondary)
                         .padding(.horizontal, 16)
                         .padding(.vertical, 8)
                         .background(
@@ -86,14 +86,14 @@ struct MusicView: View {
     private func listView(_ list: [MusicTrack]) -> some View {
         Group {
             if list.isEmpty {
-                VStack(spacing: 12) {
-                    Image(systemName: "music.note.list")
-                        .font(.system(size: 48))
-                        .foregroundColor(.white.opacity(0.2))
-                    Text("Нет треков")
-                        .font(.system(size: 17, weight: .medium))
-                        .foregroundColor(.white.opacity(0.3))
-                }
+                    VStack(spacing: 12) {
+                        Image(systemName: "music.note.list")
+                            .font(.system(size: 48))
+                            .foregroundColor(theme.textSecondary.opacity(0.5))
+                        Text("Нет треков")
+                            .font(.system(size: 17, weight: .medium))
+                            .foregroundColor(theme.textSecondary)
+                    }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
             } else {
                 ScrollView {
@@ -112,7 +112,7 @@ struct MusicView: View {
                                         } else {
                                             Image(systemName: "music.note")
                                                 .font(.system(size: 16))
-                                                .foregroundColor(.white.opacity(0.5))
+                                                .foregroundColor(theme.textSecondary)
                                         }
                                     }
                                     .frame(width: 48, height: 48)
@@ -120,10 +120,10 @@ struct MusicView: View {
                                     VStack(alignment: .leading, spacing: 3) {
                                         Text(track.title)
                                             .font(.system(size: 16, weight: .medium))
-                                            .foregroundColor(.white)
+                                            .foregroundColor(theme.textPrimary)
                                         Text(track.artist)
                                             .font(.system(size: 14))
-                                            .foregroundColor(.white.opacity(0.4))
+                                            .foregroundColor(theme.textSecondary)
                                     }
 
                                     Spacer()
@@ -131,7 +131,7 @@ struct MusicView: View {
                                     Button(action: { toggleFavorite(track) }) {
                                         Image(systemName: track.isFavorite ? "heart.fill" : "heart")
                                             .font(.system(size: 18))
-                                            .foregroundColor(track.isFavorite ? .red : .white.opacity(0.3))
+                                            .foregroundColor(track.isFavorite ? .red : theme.textSecondary)
                                     }.buttonStyle(.plain)
                                 }
                                 .padding(.vertical, 10)

@@ -134,18 +134,18 @@ struct OnboardingView: View {
                 .foregroundColor(Color(hex: "#6C63FF"))
                 .padding(.horizontal, 14)
                 .padding(.vertical, 14)
-                .background(Color.white.opacity(0.08))
+                .background(theme.inputBg)
                 .cornerRadius(12)
 
             TextField("XXXX", text: $phonePrefix)
                 .font(.system(size: 22, weight: .medium, design: .monospaced))
                 .keyboardType(.numberPad)
                 .multilineTextAlignment(.center)
-                .foregroundColor(.white)
+                .foregroundColor(theme.inputText)
                 .tint(Color(hex: "#6C63FF"))
                 .padding(.vertical, 14)
                 .frame(width: 80)
-                .background(Color.white.opacity(0.08))
+                .background(theme.inputBg)
                 .cornerRadius(12)
                 .onChange(of: phonePrefix) { _, new in
                     let filtered = new.filter(\.isNumber)
@@ -160,11 +160,11 @@ struct OnboardingView: View {
                 .font(.system(size: 22, weight: .medium, design: .monospaced))
                 .keyboardType(.numberPad)
                 .multilineTextAlignment(.center)
-                .foregroundColor(.white)
+                .foregroundColor(theme.inputText)
                 .tint(Color(hex: "#6C63FF"))
                 .padding(.vertical, 14)
                 .frame(width: 80)
-                .background(Color.white.opacity(0.08))
+                .background(theme.inputBg)
                 .cornerRadius(12)
                 .onChange(of: phoneLast) { _, new in
                     let filtered = new.filter(\.isNumber)
@@ -287,16 +287,16 @@ struct OnboardingView: View {
             if isSecure {
                 SecureField(placeholder, text: text)
                     .font(.system(size: 16))
-                    .foregroundColor(.white)
+                    .foregroundColor(theme.inputText)
             } else {
                 TextField(placeholder, text: text)
                     .font(.system(size: 16))
-                    .foregroundColor(.white)
+                    .foregroundColor(theme.inputText)
             }
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 14)
-        .background(Color.white.opacity(0.08))
+        .background(theme.inputBg)
         .cornerRadius(12)
     }
 
@@ -311,7 +311,12 @@ struct OnboardingView: View {
                     userId: userId, name: name, password: password, deviceId: deviceId,
                     phone: fullPhone, bio: bio.isEmpty ? nil : bio, avatarData: avatarData
                 )
-                APIClient.shared.token = resp.token; onComplete()
+                APIClient.shared.token = resp.token
+                if let user = resp.user {
+                    UserDefaults.standard.set(user.userId, forKey: "user_id")
+                    UserDefaults.standard.set(user.id, forKey: "user_uuid")
+                }
+                onComplete()
             } catch { self.error = error.localizedDescription }
             loading = false
         }

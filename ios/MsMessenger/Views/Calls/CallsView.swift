@@ -24,7 +24,7 @@ struct CallsView: View {
                 ToolbarItem(placement: .principal) {
                     Text("Звонки")
                         .font(.system(size: 17, weight: .semibold))
-                        .foregroundColor(.white)
+                        .foregroundColor(theme.textPrimary)
                 }
             }
             .toolbarBackground(Color.clear, for: .navigationBar)
@@ -41,21 +41,21 @@ struct CallsView: View {
             if number.isEmpty {
                 Text("+777 XXX XXXX")
                     .font(.system(size: 32, weight: .light, design: .monospaced))
-                    .foregroundColor(.white.opacity(0.2))
+                    .foregroundColor(theme.textSecondary.opacity(0.5))
             } else {
-                Text(formattedNumber)
-                    .font(.system(size: 32, weight: .light, design: .monospaced))
-                    .foregroundColor(.white)
-            }
+                    Text(formattedNumber)
+                        .font(.system(size: 32, weight: .light, design: .monospaced))
+                        .foregroundColor(theme.textPrimary)
+                }
 
             if let user = searchResult {
                 Text(user.name)
                     .font(.system(size: 15))
-                    .foregroundColor(.white.opacity(0.5))
+                    .foregroundColor(theme.textSecondary)
             } else if !number.isEmpty && number.count >= 4 {
                 Text("контакт не найден")
                     .font(.system(size: 15))
-                    .foregroundColor(.white.opacity(0.3))
+                    .foregroundColor(theme.textSecondary.opacity(0.7))
             }
         }
         .frame(height: 80)
@@ -102,13 +102,13 @@ struct CallsView: View {
     private func dialButton(_ digit: String, subtitle: String?) -> some View {
         Button(action: { addDigit(digit) }) {
             VStack(spacing: 2) {
-                Text(digit)
-                    .font(.system(size: 32, weight: .light))
-                    .foregroundColor(.white)
+                    Text(digit)
+                        .font(.system(size: 32, weight: .light))
+                        .foregroundColor(theme.textPrimary)
                 if let sub = subtitle {
                     Text(sub)
                         .font(.system(size: 10, weight: .medium))
-                        .foregroundColor(.white.opacity(0.4))
+                        .foregroundColor(theme.textSecondary)
                 }
             }
             .frame(width: 76, height: 76)
@@ -127,7 +127,7 @@ struct CallsView: View {
                 Button(action: { deleteDigit() }) {
                     Image(systemName: "delete.left")
                         .font(.system(size: 24))
-                        .foregroundColor(.white.opacity(0.5))
+                        .foregroundColor(theme.textSecondary)
                         .frame(width: 60, height: 60)
                 }.buttonStyle(.plain)
             } else {
@@ -149,7 +149,7 @@ struct CallsView: View {
                 Button(action: addContact) {
                     Image(systemName: "person.crop.circle.badge.plus")
                         .font(.system(size: 24))
-                        .foregroundColor(.white.opacity(0.5))
+                        .foregroundColor(theme.textSecondary)
                         .frame(width: 60, height: 60)
                 }.buttonStyle(.plain)
             } else {

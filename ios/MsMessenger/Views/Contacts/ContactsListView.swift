@@ -35,13 +35,13 @@ struct ContactsListView: View {
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .background(theme.bgColor.ignoresSafeArea())
-            .searchable(text: $search, prompt: Text("Поиск").foregroundColor(.white.opacity(0.4)))
+            .searchable(text: $search, prompt: Text("Поиск").foregroundColor(theme.textSecondary))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .principal) {
                     Text("Контакты")
                         .font(.system(size: 17, weight: .semibold))
-                        .foregroundColor(.white)
+                        .foregroundColor(theme.textPrimary)
                 }
             }
             .toolbarBackground(Color.clear, for: .navigationBar)
@@ -75,12 +75,13 @@ struct ContactsListView: View {
 
 struct ContactRowView: View {
     let user: User
+    @ObservedObject private var theme = ThemeManager.shared
 
     var body: some View {
         HStack(spacing: 12) {
             ZStack {
                 Circle()
-                    .fill(Color.white.opacity(0.1))
+                    .fill(theme.cardColor)
                     .frame(width: 48, height: 48)
                 Text(user.name.prefix(1).uppercased())
                     .font(.system(size: 18, weight: .semibold))
@@ -90,17 +91,17 @@ struct ContactRowView: View {
             VStack(alignment: .leading, spacing: 3) {
                 Text(user.name)
                     .font(.system(size: 16, weight: .medium))
-                    .foregroundColor(.white)
+                    .foregroundColor(theme.textPrimary)
                 Text("@\(user.userId)")
                     .font(.system(size: 14))
-                    .foregroundColor(.white.opacity(0.4))
+                    .foregroundColor(theme.textSecondary)
             }
 
             Spacer()
 
             Image(systemName: "chevron.right")
                 .font(.system(size: 14))
-                .foregroundColor(.white.opacity(0.2))
+                .foregroundColor(theme.textSecondary.opacity(0.6))
         }
         .padding(.vertical, 10)
         .padding(.horizontal, 4)

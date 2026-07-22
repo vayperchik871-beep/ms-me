@@ -102,7 +102,7 @@ struct PrivacyPolicyView: View {
             ToolbarItem(placement: .principal) {
                 Text("Конфиденциальность")
                     .font(.system(size: 17, weight: .semibold))
-                    .foregroundColor(.white)
+                    .foregroundColor(theme.textPrimary)
             }
         }
         .toolbarBackground(Color.clear, for: .navigationBar)

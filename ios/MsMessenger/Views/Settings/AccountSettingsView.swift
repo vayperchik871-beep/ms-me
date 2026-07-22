@@ -24,10 +24,10 @@ struct AccountSettingsView: View {
                             VStack(alignment: .leading, spacing: 3) {
                                 Text(account.name)
                                     .font(.system(size: 16, weight: .medium))
-                                    .foregroundColor(.white)
+                                    .foregroundColor(theme.textPrimary)
                                 Text("@\(account.userId)")
                                     .font(.system(size: 14))
-                                    .foregroundColor(.white.opacity(0.4))
+                                    .foregroundColor(theme.textSecondary)
                             }
 
                             Spacer()
@@ -39,7 +39,7 @@ struct AccountSettingsView: View {
                             } else {
                                 Image(systemName: "arrow.right")
                                     .font(.system(size: 14))
-                                    .foregroundColor(.white.opacity(0.2))
+                                    .foregroundColor(theme.textSecondary.opacity(0.6))
                             }
                         }
                         .padding(14)
@@ -88,7 +88,7 @@ struct AccountSettingsView: View {
             ToolbarItem(placement: .principal) {
                 Text("Аккаунт")
                     .font(.system(size: 17, weight: .semibold))
-                    .foregroundColor(.white)
+                    .foregroundColor(theme.textPrimary)
             }
         }
         .toolbarBackground(Color.clear, for: .navigationBar)
@@ -109,6 +109,7 @@ struct AccountSettingsView: View {
         APIClient.shared.token = account.token
         currentUserId = account.userId
         UserDefaults.standard.set(account.userId, forKey: "user_id")
+        UserDefaults.standard.set(account.userUUID ?? "", forKey: "user_uuid")
         WebSocketService.shared.connect(token: account.token)
     }
 
@@ -126,6 +127,7 @@ struct StoredAccount: Codable, Identifiable {
     let userId: String
     let name: String
     let token: String
+    var userUUID: String?
     var id: String { userId }
 }
 
@@ -145,10 +147,10 @@ struct CreateAccountView: View {
                 VStack(spacing: 8) {
                     Text("Создать аккаунт")
                         .font(.system(size: 22, weight: .bold))
-                        .foregroundColor(.white)
-                    Text("Войдите с другим ID")
-                        .font(.system(size: 15))
-                        .foregroundColor(.white.opacity(0.4))
+                    .foregroundColor(theme.textPrimary)
+                Text("Войдите с другим ID")
+                    .font(.system(size: 15))
+                    .foregroundColor(theme.textSecondary)
                 }
 
                 VStack(spacing: 16) {
@@ -159,13 +161,13 @@ struct CreateAccountView: View {
                             .frame(width: 24)
                         TextField("ID", text: $userId)
                             .font(.system(size: 16))
-                            .foregroundColor(.white)
+                            .foregroundColor(theme.inputText)
                             .autocapitalization(.none)
                             .disableAutocorrection(true)
                     }
                     .padding(.horizontal, 16)
                     .padding(.vertical, 14)
-                    .background(Color.white.opacity(0.08))
+                    .background(theme.inputBg)
                     .cornerRadius(12)
 
                     HStack(spacing: 12) {
@@ -175,7 +177,7 @@ struct CreateAccountView: View {
                             .frame(width: 24)
                         SecureField("Пароль", text: $password)
                             .font(.system(size: 16))
-                            .foregroundColor(.white)
+                            .foregroundColor(theme.inputText)
                     }
                     .padding(.horizontal, 16)
                     .padding(.vertical, 14)
@@ -225,7 +227,7 @@ struct CreateAccountView: View {
                 APIClient.shared.token = resp.token
                 var accounts = (try? JSONDecoder().decode([StoredAccount].self, from: UserDefaults.standard.data(forKey: "stored_accounts") ?? Data())) ?? []
                 if !accounts.contains(where: { $0.userId == resp.user?.userId }) {
-                    accounts.append(StoredAccount(userId: resp.user?.userId ?? userId, name: resp.user?.name ?? userId, token: resp.token ?? ""))
+                    accounts.append(StoredAccount(userId: resp.user?.userId ?? userId, name: resp.user?.name ?? userId, token: resp.token ?? "", userUUID: resp.user?.id))
                     if let data = try? JSONEncoder().encode(accounts) {
                         UserDefaults.standard.set(data, forKey: "stored_accounts")
                     }
