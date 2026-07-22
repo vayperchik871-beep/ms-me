@@ -6,6 +6,7 @@ struct ContactsListView: View {
     @State private var searchResults: [User] = []
     @State private var loading = true
     @State private var navigateChat: Chat?
+    @State private var showChat = false
     @ObservedObject private var theme = ThemeManager.shared
 
     var body: some View {
@@ -56,7 +57,9 @@ struct ContactsListView: View {
             }
             .task { await load() }
             .refreshable { await load() }
-            .navigationDestination(item: $navigateChat) { ChatDetailView(chat: $0) }
+            .background(
+                NavigationLink("", destination: ChatDetailView(chat: navigateChat ?? Chat(id: "", type: nil, name: nil, peer: nil, lastMessage: nil, lastTime: nil, unread: nil, lastMessageAt: nil)), isActive: $showChat).hidden()
+            )
         }
         .tint(Color(hex: "#6C63FF"))
     }
@@ -72,6 +75,7 @@ struct ContactsListView: View {
             do {
                 let resp = try await APIClient.shared.addContact(userId: user.userId)
                 navigateChat = Chat(id: resp.chatId, type: "direct", name: resp.contact.name, peer: Peer(id: resp.contact.id, userId: resp.contact.userId, name: resp.contact.name, isSystem: nil, avatar: nil, profileColor: nil, online: nil, lastSeen: nil), lastMessage: nil, lastTime: nil, unread: nil, lastMessageAt: nil)
+                showChat = true
             } catch { print(error) }
         }
     }
