@@ -86,7 +86,7 @@ struct StoredAccount: Codable, Identifiable {
 struct CreateAccountView: View {
     @Environment(\.dismiss) private var dismiss
     @ObservedObject private var theme = ThemeManager.shared
-    @State private userId = ""
+    @State private var userId = ""
     @State private var password = ""
     @State private var error: String?
     @State private var loading = false
