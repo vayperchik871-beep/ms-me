@@ -15,8 +15,9 @@ struct ProfileView: View {
             }
             if let mcoins = user.mcoins { Section("Монеты") { HStack { Image(systemName: "bitcoinsign.circle.fill").foregroundColor(.yellow); Text("\(mcoins) MCoins") } } }
         }
+        .scrollContentBackground(.hidden)
         .navigationTitle("Профиль")
-        .toolbarBackground(ThemeManager.shared.isDark ? Color.black : Color(.systemGroupedBackground), for: .navigationBar)
+        .toolbarBackground(.ultraThinMaterial, for: .navigationBar)
         .toolbarBackground(.visible, for: .navigationBar)
     }
 }

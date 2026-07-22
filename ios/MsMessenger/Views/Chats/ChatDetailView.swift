@@ -18,6 +18,7 @@ struct ChatDetailView: View {
                         }
                     }.padding(.horizontal, 12)
                 }
+                .scrollDismissesKeyboard(.interactively)
                 .onChange(of: messages.count, initial: false) { _, _ in
                     if let last = messages.last { withAnimation { proxy.scrollTo(last.id, anchor: .bottom) } }
                 }
@@ -28,11 +29,12 @@ struct ChatDetailView: View {
             }
             .padding(.horizontal, 12)
             .padding(.vertical, 8)
-            .background(theme.surfaceColor)
+            .background(.ultraThinMaterial)
             .safeAreaInset(edge: .bottom) { Color.clear.frame(height: 0) }
         }
+        .background(.ultraThinMaterial)
         .navigationTitle(chat.name ?? "Чат")
-        .toolbarBackground(ThemeManager.shared.isDark ? Color.black : Color(.systemGroupedBackground), for: .navigationBar)
+        .toolbarBackground(.ultraThinMaterial, for: .navigationBar)
         .toolbarBackground(.visible, for: .navigationBar)
         .task { await load() }
         .onReceive(ws.$newMessage) { msg in guard let msg, msg.chatId == chat.id else { return }; if !messages.contains(where: { $0.id == msg.id }) { messages.append(msg) } }
@@ -59,7 +61,7 @@ struct MessageBubbleView: View {
             if isOwn { Spacer(minLength: 40) }
             VStack(alignment: isOwn ? .trailing : .leading, spacing: 2) {
                 if let reply = message.replyTo { Text((reply.senderName ?? "") + ": ").font(.caption2).bold() + Text(reply.text ?? "").font(.caption2).foregroundColor(theme.textSecondary) }
-                Text(message.text ?? "").padding(.horizontal, 12).padding(.vertical, 8).background(isOwn ? theme.accent : theme.cardColor).foregroundColor(isOwn ? .white : theme.textPrimary).cornerRadius(16).fixedSize(horizontal: false, vertical: true)
+                Text(message.text ?? "").padding(.horizontal, 12).padding(.vertical, 8).background(isOwn ? theme.accent : .ultraThinMaterial).foregroundColor(isOwn ? .white : theme.textPrimary).cornerRadius(16).fixedSize(horizontal: false, vertical: true)
                 if let reactions = message.reactions, !reactions.isEmpty { HStack(spacing: 2) { ForEach(reactions, id: \.userId) { r in Text(r.emoji).font(.caption2) } } }
             }
             if !isOwn { Spacer(minLength: 40) }

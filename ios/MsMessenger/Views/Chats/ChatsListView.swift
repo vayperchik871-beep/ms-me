@@ -12,8 +12,9 @@ struct ChatsListView: View {
                 else { List(chats) { chat in NavigationLink(destination: ChatDetailView(chat: chat)) { ChatRowView(chat: chat) } }.listStyle(.plain) }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .scrollContentBackground(.hidden)
             .navigationTitle("Чаты").refreshable { await load() }.task { await load() }
-            .toolbarBackground(ThemeManager.shared.isDark ? Color.black : Color(.systemGroupedBackground), for: .navigationBar)
+            .toolbarBackground(.ultraThinMaterial, for: .navigationBar)
             .toolbarBackground(.visible, for: .navigationBar)
         }
     }

@@ -9,11 +9,13 @@ struct ContactsListView: View {
     var body: some View {
         NavigationStack {
             List { if !search.isEmpty { ForEach(searchResults) { user in ContactRowView(user: user) } } else { ForEach(contacts) { c in ContactRowView(user: c) } } }
+                .listStyle(.plain)
+                .scrollContentBackground(.hidden)
                 .navigationTitle("Контакты").searchable(text: $search)
                 .onChange(of: search, initial: false) { _, _ in guard !search.isEmpty else { searchResults = []; return }; Task { do { searchResults = try await APIClient.shared.searchUsers(query: search).users } catch {} } }
                 .task { await load() }.refreshable { await load() }
                 .overlay { if loading { ProgressView() } }
-                .toolbarBackground(ThemeManager.shared.isDark ? Color.black : Color(.systemGroupedBackground), for: .navigationBar)
+                .toolbarBackground(.ultraThinMaterial, for: .navigationBar)
                 .toolbarBackground(.visible, for: .navigationBar)
         }
     }

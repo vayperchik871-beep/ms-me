@@ -8,5 +8,7 @@ struct TabBarView: View {
             SettingsView().tabItem { Label("Настройки", systemImage: "gearshape.fill") }
         }
         .tint(ThemeManager.shared.accent)
+        .toolbarBackground(.ultraThinMaterial, for: .tabBar)
+        .toolbarBackground(.visible, for: .tabBar)
     }
 }
