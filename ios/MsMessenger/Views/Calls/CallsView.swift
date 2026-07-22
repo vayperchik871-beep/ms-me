@@ -29,7 +29,7 @@ struct CallsView: View {
             }
             .toolbarBackground(Color.clear, for: .navigationBar)
             .toolbarBackground(.visible, for: .navigationBar)
-            .onChange(of: number) { _, _ in search() }
+            .onChange(of: number) { _ in search() }
         }
         .tint(Color(hex: "#6C63FF"))
     }

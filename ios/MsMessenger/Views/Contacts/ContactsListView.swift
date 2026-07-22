@@ -46,8 +46,12 @@ struct ContactsListView: View {
             }
             .toolbarBackground(Color.clear, for: .navigationBar)
             .toolbarBackground(.visible, for: .navigationBar)
-            .onChange(of: search, initial: false) { _, _ in
+            .onChange(of: search) { _ in
                 guard !search.isEmpty else { searchResults = []; return }
+                Task { do { searchResults = try await APIClient.shared.searchUsers(query: search).users } catch {} }
+            }
+            .onAppear {
+                guard !search.isEmpty else { return }
                 Task { do { searchResults = try await APIClient.shared.searchUsers(query: search).users } catch {} }
             }
             .task { await load() }

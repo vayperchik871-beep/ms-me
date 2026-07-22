@@ -147,7 +147,7 @@ struct OnboardingView: View {
                 .frame(width: 80)
                 .background(theme.inputBg)
                 .cornerRadius(12)
-                .onChange(of: phonePrefix) { _, new in
+                .onChange(of: phonePrefix) { new in
                     let filtered = new.filter(\.isNumber)
                     phonePrefix = String(filtered.prefix(4))
                 }
@@ -166,7 +166,7 @@ struct OnboardingView: View {
                 .frame(width: 80)
                 .background(theme.inputBg)
                 .cornerRadius(12)
-                .onChange(of: phoneLast) { _, new in
+                .onChange(of: phoneLast) { new in
                     let filtered = new.filter(\.isNumber)
                     phoneLast = String(filtered.prefix(4))
                 }
@@ -247,7 +247,7 @@ struct OnboardingView: View {
                     }
                 }
             }
-            .onChange(of: avatarItem) { _, _ in
+            .onChange(of: avatarItem) { _ in
                 Task { if let data = try? await avatarItem?.loadTransferable(type: Data.self) { avatarData = data } }
             }
 
