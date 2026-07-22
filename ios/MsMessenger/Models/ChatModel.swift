@@ -2,12 +2,13 @@ import Foundation
 
 struct Chat: Codable, Identifiable, Hashable {
     let id: String
+    let type: String?
+    let name: String?
     let peer: Peer?
     let lastMessage: String?
     let lastTime: String?
     let unread: Int?
 
-    var name: String? { peer?.name }
     var unreadCount: Int? { unread }
 }
 

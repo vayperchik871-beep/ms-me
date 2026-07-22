@@ -201,13 +201,22 @@ function sanitizeUserId(raw) {
 // ─── Auth ───
 
 app.post('/api/auth/register', async (req, res) => {
-  const { name, userId, password, deviceId } = req.body
+  const { name, userId, password, deviceId, phone, bio, avatar } = req.body
   const isAdminApp = req.headers['x-admin-app'] === 'true'
   if (!name?.trim() || !userId?.trim() || !password || !deviceId) {
     return res.status(400).json({ error: 'Заполните все поля' })
   }
   if (password.length < 6) {
     return res.status(400).json({ error: 'Пароль минимум 6 символов' })
+  }
+
+  if (phone) {
+    const cleanPhone = phone.trim()
+    if (!/^\+777\d{7,11}$/.test(cleanPhone)) {
+      return res.status(400).json({ error: 'Номер должен начинаться на +777' })
+    }
+    const phoneExist = await dbGet('SELECT id FROM users WHERE phone = ?', cleanPhone)
+    if (phoneExist) return res.status(409).json({ error: 'Этот номер уже занят' })
   }
 
   const cleanId = sanitizeUserId(userId)
@@ -227,8 +236,18 @@ app.post('/api/auth/register', async (req, res) => {
   const hash = await bcrypt.hash(password, 12)
   const now = Date.now()
 
-  await dbRun('INSERT INTO users (id, user_id, name, password_hash, is_admin, created_at) VALUES (?, ?, ?, ?, ?, ?)',
-    id, cleanId, name.trim(), hash, isFirst ? 1 : 0, now
+  let avatarUrl = null
+  if (avatar) {
+    try {
+      const buf = Buffer.from(avatar, 'base64')
+      const fileName = `avatars/${id}.png`
+      require('fs').writeFileSync(require('path').join(__dirname, 'public', fileName), buf)
+      avatarUrl = `https://ms-messenger-server.onrender.com/${fileName}`
+    } catch {}
+  }
+
+  await dbRun('INSERT INTO users (id, user_id, name, password_hash, phone, bio, avatar, is_admin, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+    id, cleanId, name.trim(), hash, phone || null, bio || null, avatarUrl, isFirst ? 1 : 0, now
   )
 
   const devId = hashDevice(deviceId)
@@ -238,11 +257,11 @@ app.post('/api/auth/register', async (req, res) => {
 
   const token = await createToken(id, devId)
   await getOrCreateDirectChat(id, SYSTEM_BOT.id)
-  await sendBotMessage(id, `Добро пожаловать в MS Messenger, ${name.trim()}!\n\nВаш ID: @${cleanId}\n\nДругие пользователи могут найти вас по этому ID. Этот чат используется для кодов подтверждения при входе с нового устройства.`)
+  await sendBotMessage(id, `Добро пожаловать в MS Messenger, ${name.trim()}!\n\nВаш ID: @${cleanId}\nНомер: ${phone || 'не указан'}\n\nДругие пользователи могут найти вас по ID или номеру. Этот чат используется для кодов подтверждения при входе с нового устройства.`)
 
   res.json({
     token,
-    user: { id, userId: cleanId, name: name.trim() },
+    user: { id, userId: cleanId, name: name.trim(), phone: phone || null, bio: bio || null, avatar: avatarUrl },
   })
 })
 
@@ -334,12 +353,14 @@ app.post('/api/auth/verify-device', async (req, res) => {
 })
 
 app.get('/api/auth/me', authMiddleware, async (req, res) => {
-  const u = await dbGet('SELECT id, user_id, name, is_system, avatar, birthday, gender, profile_color, mcoins FROM users WHERE id = ?', req.user.id)
+  const u = await dbGet('SELECT id, user_id, name, phone, bio, is_system, avatar, birthday, gender, profile_color, mcoins FROM users WHERE id = ?', req.user.id)
   const extra = await dbGet('SELECT is_admin, banned FROM users WHERE id = ?', req.user.id)
   res.json({ user: {
     id: u.id,
     userId: u.user_id,
     name: u.name,
+    phone: u.phone,
+    bio: u.bio,
     isSystem: !!u.is_system,
     avatar: u.avatar,
     birthday: u.birthday,
@@ -754,16 +775,16 @@ app.post('/api/admin/command', authMiddleware, adminMiddleware, async (req, res)
 // ─── Users ───
 
 app.get('/api/users/search', authMiddleware, async (req, res) => {
-  const q = sanitizeUserId(req.query.q || '')
+  const q = (req.query.q || '').trim()
   if (q.length < 2) return res.json({ users: [] })
 
   const users = await dbAll(`
-    SELECT id, user_id, name, avatar FROM users
-    WHERE user_id LIKE ? AND is_system = 0 AND id != ?
+    SELECT id, user_id, name, phone, avatar FROM users
+    WHERE (user_id LIKE ? OR phone LIKE ?) AND is_system = 0 AND id != ?
     LIMIT 20
-  `, `${q}%`, req.user.id)
+  `, `${q}%`, `${q}%`, req.user.id)
 
-  res.json({ users: users.map((u) => ({ id: u.id, userId: u.user_id, name: u.name, avatar: u.avatar })) })
+  res.json({ users: users.map((u) => ({ id: u.id, userId: u.user_id, name: u.name, phone: u.phone, avatar: u.avatar })) })
 })
 
 app.get('/api/users/:userId', authMiddleware, async (req, res) => {
@@ -891,6 +912,38 @@ app.post('/api/contacts', authMiddleware, async (req, res) => {
   })
 })
 
+// ─── Groups ───
+
+app.post('/api/groups', authMiddleware, async (req, res) => {
+  const { name, about } = req.body
+  if (!name?.trim()) return res.status(400).json({ error: 'Укажите название группы' })
+  const id = uuidv4()
+  const now = Date.now()
+  await dbRun('INSERT INTO chats (id, type, name, about, created_by, created_at) VALUES (?, ?, ?, ?, ?, ?)',
+    id, 'group', name.trim(), about || null, req.user.id, now
+  )
+  await dbRun('INSERT INTO chat_participants (chat_id, user_id, role, joined_at) VALUES (?, ?, ?, ?)',
+    id, req.user.id, 'creator', now
+  )
+  res.json({ id, name: name.trim(), type: 'group' })
+})
+
+// ─── Channels ───
+
+app.post('/api/channels', authMiddleware, async (req, res) => {
+  const { name, about } = req.body
+  if (!name?.trim()) return res.status(400).json({ error: 'Укажите название канала' })
+  const id = uuidv4()
+  const now = Date.now()
+  await dbRun('INSERT INTO chats (id, type, name, about, created_by, created_at) VALUES (?, ?, ?, ?, ?, ?)',
+    id, 'channel', name.trim(), about || null, req.user.id, now
+  )
+  await dbRun('INSERT INTO chat_participants (chat_id, user_id, role, joined_at) VALUES (?, ?, ?, ?)',
+    id, req.user.id, 'creator', now
+  )
+  res.json({ id, name: name.trim(), type: 'channel' })
+})
+
 // ─── Uploads ───
 
 function fullUrl(req, path) {
@@ -928,7 +981,7 @@ app.patch('/api/users/avatar', authMiddleware, async (req, res) => {
 
 app.get('/api/chats', authMiddleware, async (req, res) => {
   const chats = await dbAll(`
-    SELECT c.id, c.type,
+    SELECT c.id, c.type, c.name,
       (SELECT content_enc FROM messages m WHERE m.chat_id = c.id AND m.deleted = 0 ORDER BY m.created_at DESC LIMIT 1) as last_enc,
       (SELECT content_iv FROM messages m WHERE m.chat_id = c.id AND m.deleted = 0 ORDER BY m.created_at DESC LIMIT 1) as last_iv,
       (SELECT content_tag FROM messages m WHERE m.chat_id = c.id AND m.deleted = 0 ORDER BY m.created_at DESC LIMIT 1) as last_tag,
@@ -967,6 +1020,8 @@ const others = await dbAll(`
 
     return {
       id: chat.id,
+      type: chat.type || 'direct',
+      name: chat.type !== 'direct' ? chat.name : (peer?.name || 'Чат'),
       peer: peer ? { id: peer.id, userId: peer.user_id, name: peer.name, isSystem: !!peer.is_system, avatar: peer.avatar, profileColor: peer.profile_color, online: isUserOnline(peer.id), lastSeen } : null,
       lastMessage,
       lastTime: chat.last_time ? formatTime(chat.last_time) : '',

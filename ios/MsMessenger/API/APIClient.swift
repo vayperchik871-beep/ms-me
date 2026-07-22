@@ -33,7 +33,7 @@ final class APIClient {
         set { UserDefaults.standard.set(newValue, forKey: "auth_token") }
     }
 
-    private func request<T: Decodable>(_ path: String, method: String = "GET", body: Data? = nil, query: [String: String]? = nil) async throws -> T {
+    func request<T: Decodable>(_ path: String, method: String = "GET", body: Data? = nil, query: [String: String]? = nil) async throws -> T {
         var components = URLComponents(url: baseURL.appendingPathComponent(path), resolvingAgainstBaseURL: false)!
         if let query { components.queryItems = query.map { URLQueryItem(name: $0.key, value: $0.value) } }
         var urlRequest = URLRequest(url: components.url!)
@@ -59,8 +59,12 @@ final class APIClient {
         catch { throw APIError.decodingFailed }
     }
 
-    func register(userId: String, name: String, password: String, deviceId: String) async throws -> AuthResponse {
-        try await request("/auth/register", method: "POST", body: try JSONEncoder().encode(["userId": userId, "name": name, "password": password, "deviceId": deviceId]))
+    func register(userId: String, name: String, password: String, deviceId: String, phone: String? = nil, bio: String? = nil, avatarData: Data? = nil) async throws -> AuthResponse {
+        var body: [String: Any] = ["userId": userId, "name": name, "password": password, "deviceId": deviceId]
+        if let phone { body["phone"] = phone }
+        if let bio { body["bio"] = bio }
+        if let avatarData { body["avatar"] = avatarData.base64EncodedString() }
+        return try await request("/auth/register", method: "POST", body: try JSONSerialization.data(withJSONObject: body))
     }
 
     func login(userId: String, password: String, deviceId: String) async throws -> AuthResponse {

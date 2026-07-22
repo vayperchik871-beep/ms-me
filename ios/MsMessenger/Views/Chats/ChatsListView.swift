@@ -3,19 +3,44 @@ import SwiftUI
 struct ChatsListView: View {
     @State private var chats: [Chat] = []
     @State private var loading = true
+    @State private var showCreateGroup = false
+    @ObservedObject private var theme = ThemeManager.shared
 
     var body: some View {
         NavigationStack {
             Group {
                 if loading { ProgressView() }
-                else if chats.isEmpty { VStack(spacing: 8) { Image(systemName: "message.slash").font(.largeTitle).foregroundColor(.secondary); Text("Нет чатов").foregroundColor(.secondary) }.frame(maxWidth: .infinity, maxHeight: .infinity) }
-                else { List(chats) { chat in NavigationLink(destination: ChatDetailView(chat: chat)) { ChatRowView(chat: chat) } }.listStyle(.plain) }
+                else if chats.isEmpty {
+                    VStack(spacing: 8) {
+                        Image(systemName: "message.slash").font(.largeTitle).foregroundColor(.secondary)
+                        Text("Нет чатов").foregroundColor(.secondary)
+                    }
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                }
+                else {
+                    List(chats) { chat in
+                        NavigationLink(destination: ChatDetailView(chat: chat)) {
+                            ChatRowView(chat: chat)
+                        }
+                    }
+                    .listStyle(.plain)
+                }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .scrollContentBackground(.hidden)
-            .navigationTitle("Чаты").refreshable { await load() }.task { await load() }
+            .navigationTitle("Чаты")
+            .toolbar {
+                ToolbarItem(placement: .primaryAction) {
+                    Button(action: { showCreateGroup = true }) {
+                        Image(systemName: "plus")
+                    }
+                }
+            }
+            .refreshable { await load() }
+            .task { await load() }
             .toolbarBackground(.ultraThinMaterial, for: .navigationBar)
             .toolbarBackground(.visible, for: .navigationBar)
+            .sheet(isPresented: $showCreateGroup) { CreateGroupChannelView() }
         }
     }
 
@@ -30,9 +55,9 @@ struct ChatRowView: View {
     let chat: Chat
     var body: some View {
         HStack(spacing: 12) {
-            ZStack { Circle().fill(ThemeManager.shared.accent.opacity(0.2)).frame(width: 44, height: 44); Text(chat.peer?.name.prefix(1).uppercased() ?? "?").font(.title3).bold().foregroundColor(ThemeManager.shared.accent) }
+            ZStack { Circle().fill(ThemeManager.shared.accent.opacity(0.2)).frame(width: 44, height: 44); Text(chat.name?.prefix(1).uppercased() ?? "?").font(.title3).bold().foregroundColor(ThemeManager.shared.accent) }
             VStack(alignment: .leading, spacing: 4) {
-                Text(chat.peer?.name ?? "Чат").font(.body).fontWeight(.medium)
+                Text(chat.name ?? "Чат").font(.body).fontWeight(.medium)
                 if let last = chat.lastMessage, !last.isEmpty { Text(last).font(.caption).foregroundColor(ThemeManager.shared.textSecondary).lineLimit(1) }
             }
             Spacer()

@@ -33,7 +33,7 @@ struct ChatDetailView: View {
             .safeAreaInset(edge: .bottom) { Color.clear.frame(height: 0) }
         }
         .background(.ultraThinMaterial)
-        .navigationTitle(chat.peer?.name ?? "Чат")
+        .navigationTitle(chat.name ?? "Чат")
         .toolbarBackground(.ultraThinMaterial, for: .navigationBar)
         .toolbarBackground(.visible, for: .navigationBar)
         .task { await load() }

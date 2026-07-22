@@ -4,6 +4,8 @@ struct User: Codable, Identifiable, Hashable {
     let id: String
     let userId: String
     let name: String
+    var phone: String?
+    var bio: String?
     var isSystem: Bool?
     var avatar: String?
     var isAdmin: Bool?
