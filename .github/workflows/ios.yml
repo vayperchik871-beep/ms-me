@@ -9,7 +9,7 @@ on:
 jobs:
   build:
     runs-on: macos-latest
-    timeout-minutes: 30
+    timeout-minutes: 45
     defaults:
       run:
         working-directory: ios
@@ -46,6 +46,38 @@ jobs:
 
       - uses: actions/upload-artifact@v4
         with:
-          name: MsMessenger-iOS
+          name: MsMessenger-iOS-Simulator
           path: ios/MsMessenger.zip
+          retention-days: 14
+
+      - name: Build for Device (unsigned IPA)
+        run: |
+          set -e
+          rm -rf build
+          xcodebuild build \
+            -project MsMessenger.xcodeproj \
+            -scheme MsMessenger \
+            -sdk iphoneos \
+            -configuration Debug \
+            -derivedDataPath build \
+            CODE_SIGNING_ALLOWED=NO
+          echo "=== Device build products ==="
+          find build/Build/Products -name "*.app" -type d
+          test -d build/Build/Products/Debug-iphoneos/MsMessenger.app
+
+      - name: Package as IPA
+        run: |
+          set -e
+          mkdir -p Payload
+          cp -R build/Build/Products/Debug-iphoneos/MsMessenger.app Payload/
+          zip -r MsMessenger.ipa Payload
+          rm -rf Payload
+          echo "=== IPA contents ==="
+          unzip -l MsMessenger.ipa | head -10
+          cp MsMessenger.ipa ../MsMessenger.ipa
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: MsMessenger-iOS-IPA
+          path: ios/MsMessenger.ipa
           retention-days: 14
