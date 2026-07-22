@@ -2,8 +2,8 @@ name: MsMessenger
 options:
   bundleIdPrefix: com.ms
   deploymentTarget:
-    iOS: "16.0"
-  xcodeVersion: "16.0"
+    iOS: "26.0"
+  xcodeVersion: "26.0"
 
 settings:
   SWIFT_VERSION: "5.0"

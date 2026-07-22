@@ -64,7 +64,7 @@ struct OnboardingView: View {
             }
             .scrollDismissesKeyboard(.interactively)
             .background(ThemeManager.shared.isDark ? Color.black : Color.white)
-            .onChange(of: focusedField) { field in
+            .onChange(of: focusedField, initial: false) { _, field in
                 if let field { DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { withAnimation { proxy.scrollTo(field, anchor: .center) } } }
             }
         }

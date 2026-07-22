@@ -10,7 +10,7 @@ struct ContactsListView: View {
         NavigationStack {
             List { if !search.isEmpty { ForEach(searchResults) { user in ContactRowView(user: user) } } else { ForEach(contacts) { c in ContactRowView(user: c) } } }
                 .navigationTitle("Контакты").searchable(text: $search)
-                .onChange(of: search) { _ in guard !search.isEmpty else { searchResults = []; return }; Task { do { searchResults = try await APIClient.shared.searchUsers(query: search).users } catch {} } }
+                .onChange(of: search, initial: false) { _, _ in guard !search.isEmpty else { searchResults = []; return }; Task { do { searchResults = try await APIClient.shared.searchUsers(query: search).users } catch {} } }
                 .task { await load() }.refreshable { await load() }
                 .overlay { if loading { ProgressView() } }
                 .toolbarBackground(ThemeManager.shared.isDark ? Color.black : Color(.systemGroupedBackground), for: .navigationBar)
