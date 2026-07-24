@@ -210,7 +210,64 @@ try {
 } catch {}
 
 try { await dbExec('CREATE TABLE IF NOT EXISTS gifts (id TEXT PRIMARY KEY, emoji TEXT NOT NULL, title TEXT NOT NULL, price INTEGER DEFAULT 10)') } catch {}
+
+// Subscription system
+try { await dbExec('ALTER TABLE users ADD COLUMN subscription_plan TEXT DEFAULT NULL') } catch {}
+try { await dbExec('ALTER TABLE users ADD COLUMN subscription_until INTEGER DEFAULT NULL') } catch {}
+try { await dbExec('ALTER TABLE users ADD COLUMN profile_banner TEXT DEFAULT NULL') } catch {}
+try { await dbExec('ALTER TABLE chats ADD COLUMN disappearing_interval INTEGER DEFAULT NULL') } catch {}
+try { await dbExec('CREATE TABLE IF NOT EXISTS subscription_codes (code TEXT PRIMARY KEY, plan TEXT NOT NULL, duration_days INTEGER NOT NULL, used_by TEXT DEFAULT NULL REFERENCES users(id), used_at INTEGER DEFAULT NULL, created_by TEXT NOT NULL, created_at INTEGER NOT NULL)') } catch {}
+try { await dbExec("CREATE TABLE IF NOT EXISTS subscription_purchases (id TEXT PRIMARY KEY, user_id TEXT NOT NULL REFERENCES users(id), plan TEXT NOT NULL, provider TEXT NOT NULL, provider_token TEXT, amount INTEGER, currency TEXT DEFAULT 'USD', status TEXT DEFAULT 'completed', created_at INTEGER NOT NULL)") } catch {}
 try { await dbExec('CREATE TABLE IF NOT EXISTS user_gifts (id TEXT PRIMARY KEY, user_id TEXT NOT NULL REFERENCES users(id), gift_id TEXT NOT NULL REFERENCES gifts(id), sender_id TEXT REFERENCES users(id), message TEXT, created_at INTEGER NOT NULL)') } catch {}
+
+// Plus features: call log
+try { await dbExec(`CREATE TABLE IF NOT EXISTS call_log (
+  id TEXT PRIMARY KEY,
+  caller_id TEXT NOT NULL REFERENCES users(id),
+  callee_id TEXT NOT NULL REFERENCES users(id),
+  chat_id TEXT REFERENCES chats(id),
+  type TEXT NOT NULL DEFAULT 'audio',
+  status TEXT NOT NULL DEFAULT 'missed',
+  duration INTEGER DEFAULT 0,
+  started_at INTEGER NOT NULL,
+  ended_at INTEGER
+)`) } catch {}
+
+// Plus features: sticker packs
+try { await dbExec(`CREATE TABLE IF NOT EXISTS sticker_packs (
+  id TEXT PRIMARY KEY,
+  title TEXT NOT NULL,
+  author TEXT NOT NULL,
+  stickers TEXT NOT NULL DEFAULT '[]',
+  price INTEGER NOT NULL DEFAULT 0,
+  created_at INTEGER NOT NULL
+)`) } catch {}
+try { await dbExec(`CREATE TABLE IF NOT EXISTS user_sticker_packs (
+  user_id TEXT NOT NULL REFERENCES users(id),
+  pack_id TEXT NOT NULL REFERENCES sticker_packs(id),
+  purchased_at INTEGER NOT NULL,
+  PRIMARY KEY (user_id, pack_id)
+)`) } catch {}
+
+// Plus features: support tickets
+try { await dbExec(`CREATE TABLE IF NOT EXISTS support_tickets (
+  id TEXT PRIMARY KEY,
+  user_id TEXT NOT NULL REFERENCES users(id),
+  subject TEXT NOT NULL,
+  status TEXT DEFAULT 'open',
+  created_at INTEGER NOT NULL,
+  closed_at INTEGER
+)`) } catch {}
+try { await dbExec(`CREATE TABLE IF NOT EXISTS support_messages (
+  id TEXT PRIMARY KEY,
+  ticket_id TEXT NOT NULL REFERENCES support_tickets(id),
+  sender_id TEXT NOT NULL REFERENCES users(id),
+  content TEXT NOT NULL,
+  created_at INTEGER NOT NULL
+)`) } catch {}
+try { await dbExec('CREATE INDEX IF NOT EXISTS idx_support_tickets_user ON support_tickets(user_id)') } catch {}
+try { await dbExec('CREATE INDEX IF NOT EXISTS idx_call_log_caller ON call_log(caller_id, started_at)') } catch {}
+try { await dbExec('CREATE INDEX IF NOT EXISTS idx_call_log_callee ON call_log(callee_id, started_at)') } catch {}
 
 // Predefined gifts with prices
 const GIFTS = [

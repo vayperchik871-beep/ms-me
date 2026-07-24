@@ -98,6 +98,32 @@ async function authMiddleware(req, res, next) {
   }
 }
 
+const SUBSCRIPTION_PLANS = {
+  plus: { name: 'Plus', durationDays: 30, priceCents: 299 },
+  premium: { name: 'Premium', durationDays: 365, priceCents: 1999 },
+}
+
+function isSubActive(user) {
+  return !!user.subscription_plan && user.subscription_until > Date.now()
+}
+
+async function requirePlus(req, res, next) {
+  const row = await dbGet('SELECT subscription_plan, subscription_until FROM users WHERE id = ?', req.user.id)
+  if (!row || !isSubActive(row)) return res.status(403).json({ error: 'Требуется подписка Plus' })
+  req.userPlus = row
+  next()
+}
+
+function getLimits(user, subRow) {
+  const hasPlus = subRow ? isSubActive(subRow) : false
+  return {
+    maxContacts: hasPlus ? 500 : 100,
+    maxBioLength: hasPlus ? 300 : 100,
+    maxFileSize: hasPlus ? 50 * 1024 * 1024 : 15 * 1024 * 1024,
+    maxGroups: hasPlus ? 50 : 10,
+  }
+}
+
 async function createToken(userId, deviceId) {
   const token = jwt.sign({ userId, deviceId }, JWT_SECRET, { expiresIn: '30d' })
   const expiresAt = Date.now() + 30 * 24 * 60 * 60 * 1000
@@ -565,6 +591,14 @@ app.post('/api/admin/command', authMiddleware, adminMiddleware, async (req, res)
           '  verifys        — список заявок на верификацию',
           '  verify <id>    — одобрить заявку',
           '  reject <id>    — отклонить заявку',
+          '  sub <id> <plan> [days] — выдать подписку (plus/premium)',
+          '  unsub <id>     — отменить подписку',
+          '  subcodes <n> <plan> <days> — сгенерировать N кодов активации',
+          '  substats       — статистика подписок',
+          '  addsticker <title> <stickerUrls...> — создать стикерпак',
+          '  delsticker <id> — удалить стикерпак',
+          '  tickets        — открытые тикеты поддержки',
+          '  reply <id> <text> — ответить в тикет',
           '  clear          — очистить терминал',
           '  purge          — удалить ВСЕ аккаунты (кроме системного)',
           '  help           — эта справка',
@@ -766,6 +800,85 @@ app.post('/api/admin/command', authMiddleware, adminMiddleware, async (req, res)
         await dbRun('UPDATE verification_requests SET status = ?, reviewed_at = ?, reviewed_by = ? WHERE id = ?', 'rejected', Date.now(), req.user.id, id)
         return res.json(say(`Заявка #${id} отклонена`))
       }
+      case 'sub': {
+        if (!args[0] || !args[1]) return res.json(say('Укажите: sub <userId> <plan> [days]'))
+        const plan = args[1].toLowerCase()
+        if (!SUBSCRIPTION_PLANS[plan]) return res.json(say('План должен быть plus или premium'))
+        const user = await dbGet('SELECT id FROM users WHERE user_id = ? AND is_system = 0', args[0])
+        if (!user) return res.json(say('Пользователь не найден'))
+        const days = args[2] ? parseInt(args[2]) : SUBSCRIPTION_PLANS[plan].durationDays
+        if (!days || days < 1) return res.json(say('Некорректное количество дней'))
+        const now = Date.now()
+        const existing = await dbGet('SELECT subscription_plan, subscription_until FROM users WHERE id = ?', user.id)
+        const currentUntil = (existing.subscription_until && existing.subscription_until > now) ? existing.subscription_until : now
+        const newUntil = currentUntil + days * 86400000
+        await dbRun('UPDATE users SET subscription_plan = ?, subscription_until = ? WHERE id = ?', plan, newUntil, user.id)
+        return res.json(say(`@${args[0]} получил ${plan} до ${new Date(newUntil).toLocaleDateString('ru-RU')}`))
+      }
+      case 'unsub': {
+        if (!args[0]) return res.json(say('Укажите userId: unsub <id>'))
+        const user = await dbGet('SELECT id FROM users WHERE user_id = ? AND is_system = 0', args[0])
+        if (!user) return res.json(say('Пользователь не найден'))
+        await dbRun('UPDATE users SET subscription_plan = NULL, subscription_until = NULL WHERE id = ?', user.id)
+        return res.json(say(`Подписка @${args[0]} отменена`))
+      }
+      case 'subcodes': {
+        const n = parseInt(args[0])
+        const plan = args[1]?.toLowerCase()
+        const days = parseInt(args[2])
+        if (!n || n < 1 || n > 100) return res.json(say('Укажите количество кодов (1-100)'))
+        if (!plan || !SUBSCRIPTION_PLANS[plan]) return res.json(say('Укажите план: plus или premium'))
+        if (!days || days < 1) return res.json(say('Укажите количество дней'))
+        const now = Date.now()
+        const codes = []
+        for (let i = 0; i < n; i++) {
+          const code = 'SUB-' + Array.from({ length: 8 }, () => 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'[Math.floor(Math.random() * 32)]).join('')
+          await dbRun('INSERT INTO subscription_codes (code, plan, duration_days, created_by, created_at) VALUES (?, ?, ?, ?, ?)', code, plan, days, req.user.id, now)
+          codes.push(code)
+        }
+        return res.json(say(`Сгенерировано ${codes.length} кодов ${plan} (${days} дн.):\n${codes.join('\n')}`))
+      }
+      case 'substats': {
+        const total = await dbGet("SELECT COUNT(*) as c FROM users WHERE subscription_plan IS NOT NULL AND subscription_until > ?", Date.now())
+        const byPlan = await dbAll("SELECT subscription_plan, COUNT(*) as c FROM users WHERE subscription_plan IS NOT NULL AND subscription_until > ? GROUP BY subscription_plan", Date.now())
+        const usedCodes = await dbGet('SELECT COUNT(*) as c FROM subscription_codes WHERE used_by IS NOT NULL')
+        const totalCodes = await dbGet('SELECT COUNT(*) as c FROM subscription_codes')
+        const lines = [`Активных подписок: ${total.c}`]
+        for (const p of byPlan) lines.push(`  ${p.subscription_plan}: ${p.c}`)
+        lines.push(`Кодов активации: ${usedCodes.c}/${totalCodes.c} использовано`)
+        return res.json(say(lines.join('\n')))
+      }
+      case 'addsticker': {
+        const title = args[0]
+        const stickerUrls = args.slice(1)
+        if (!title) return res.json(say('Укажите название пакета'))
+        if (stickerUrls.length === 0) return res.json(say('Укажите URL стикеров'))
+        const id = uuidv4()
+        await dbRun('INSERT INTO sticker_packs (id, title, author, stickers, price, created_at) VALUES (?, ?, ?, ?, ?, ?)', id, title, req.user.id, JSON.stringify(stickerUrls), 0, Date.now())
+        return res.json(say(`Стикерпак "${title}" создан (id: ${id})`))
+      }
+      case 'delsticker': {
+        if (!args[0]) return res.json(say('Укажите ID стикерпака'))
+        await dbRun('DELETE FROM user_sticker_packs WHERE pack_id = ?', args[0])
+        await dbRun('DELETE FROM sticker_packs WHERE id = ?', args[0])
+        return res.json(say('Стикерпак удалён'))
+      }
+      case 'tickets': {
+        const tickets = await dbAll("SELECT * FROM support_tickets WHERE status = 'open' ORDER BY created_at ASC")
+        if (tickets.length === 0) return res.json(say('Нет открытых тикетов'))
+        const lines = tickets.map(t => `#${t.id} от ${t.user_id}: ${t.subject} (${new Date(t.created_at).toLocaleString('ru-RU')})`)
+        return res.json(say(lines.join('\n')))
+      }
+      case 'reply': {
+        if (!args[0]) return res.json(say('Укажите ID тикета'))
+        const text = args.slice(1).join(' ')
+        if (!text) return res.json(say('Напишите ответ'))
+        const ticket = await dbGet('SELECT * FROM support_tickets WHERE id = ?', args[0])
+        if (!ticket) return res.json(say('Тикет не найден'))
+        await dbRun('INSERT INTO support_messages (id, ticket_id, sender_id, content, created_at) VALUES (?, ?, ?, ?, ?)', uuidv4(), args[0], req.user.id, text, Date.now())
+        await dbRun("UPDATE support_tickets SET status = 'answered' WHERE id = ?", args[0])
+        return res.json(say(`Ответ отправлен в тикет #${args[0]}`))
+      }
       default:
         return res.json(say(`Неизвестная команда: ${cmd}. Введите help для списка команд`))
     }
@@ -791,7 +904,7 @@ app.get('/api/users/search', authMiddleware, async (req, res) => {
 
 app.get('/api/users/:userId', authMiddleware, async (req, res) => {
   const cleanId = sanitizeUserId(req.params.userId)
-  const user = await dbGet('SELECT id, user_id, name, is_system, avatar, birthday, gender, profile_color FROM users WHERE user_id = ?', cleanId)
+  const user = await dbGet('SELECT id, user_id, name, is_system, avatar, birthday, gender, profile_color, profile_banner, subscription_plan, subscription_until, is_verified, verify_type FROM users WHERE user_id = ?', cleanId)
   if (!user) return res.status(404).json({ error: 'Не найден' })
   const mutual = await dbAll(`
     SELECT cp.chat_id FROM chat_participants cp
@@ -799,20 +912,35 @@ app.get('/api/users/:userId', authMiddleware, async (req, res) => {
       SELECT chat_id FROM chat_participants WHERE user_id = ?
     )
   `, user.id, req.user.id)
+  const hasPlus = !!user.subscription_plan && user.subscription_until > Date.now()
   res.json({
-    user: { id: user.id, userId: user.user_id, name: user.name, isSystem: !!user.is_system, avatar: user.avatar, birthday: user.birthday, gender: user.gender, profileColor: user.profile_color },
+    user: {
+      id: user.id, userId: user.user_id, name: user.name, isSystem: !!user.is_system,
+      avatar: user.avatar, birthday: user.birthday, gender: user.gender,
+      profileColor: user.profile_color, banner: user.profile_banner,
+      verified: !!user.is_verified, verifyType: user.verify_type,
+      plus: hasPlus,
+    },
     mutualChats: mutual.map(r => r.chat_id),
   })
 })
 
 app.patch('/api/user/profile', authMiddleware, async (req, res) => {
-  const { birthday, gender, profileColor, name, userId, avatar } = req.body
+  const { birthday, gender, profileColor, name, userId, avatar, bio } = req.body
   if (birthday !== undefined) await dbRun('UPDATE users SET birthday = ? WHERE id = ?', birthday || null, req.user.id)
   if (gender !== undefined) await dbRun('UPDATE users SET gender = ? WHERE id = ?', gender || null, req.user.id)
   if (profileColor !== undefined) await dbRun('UPDATE users SET profile_color = ? WHERE id = ?', profileColor || null, req.user.id)
   if (name !== undefined) await dbRun('UPDATE users SET name = ? WHERE id = ?', name.trim(), req.user.id)
   if (avatar !== undefined) await dbRun('UPDATE users SET avatar = ? WHERE id = ?', avatar || null, req.user.id)
+  if (bio !== undefined) {
+    const sub = await dbGet('SELECT subscription_plan, subscription_until FROM users WHERE id = ?', req.user.id)
+    const limits = getLimits(null, sub)
+    if (bio.length > limits.maxBioLength) return res.status(400).json({ error: `Максимум ${limits.maxBioLength} символов` })
+    await dbRun('UPDATE users SET bio = ? WHERE id = ?', bio || null, req.user.id)
+  }
   if (userId !== undefined) {
+    const sub = await dbGet('SELECT subscription_plan, subscription_until FROM users WHERE id = ?', req.user.id)
+    if (!sub || !isSubActive(sub)) return res.status(403).json({ error: 'Смена ID доступна только с подпиской Plus' })
     const cleanId = sanitizeUserId(userId)
     const existing = await dbGet('SELECT id FROM users WHERE user_id = ? AND id != ?', cleanId, req.user.id)
     if (existing) return res.status(409).json({ error: 'Этот ID уже занят' })
@@ -1243,6 +1371,199 @@ app.post('/api/mcoins/earn', authMiddleware, async (req, res) => {
   const row = await dbGet('SELECT mcoins FROM users WHERE id = ?', req.user.id)
   res.json({ earned, mcoins: row?.mcoins || 0 })
 })
+
+// ─── Subscriptions (Plus/Premium) ───
+
+function formatSubscription(user) {
+  const plan = SUBSCRIPTION_PLANS[user.subscription_plan]
+  return {
+    plan: user.subscription_plan || null,
+    planName: plan?.name || null,
+    active: !!user.subscription_plan && user.subscription_until > Date.now(),
+    until: user.subscription_until || null,
+    daysLeft: user.subscription_plan ? Math.max(0, Math.floor(((user.subscription_until || 0) - Date.now()) / 86400000)) : 0,
+  }
+}
+
+app.get('/api/subscriptions/status', authMiddleware, async (req, res) => {
+  const user = await dbGet('SELECT subscription_plan, subscription_until FROM users WHERE id = ?', req.user.id)
+  res.json(formatSubscription(user))
+})
+
+app.post('/api/subscriptions/activate', authMiddleware, async (req, res) => {
+  const { code } = req.body
+  if (!code || typeof code !== 'string') return res.status(400).json({ error: 'Укажите код' })
+  const row = await dbGet('SELECT * FROM subscription_codes WHERE code = ?', code.trim())
+  if (!row) return res.status(404).json({ error: 'Код не найден' })
+  if (row.used_by) return res.status(400).json({ error: 'Код уже использован' })
+  const now = Date.now()
+  await dbRun('UPDATE subscription_codes SET used_by = ?, used_at = ? WHERE code = ?', req.user.id, now, code)
+  const existing = await dbGet('SELECT subscription_plan, subscription_until FROM users WHERE id = ?', req.user.id)
+  const currentUntil = (existing.subscription_until && existing.subscription_until > now) ? existing.subscription_until : now
+  const newUntil = currentUntil + row.duration_days * 86400000
+  await dbRun('UPDATE users SET subscription_plan = ?, subscription_until = ? WHERE id = ?', row.plan, newUntil, req.user.id)
+  res.json({ ok: true, ...formatSubscription({ subscription_plan: row.plan, subscription_until: newUntil }) })
+})
+
+app.post('/api/subscriptions/purchase', authMiddleware, async (req, res) => {
+  const { plan, provider, token } = req.body
+  if (!plan || !SUBSCRIPTION_PLANS[plan]) return res.status(400).json({ error: 'Неверный план' })
+  if (!provider) return res.status(400).json({ error: 'Укажите провайдера (google_play, apple_appstore, crypto)' })
+  const p = SUBSCRIPTION_PLANS[plan]
+  const purchaseId = uuidv4()
+  const now = Date.now()
+  try {
+    await dbRun(
+      'INSERT INTO subscription_purchases (id, user_id, plan, provider, provider_token, amount, currency, status, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      purchaseId, req.user.id, plan, provider, token || null, p.priceCents, 'USD', 'completed', now
+    )
+    const existing = await dbGet('SELECT subscription_plan, subscription_until FROM users WHERE id = ?', req.user.id)
+    const currentUntil = (existing.subscription_until && existing.subscription_until > now) ? existing.subscription_until : now
+    const newUntil = currentUntil + p.durationDays * 86400000
+    await dbRun('UPDATE users SET subscription_plan = ?, subscription_until = ? WHERE id = ?', plan, newUntil, req.user.id)
+    res.json({ ok: true, purchaseId, ...formatSubscription({ subscription_plan: plan, subscription_until: newUntil }) })
+  } catch (err) {
+    res.status(500).json({ error: 'Ошибка обработки покупки' })
+  }
+})
+
+// ─── Plus: Profile (Change ID, Banner) ───
+
+app.post('/api/users/change-id', authMiddleware, requirePlus, async (req, res) => {
+  const { newId } = req.body
+  if (!newId || typeof newId !== 'string') return res.status(400).json({ error: 'Укажите новый ID' })
+  if (!/^[a-zA-Z0-9_-]{3,30}$/.test(newId)) return res.status(400).json({ error: 'ID: 3-30 символов, буквы/цифры/_-' })
+  const existing = await dbGet('SELECT id FROM users WHERE user_id = ?', newId)
+  if (existing) return res.status(409).json({ error: 'Этот ID уже занят' })
+  await dbRun('UPDATE users SET user_id = ? WHERE id = ?', newId, req.user.id)
+  res.json({ ok: true, user_id: newId })
+})
+
+app.post('/api/users/banner', authMiddleware, requirePlus, upload.single('banner'), async (req, res) => {
+  if (!req.file) return res.status(400).json({ error: 'Файл не загружен' })
+  const url = `${BASE_URL}/uploads/${req.file.filename}`
+  await dbRun('UPDATE users SET profile_banner = ? WHERE id = ?', url, req.user.id)
+  res.json({ ok: true, banner: url })
+})
+
+app.delete('/api/users/banner', authMiddleware, requirePlus, async (req, res) => {
+  await dbRun('UPDATE users SET profile_banner = NULL WHERE id = ?', req.user.id)
+  res.json({ ok: true })
+})
+
+// ─── Plus: Disappearing Messages ───
+
+app.get('/api/chats/:chatId/disappearing', authMiddleware, async (req, res) => {
+  const chat = await dbGet('SELECT disappearing_interval FROM chats WHERE id = ?', req.params.chatId)
+  if (!chat) return res.status(404).json({ error: 'Чат не найден' })
+  res.json({ interval: chat.disappearing_interval || 0 })
+})
+
+app.patch('/api/chats/:chatId/disappearing', authMiddleware, requirePlus, async (req, res) => {
+  const { interval } = req.body
+  const valid = [0, 5, 30, 60, 360, 1440, 10080]
+  if (!valid.includes(interval)) return res.status(400).json({ error: 'Интервал: 0(выкл), 5мин, 30мин, 1ч, 6ч, 24ч, 7дн' })
+  const chat = await dbGet('SELECT id FROM chats WHERE id = ?', req.params.chatId)
+  if (!chat) return res.status(404).json({ error: 'Чат не найден' })
+  await dbRun('UPDATE chats SET disappearing_interval = ? WHERE id = ?', interval || null, req.params.chatId)
+  res.json({ ok: true, interval })
+})
+
+// cleanup expired messages (called periodically)
+async function cleanupDisappearingMessages() {
+  try {
+    const chats = await dbAll('SELECT id, disappearing_interval FROM chats WHERE disappearing_interval IS NOT NULL')
+    for (const chat of chats) {
+      const cutoff = Date.now() - chat.disappearing_interval * 60 * 1000
+      await dbRun("UPDATE messages SET deleted = 1 WHERE chat_id = ? AND created_at < ? AND deleted = 0 AND pinned = 0", chat.id, cutoff)
+    }
+  } catch {}
+}
+
+// ─── Plus: Call Log ───
+
+app.post('/api/call/log', authMiddleware, requirePlus, async (req, res) => {
+  const { calleeId, chatId, type, status, duration } = req.body
+  if (!calleeId) return res.status(400).json({ error: 'Укажите calleeId' })
+  const callee = await dbGet('SELECT id FROM users WHERE user_id = ?', calleeId)
+  if (!callee) return res.status(404).json({ error: 'Калли не найден' })
+  const id = uuidv4()
+  const now = Date.now()
+  await dbRun(
+    'INSERT INTO call_log (id, caller_id, callee_id, chat_id, type, status, duration, started_at, ended_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+    id, req.user.id, callee.id, chatId || null, type || 'audio', status || 'missed', duration || 0, now, status === 'ended' ? now : null
+  )
+  res.json({ ok: true, callId: id })
+})
+
+app.get('/api/call/history', authMiddleware, requirePlus, async (req, res) => {
+  const limit = Math.min(parseInt(req.query.limit) || 50, 100)
+  const offset = parseInt(req.query.offset) || 0
+  const rows = await dbAll(`SELECT c.*, u.user_id AS caller_name, u2.user_id AS callee_name
+    FROM call_log c
+    JOIN users u ON u.id = c.caller_id
+    JOIN users u2 ON u2.id = c.callee_id
+    WHERE c.caller_id = ? OR c.callee_id = ?
+    ORDER BY c.started_at DESC LIMIT ? OFFSET ?`, req.user.id, req.user.id, limit, offset)
+  res.json({ calls: rows })
+})
+
+// ─── Plus: Sticker Packs ───
+
+app.get('/api/stickers/packs', authMiddleware, async (req, res) => {
+  const packs = await dbAll('SELECT * FROM sticker_packs ORDER BY created_at DESC')
+  res.json({ packs })
+})
+
+app.post('/api/stickers/purchase', authMiddleware, requirePlus, async (req, res) => {
+  const { packId } = req.body
+  if (!packId) return res.status(400).json({ error: 'Укажите packId' })
+  const pack = await dbGet('SELECT * FROM sticker_packs WHERE id = ?', packId)
+  if (!pack) return res.status(404).json({ error: 'Пак не найден' })
+  const owned = await dbGet('SELECT 1 FROM user_sticker_packs WHERE user_id = ? AND pack_id = ?', req.user.id, packId)
+  if (owned) return res.status(400).json({ error: 'Уже куплен' })
+  await dbRun('INSERT INTO user_sticker_packs (user_id, pack_id, purchased_at) VALUES (?, ?, ?)', req.user.id, packId, Date.now())
+  res.json({ ok: true })
+})
+
+app.get('/api/stickers/my', authMiddleware, async (req, res) => {
+  const rows = await dbAll(`SELECT sp.* FROM sticker_packs sp
+    JOIN user_sticker_packs usp ON usp.pack_id = sp.id
+    WHERE usp.user_id = ?`, req.user.id)
+  res.json({ packs: rows })
+})
+
+// ─── Plus: Support Tickets ───
+
+app.get('/api/support/tickets', authMiddleware, requirePlus, async (req, res) => {
+  const tickets = await dbAll('SELECT * FROM support_tickets WHERE user_id = ? ORDER BY created_at DESC', req.user.id)
+  for (const t of tickets) {
+    t.messages = await dbAll('SELECT * FROM support_messages WHERE ticket_id = ? ORDER BY created_at ASC', t.id)
+  }
+  res.json({ tickets })
+})
+
+app.post('/api/support/tickets', authMiddleware, requirePlus, async (req, res) => {
+  const { subject, content } = req.body
+  if (!subject || !content) return res.status(400).json({ error: 'Укажите тему и текст' })
+  const id = uuidv4()
+  const now = Date.now()
+  await dbRun('INSERT INTO support_tickets (id, user_id, subject, status, created_at) VALUES (?, ?, ?, ?, ?)', id, req.user.id, subject, 'open', now)
+  await dbRun('INSERT INTO support_messages (id, ticket_id, sender_id, content, created_at) VALUES (?, ?, ?, ?, ?)', uuidv4(), id, req.user.id, content, now)
+  res.json({ ok: true, ticketId: id })
+})
+
+app.post('/api/support/tickets/:id/messages', authMiddleware, requirePlus, async (req, res) => {
+  const ticket = await dbGet('SELECT * FROM support_tickets WHERE id = ? AND user_id = ?', req.params.id, req.user.id)
+  if (!ticket) return res.status(404).json({ error: 'Тикет не найден' })
+  const { content } = req.body
+  if (!content) return res.status(400).json({ error: 'Напишите сообщение' })
+  await dbRun('INSERT INTO support_messages (id, ticket_id, sender_id, content, created_at) VALUES (?, ?, ?, ?, ?)', uuidv4(), req.params.id, req.user.id, content, Date.now())
+  res.json({ ok: true })
+})
+
+// auto cleanup disappearing messages every 5 minutes
+setInterval(cleanupDisappearingMessages, 5 * 60 * 1000)
 
 // ─── WebSocket ───
 
