@@ -1,41 +1,64 @@
-import { useState } from 'react'
+import { useState, useRef, useCallback } from 'react'
 import WelcomeStep from './WelcomeStep'
 import RegisterStep from './RegisterStep'
 import LoginStep from './LoginStep'
 import DeviceVerifyStep from './DeviceVerifyStep'
-import GoogleSetupStep from './GoogleSetupStep'
 import '../../styles/onboarding.css'
+
+const STEPS = ['welcome', 'register', 'login', 'verify']
 
 export default function Onboarding({ onComplete }) {
   const [screen, setScreen] = useState('welcome')
   const [pendingUserId, setPendingUserId] = useState('')
-  const [googleResult, setGoogleResult] = useState(null)
-  const [direction, setDirection] = useState('forward')
+  const [transition, setTransition] = useState('')
+  const touchStart = useRef(null)
+  const lockSwipe = useRef(false)
 
-  const go = (next) => {
-    setDirection('forward')
-    setScreen(next)
+  const go = useCallback((next, dir) => {
+    if (lockSwipe.current) return
+    if (next === screen) return
+    lockSwipe.current = true
+    setTransition(dir === 'left' ? 'swipe-left' : 'swipe-right')
+    setTimeout(() => {
+      setScreen(next)
+      setTransition(dir === 'left' ? 'swipe-right-enter' : 'swipe-left-enter')
+      setTimeout(() => {
+        setTransition('')
+        lockSwipe.current = false
+      }, 350)
+    }, 300)
+  }, [screen])
+
+  const handleTouchStart = (e) => {
+    touchStart.current = e.touches[0].clientX
   }
 
-  const back = (prev) => {
-    setDirection('back')
-    setScreen(prev)
-  }
-
-  const animClass = direction === 'forward' ? 'slide-in-right' : 'slide-in-left'
-
-  const handleGoogleComplete = (result) => {
-    if (result?.needsSetup) {
-      setGoogleResult(result)
-      go('google-setup')
-    } else if (result) {
-      onComplete?.()
+  const handleTouchEnd = (e) => {
+    if (touchStart.current === null) return
+    const diff = touchStart.current - e.changedTouches[0].clientX
+    const idx = STEPS.indexOf(screen)
+    if (Math.abs(diff) < 60) return
+    if (diff > 0 && idx < STEPS.length - 1) {
+      go(STEPS[idx + 1], 'left')
+    } else if (diff < 0 && idx > 0) {
+      go(STEPS[idx - 1], 'right')
     }
+    touchStart.current = null
   }
+
+  const handleVerify = (userId) => {
+    setPendingUserId(userId)
+    go('verify', 'left')
+  }
+
+  const animClass = transition || ''
 
   return (
-    <div className="onboarding">
-      {/* Background chat bubbles */}
+    <div
+      className="onboarding"
+      onTouchStart={handleTouchStart}
+      onTouchEnd={handleTouchEnd}
+    >
       <div className="bg-chat" aria-hidden="true">
         <div className="bg-bubble bg-bubble-1" style={{ width: '140px', height: '36px', top: '12%', left: '8%' }} />
         <div className="bg-bubble bg-bubble-2" style={{ width: '100px', height: '36px', top: '18%', left: '58%' }} />
@@ -57,8 +80,8 @@ export default function Onboarding({ onComplete }) {
         <div className="bg-bubble-avatar bg-avatar-right" style={{ top: '44%', right: '24%' }} />
       </div>
 
-      {screen !== 'welcome' && screen !== 'verify' && screen !== 'google-setup' && (
-        <button className="onboarding-back" onClick={() => back(screen === 'register' || screen === 'login' ? 'welcome' : 'login')} aria-label="Назад">
+      {screen !== 'welcome' && (
+        <button className="onboarding-back" onClick={() => go(screen === 'verify' ? 'login' : 'welcome', 'right')} aria-label="Назад">
           <svg width="12" height="20" viewBox="0 0 12 20" fill="none">
             <path d="M10 2L2 10L10 18" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
           </svg>
@@ -68,37 +91,36 @@ export default function Onboarding({ onComplete }) {
       <div className={`onboarding-step ${animClass}`} key={screen}>
         {screen === 'welcome' && (
           <WelcomeStep
-            onRegister={() => go('register')}
-            onLogin={() => go('login')}
-            onComplete={handleGoogleComplete}
+            onRegister={() => go('register', 'left')}
+            onLogin={() => go('login', 'left')}
           />
         )}
         {screen === 'register' && (
           <RegisterStep
             onComplete={onComplete}
-            onSwitchLogin={() => go('login')}
+            onSwitchLogin={() => go('login', 'left')}
           />
         )}
         {screen === 'login' && (
           <LoginStep
-            onNeedsVerify={(userId) => { setPendingUserId(userId); go('verify') }}
+            onNeedsVerify={handleVerify}
             onComplete={onComplete}
-            onSwitchRegister={() => go('register')}
+            onSwitchRegister={() => go('register', 'left')}
           />
         )}
         {screen === 'verify' && (
           <DeviceVerifyStep
             userId={pendingUserId}
             onComplete={onComplete}
-            onBack={() => back('login')}
+            onBack={() => go('login', 'right')}
           />
         )}
-        {screen === 'google-setup' && googleResult && (
-          <GoogleSetupStep
-            result={googleResult}
-            onComplete={onComplete}
-          />
-        )}
+      </div>
+
+      <div className="swipe-dots" aria-hidden="true">
+        {STEPS.map((_, i) => (
+          <span key={i} className={`swipe-dot ${STEPS.indexOf(screen) === i ? 'active' : ''}`} />
+        ))}
       </div>
     </div>
   )
