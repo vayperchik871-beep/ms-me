@@ -214,9 +214,6 @@ try { await dbExec('CREATE TABLE IF NOT EXISTS gifts (id TEXT PRIMARY KEY, emoji
 // Subscription system
 try { await dbExec('ALTER TABLE users ADD COLUMN subscription_plan TEXT DEFAULT NULL') } catch {}
 try { await dbExec('ALTER TABLE users ADD COLUMN subscription_until INTEGER DEFAULT NULL') } catch {}
-try { await dbExec('ALTER TABLE users ADD COLUMN email TEXT DEFAULT NULL') } catch {}
-try { await dbExec('CREATE INDEX IF NOT EXISTS idx_users_email ON users(email)') } catch {}
-
 try { await dbExec('ALTER TABLE users ADD COLUMN profile_banner TEXT DEFAULT NULL') } catch {}
 try { await dbExec('ALTER TABLE chats ADD COLUMN disappearing_interval INTEGER DEFAULT NULL') } catch {}
 try { await dbExec('CREATE TABLE IF NOT EXISTS subscription_codes (code TEXT PRIMARY KEY, plan TEXT NOT NULL, duration_days INTEGER NOT NULL, used_by TEXT DEFAULT NULL REFERENCES users(id), used_at INTEGER DEFAULT NULL, created_by TEXT NOT NULL, created_at INTEGER NOT NULL)') } catch {}
