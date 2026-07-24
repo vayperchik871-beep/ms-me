@@ -60,6 +60,27 @@ export function AuthProvider({ children }) {
     return result
   }
 
+  const registerEmail = async (email, username, password, name) => {
+    if (!canAddAccount()) throw new Error('Максимум 2 аккаунта на устройстве')
+    const result = await api.registerEmail({ email, username, password, name, deviceId: getDeviceId() })
+    const account = { ...result.user, token: result.token }
+    saveAccount(account)
+    setAccounts(getAccounts())
+    setUser(result.user)
+    reconnectWs()
+    return result
+  }
+
+  const loginEmail = async (email, password) => {
+    const result = await api.loginEmail({ email, password, deviceId: getDeviceId() })
+    const account = { ...result.user, token: result.token }
+    saveAccount(account)
+    setAccounts(getAccounts())
+    setUser(result.user)
+    reconnectWs()
+    return result
+  }
+
   const verifyDevice = async (userId, code) => {
     const result = await api.verifyDevice({ userId, code, deviceId: getDeviceId() })
     const account = { ...result.user, token: result.token }
@@ -106,7 +127,8 @@ export function AuthProvider({ children }) {
 
   return (
     <AuthContext.Provider value={{
-      user, loading, accounts, login, register, verifyDevice, googleLogin,
+      user, loading, accounts, login, register, registerEmail, loginEmail,
+      verifyDevice, googleLogin,
       logout, switchToAccount, canAddAccount: canAddAccount(), refreshUser,
       saveAccountAndLogin,
     }}>

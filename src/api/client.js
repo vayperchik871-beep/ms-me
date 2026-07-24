@@ -92,6 +92,8 @@ async function upload(path, field, file, extra = {}) {
 
 export const api = {
   register: (body) => request('/auth/register', { method: 'POST', body: JSON.stringify(body) }),
+  registerEmail: (body) => request('/auth/register-email', { method: 'POST', body: JSON.stringify(body) }),
+  loginEmail: (body) => request('/auth/login-email', { method: 'POST', body: JSON.stringify(body) }),
   login: (body) => request('/auth/login', { method: 'POST', body: JSON.stringify(body) }),
   verifyDevice: (body) => request('/auth/verify-device', { method: 'POST', body: JSON.stringify(body) }),
   me: () => request('/auth/me'),

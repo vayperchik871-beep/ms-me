@@ -293,6 +293,71 @@ app.post('/api/auth/register', async (req, res) => {
   })
 })
 
+// ─── Email Auth ───
+
+app.post('/api/auth/register-email', async (req, res) => {
+  const { email, username, password, name } = req.body
+  if (!email || !username || !password) {
+    return res.status(400).json({ error: 'Заполните все поля' })
+  }
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+  if (!emailRegex.test(email)) return res.status(400).json({ error: 'Неверный формат email' })
+  if (password.length < 6) return res.status(400).json({ error: 'Пароль минимум 6 символов' })
+  const cleanUsername = username.toLowerCase().replace(/[^a-z0-9_]/g, '')
+  if (cleanUsername.length < 3) return res.status(400).json({ error: 'Username минимум 3 символа (a-z, 0-9, _)' })
+
+  const emailExists = await dbGet('SELECT id FROM users WHERE email = ?', email.toLowerCase().trim())
+  if (emailExists) return res.status(409).json({ error: 'Этот email уже зарегистрирован' })
+  const userExists = await dbGet('SELECT id FROM users WHERE user_id = ?', cleanUsername)
+  if (userExists) return res.status(409).json({ error: 'Этот username уже занят' })
+
+  const id = uuidv4()
+  const password_hash = await bcrypt.hash(password, 12)
+  const now = Date.now()
+  const displayName = name?.trim() || cleanUsername
+
+  await dbRun(
+    'INSERT INTO users (id, user_id, name, email, password_hash, created_at) VALUES (?, ?, ?, ?, ?, ?)',
+    id, cleanUsername, displayName, email.toLowerCase().trim(), password_hash, now
+  )
+  const deviceId = hashDevice(req.body.deviceId || 'email-auth')
+  await dbRun('INSERT INTO devices (id, user_id, device_id, verified, last_seen, created_at) VALUES (?, ?, ?, 1, ?, ?)',
+    uuidv4(), id, deviceId, now, now
+  )
+  const token = await createToken(id, deviceId)
+  await getOrCreateDirectChat(id, SYSTEM_BOT.id)
+  await sendBotMessage(id, `Добро пожаловать в MS Messenger, ${displayName}!\n\nEmail: ${email}\nUsername: @${cleanUsername}\n\nЭтот чат — для кодов подтверждения.`)
+
+  res.json({ token, user: { id, userId: cleanUsername, name: displayName, email: email.toLowerCase().trim() } })
+})
+
+app.post('/api/auth/login-email', async (req, res) => {
+  const { email, password, deviceId } = req.body
+  if (!email || !password) return res.status(400).json({ error: 'Заполните все поля' })
+
+  const user = await dbGet('SELECT * FROM users WHERE email = ?', email.toLowerCase().trim())
+  if (!user) return res.status(404).json({ error: 'Пользователь не найден' })
+  if (user.banned) return res.status(403).json({ error: 'Аккаунт заблокирован' })
+
+  const valid = await bcrypt.compare(password, user.password_hash)
+  if (!valid) return res.status(401).json({ error: 'Неверный пароль' })
+
+  const devId = hashDevice(deviceId || 'email-auth')
+  let device = await dbGet('SELECT * FROM devices WHERE user_id = ? AND device_id = ?', user.id, devId)
+  if (!device) {
+    await dbRun('INSERT INTO devices (id, user_id, device_id, verified, last_seen, created_at) VALUES (?, ?, ?, 1, ?, ?)',
+      uuidv4(), user.id, devId, Date.now(), Date.now()
+    )
+  } else {
+    await dbRun('UPDATE devices SET verified = 1, last_seen = ? WHERE id = ?', Date.now(), device.id)
+  }
+  const token = await createToken(user.id, devId)
+  res.json({
+    token,
+    user: { id: user.id, userId: user.user_id, name: user.name, email: user.email, avatar: user.avatar },
+  })
+})
+
 app.post('/api/auth/login', async (req, res) => {
   const { userId, password, deviceId } = req.body
   const isAdminApp = req.headers['x-admin-app'] === 'true'

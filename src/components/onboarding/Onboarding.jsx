@@ -2,6 +2,8 @@ import { useState } from 'react'
 import WelcomeStep from './WelcomeStep'
 import RegisterStep from './RegisterStep'
 import LoginStep from './LoginStep'
+import RegisterEmail from './RegisterEmail'
+import LoginEmail from './LoginEmail'
 import DeviceVerifyStep from './DeviceVerifyStep'
 import GoogleSetupStep from './GoogleSetupStep'
 import '../../styles/onboarding.css'
@@ -70,6 +72,8 @@ export default function Onboarding({ onComplete }) {
           <WelcomeStep
             onRegister={() => go('register')}
             onLogin={() => go('login')}
+            onRegisterEmail={() => go('register-email')}
+            onLoginEmail={() => go('login-email')}
             onComplete={handleGoogleComplete}
           />
         )}
@@ -77,6 +81,20 @@ export default function Onboarding({ onComplete }) {
           <RegisterStep
             onComplete={onComplete}
             onSwitchLogin={() => go('login')}
+          />
+        )}
+        {screen === 'register-email' && (
+          <RegisterEmail
+            onComplete={onComplete}
+            onSwitchLogin={() => go('login-email')}
+            onBack={() => go('welcome')}
+          />
+        )}
+        {screen === 'login-email' && (
+          <LoginEmail
+            onComplete={onComplete}
+            onSwitchRegister={() => go('register-email')}
+            onBack={() => go('welcome')}
           />
         )}
         {screen === 'login' && (
