@@ -229,7 +229,7 @@ function sanitizeUserId(raw) {
 app.post('/api/auth/register', async (req, res) => {
   const { name, userId, password, deviceId, phone, bio, avatar } = req.body
   const isAdminApp = req.headers['x-admin-app'] === 'true'
-  if (!name?.trim() || !userId?.trim() || !password || !deviceId) {
+  if (!name?.trim() || !userId?.trim() || !password || !deviceId || !phone) {
     return res.status(400).json({ error: 'Заполните все поля' })
   }
   if (password.length < 6) {
@@ -238,8 +238,8 @@ app.post('/api/auth/register', async (req, res) => {
 
   if (phone) {
     const cleanPhone = phone.trim()
-    if (!/^\+777\d{8}$/.test(cleanPhone)) {
-      return res.status(400).json({ error: 'Номер должен быть в формате +777XXXXXXXX (12 символов)' })
+    if (!/^\+777\d+$/.test(cleanPhone) || cleanPhone.length < 6) {
+      return res.status(400).json({ error: 'Номер должен начинаться с +777 и содержать минимум 2 цифры после префикса' })
     }
     const phoneExist = await dbGet('SELECT id FROM users WHERE phone = ?', cleanPhone)
     if (phoneExist) return res.status(409).json({ error: 'Этот номер уже занят' })

@@ -23,18 +23,18 @@ export default function RegisterStep({ onComplete, onSwitchLogin }) {
   const initial = name.trim()[0]?.toUpperCase() || '?'
 
   const formatPhone = (val) => {
-    const digits = val.replace(/\D/g, '').slice(0, 11)
+    const digits = val.replace(/\D/g, '')
     if (!digits.startsWith('777')) return '+777'
-    let formatted = '+7'
-    if (digits.length > 1) formatted += ` (${digits.slice(1, 4)}`
-    if (digits.length > 4) formatted += `) ${digits.slice(4, 7)}`
-    if (digits.length > 7) formatted += `-${digits.slice(7, 9)}`
-    if (digits.length > 9) formatted += `-${digits.slice(9, 11)}`
+    let formatted = '+777'
+    if (digits.length > 3) formatted += ` ${digits.slice(3, 6)}`
+    if (digits.length > 6) formatted += ` ${digits.slice(6, 8)}`
+    if (digits.length > 8) formatted += ` ${digits.slice(8, 10)}`
+    if (digits.length > 10) formatted += ` ${digits.slice(10)}`
     return formatted
   }
 
   const phoneDigits = phone.replace(/\D/g, '')
-  const phoneValid = phoneDigits.length === 11 && phoneDigits.startsWith('777')
+  const phoneValid = phoneDigits.length >= 5 && phoneDigits.startsWith('777')
 
   const handleAvatarPick = (e) => {
     const file = e.target.files?.[0]
@@ -62,7 +62,7 @@ export default function RegisterStep({ onComplete, onSwitchLogin }) {
       return
     }
     if (!phoneValid) {
-      setError('Введите корректный номер +7 (777) XXX-XX-XX')
+      setError('Придумайте номер: +777 и минимум 2 цифры')
       return
     }
 
@@ -88,7 +88,7 @@ export default function RegisterStep({ onComplete, onSwitchLogin }) {
       return
     }
     if (step === 1 && !phoneValid) {
-      setError('Введите корректный номер +7 (777) XXX-XX-XX')
+      setError('Придумайте номер: +777 и минимум 2 цифры')
       return
     }
     if (step === 2 && cleanId.length < 3) {
@@ -158,14 +158,14 @@ export default function RegisterStep({ onComplete, onSwitchLogin }) {
       {step === 1 && (
         <div className="register-panel slide-in-right" key="phone">
           <div className="form-step-icon">📞</div>
-          <h2 className="form-step-title">Ваш номер телефона</h2>
-          <p className="form-step-desc">Нужен для входа и поиска друзей</p>
+          <h2 className="form-step-title">Придумайте номер</h2>
+          <p className="form-step-desc">Уникальный номер в формате +777... для входа и поиска</p>
 
           {error && <div className="form-error">{error}</div>}
 
           <div className="profile-fields single">
             <div className={`profile-field ${focused === 'phone' ? 'focused' : ''}`}>
-              <label>Телефон</label>
+              <label>Номер</label>
               <input
                 autoFocus
                 type="tel"
@@ -173,13 +173,13 @@ export default function RegisterStep({ onComplete, onSwitchLogin }) {
                 onChange={handlePhoneChange}
                 onFocus={() => setFocused('phone')}
                 onBlur={() => setFocused('')}
-                placeholder="+7 (777) 000-00-00"
+                placeholder="+777 000 00 00"
                 required
               />
             </div>
           </div>
 
-          <p className="id-rules">Казахстан: +7 (777) XXX-XX-XX</p>
+          <p className="id-rules">Формат: +777 XXXX... · минимум 2 цифры после префикса</p>
 
           <div className="register-nav">
             <button type="button" className="apple-btn secondary" onClick={prevStep}>Назад</button>
