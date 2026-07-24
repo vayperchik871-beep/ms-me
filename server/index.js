@@ -890,6 +890,13 @@ app.post('/api/admin/command', authMiddleware, adminMiddleware, async (req, res)
 
 // ─── Users ───
 
+app.get('/api/users/check-id/:userId', async (req, res) => {
+  const cleanId = sanitizeUserId(req.params.userId)
+  if (cleanId.length < 3) return res.json({ available: false })
+  const existing = await dbGet('SELECT id FROM users WHERE user_id = ?', cleanId)
+  res.json({ available: !existing, userId: cleanId })
+})
+
 app.get('/api/users/search', authMiddleware, async (req, res) => {
   const q = (req.query.q || '').trim()
   if (q.length < 2) return res.json({ users: [] })

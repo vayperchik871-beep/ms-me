@@ -12,7 +12,10 @@ export default function RegisterStep({ onComplete, onSwitchLogin }) {
   const [loading, setLoading] = useState(false)
   const [avatarFile, setAvatarFile] = useState(null)
   const [avatarPreview, setAvatarPreview] = useState(null)
+  const [idAvailable, setIdAvailable] = useState(null)
+  const [checkingId, setCheckingId] = useState(false)
   const fileInputRef = useRef(null)
+  const checkTimer = useRef(null)
 
   const cleanId = userId.toLowerCase().replace(/[^a-z0-9_]/g, '')
   const initial = name.trim()[0]?.toUpperCase() || '?'
@@ -39,6 +42,22 @@ export default function RegisterStep({ onComplete, onSwitchLogin }) {
     reader.readAsDataURL(file)
   }
 
+  const handleIdChange = (val) => {
+    const cleaned = val.toLowerCase().replace(/[^a-z0-9_]/g, '')
+    setUserId(cleaned)
+    setIdAvailable(null)
+    if (cleaned.length < 3) return
+    clearTimeout(checkTimer.current)
+    setCheckingId(true)
+    checkTimer.current = setTimeout(async () => {
+      try {
+        const { available } = await api.checkId(cleaned)
+        setIdAvailable(available)
+      } catch {}
+      setCheckingId(false)
+    }, 400)
+  }
+
   const handleSubmit = async (e) => {
     e.preventDefault()
     setError('')
@@ -47,6 +66,7 @@ export default function RegisterStep({ onComplete, onSwitchLogin }) {
     if (!name.trim()) { setError('Введите имя'); return }
     if (!phoneValid) { setError('Номер: +777 и минимум 2 цифры'); return }
     if (cleanId.length < 3) { setError('ID минимум 3 символа'); return }
+    if (idAvailable === false) { setError('Этот ID уже занят'); return }
     if (password.length < 6) { setError('Пароль минимум 6 символов'); return }
 
     setLoading(true)
@@ -97,7 +117,10 @@ export default function RegisterStep({ onComplete, onSwitchLogin }) {
           <label>Username</label>
           <div className="id-input-row">
             <span className="id-prefix">@</span>
-            <input value={userId} onChange={(e) => setUserId(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, ''))} placeholder="username" required maxLength={20} />
+            <input value={userId} onChange={(e) => handleIdChange(e.target.value)} placeholder="username" required maxLength={20} />
+            {checkingId && <span className="id-checking">⋯</span>}
+            {idAvailable === true && <span className="id-ok">✓</span>}
+            {idAvailable === false && <span className="id-taken">✗</span>}
           </div>
         </div>
         <div className="profile-field">
@@ -106,7 +129,7 @@ export default function RegisterStep({ onComplete, onSwitchLogin }) {
         </div>
       </div>
 
-      <button type="submit" className="apple-btn" disabled={loading || !name.trim() || !phoneValid || cleanId.length < 3 || password.length < 6}>
+      <button type="submit" className="apple-btn" disabled={loading || !name.trim() || !phoneValid || cleanId.length < 3 || idAvailable === false || password.length < 6}>
         {loading ? 'Создание...' : 'Создать аккаунт'}
       </button>
 

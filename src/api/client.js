@@ -95,6 +95,7 @@ export const api = {
   login: (body) => request('/auth/login', { method: 'POST', body: JSON.stringify(body) }),
   verifyDevice: (body) => request('/auth/verify-device', { method: 'POST', body: JSON.stringify(body) }),
   me: () => request('/auth/me'),
+  checkId: (userId) => request(`/users/check-id/${encodeURIComponent(userId)}`),
   searchUsers: (q) => request(`/users/search?q=${encodeURIComponent(q)}`),
   getUser: (userId) => request(`/users/${userId}`),
   getContacts: () => request('/contacts'),

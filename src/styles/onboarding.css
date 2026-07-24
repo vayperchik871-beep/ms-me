@@ -295,6 +295,10 @@
 .id-input-row { display: flex; align-items: center; gap: 2px; }
 .id-input-row .id-prefix { font-size: 17px; color: rgba(255,255,255,0.2); font-weight: 500; }
 .id-input-row input { flex: 1; }
+.id-checking { font-size: 14px; color: rgba(255,255,255,0.2); animation: pulse 0.8s infinite; }
+.id-ok { font-size: 14px; color: #30d158; font-weight: 700; }
+.id-taken { font-size: 14px; color: #ff453a; font-weight: 700; }
+@keyframes pulse { 0%, 100% { opacity: 0.3; } 50% { opacity: 1; } }
 
 /* ─── Code Input ─── */
 
