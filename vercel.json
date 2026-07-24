@@ -1,0 +1,17 @@
+{
+  "services": {
+    "ms-messenger-server": {
+      "root": ".",
+      "framework": "vite"
+    }
+  },
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": {
+        "type": "service",
+        "service": "ms-messenger-server"
+      }
+    }
+  ]
+}

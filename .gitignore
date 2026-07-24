@@ -4,3 +4,5 @@ dist/
 uploads/
 *.apk
 .env
+.vercel
+.env*
