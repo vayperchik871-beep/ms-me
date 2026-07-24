@@ -311,6 +311,41 @@
 
 .code-hint { font-size: 12px; color: rgba(255,255,255,0.2); margin-top: 16px; }
 
+/* ─── Step Indicator ─── */
+
+.step-indicator {
+  display: flex; align-items: center; justify-content: center;
+  gap: 0; margin-bottom: 24px;
+}
+
+.step-dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.08);
+  transition: all 0.3s ease;
+}
+.step-dot.active {
+  background: rgba(150,180,255,0.6);
+  box-shadow: 0 0 8px rgba(150,180,255,0.15);
+}
+
+.step-line {
+  width: 32px; height: 1px;
+  background: rgba(255,255,255,0.06);
+  margin: 0 6px;
+}
+
+.step-count {
+  font-size: 11px; color: rgba(255,255,255,0.15);
+  margin-bottom: 20px; font-feature-settings: "tnum";
+  text-align: center;
+}
+
+[data-theme="light"] .step-dot { background: rgba(0,0,0,0.08); }
+[data-theme="light"] .step-dot.active { background: rgba(90,120,255,0.6); }
+[data-theme="light"] .step-line { background: rgba(0,0,0,0.06); }
+[data-theme="light"] .step-count { color: rgba(0,0,0,0.2); }
+
 /* ─── Registration ─── */
 
 .register-step { width: 100%; }
