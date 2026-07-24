@@ -13,9 +13,6 @@ import ProfileTab from './components/ProfileTab'
 import SettingsTab from './components/SettingsTab'
 import ChatWindow from './components/ChatWindow'
 import { setLanguage, getLanguage } from './i18n'
-import { GoogleOAuthProvider } from '@react-oauth/google'
-
-const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_WEB_CLIENT_ID || ''
 
 let notifId = 0
 
@@ -64,7 +61,7 @@ async function showLocalNotification(title, body) {
 }
 
 export default function App() {
-  const { user, loading, logout, refreshUser } = useAuth()
+  const { user, loading, logout, refreshUser, googleLogin } = useAuth()
   const { toggleTheme } = useTheme()
   const [tab, setTab] = useState('chats')
   const [activeChatId, setActiveChatId] = useState(null)
@@ -86,6 +83,17 @@ export default function App() {
 
   useEffect(() => {
     requestNotifPermission()
+    const hash = window.location.hash
+    if (hash && hash.includes('id_token=')) {
+      const params = new URLSearchParams(hash.slice(1))
+      const idToken = params.get('id_token')
+      if (idToken) {
+        googleLogin(idToken).then(() => {
+          window.location.hash = ''
+          refreshUser()
+        }).catch(() => {})
+      }
+    }
   }, [])
 
   useWebSocket((data) => {
@@ -129,11 +137,7 @@ export default function App() {
   }
 
   if (!user || showOnboarding) {
-    return (
-      <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
-        <Onboarding onComplete={() => { setShowOnboarding(false); refreshUser() }} />
-      </GoogleOAuthProvider>
-    )
+    return <Onboarding onComplete={() => { setShowOnboarding(false); refreshUser() }} />
   }
 
   if (activeChatId) {

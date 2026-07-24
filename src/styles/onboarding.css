@@ -93,23 +93,38 @@
 
 /* ─── Welcome ─── */
 
-.welcome-step { text-align: center; width: 100%; display: flex; flex-direction: column; min-height: 100%; }
+.welcome-step { text-align: center; width: 100%; display: flex; flex-direction: column; min-height: 100%; position: relative; }
 .welcome-main { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; }
-.welcome-actions { margin-top: auto; padding-bottom: env(safe-area-inset-bottom, 24px); }
+.welcome-actions { margin-top: auto; padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 32px); }
 
-/* Google button */
-.google-btn {
+/* Corner buttons */
+.corner-btn {
+  position: absolute; top: calc(env(safe-area-inset-top, 0px) + 8px);
+  width: 36px; height: 36px;
+  border-radius: 10px;
+  border: none;
+  background: rgba(255,255,255,0.04);
+  color: rgba(255,255,255,0.4);
+  font-size: 12px; font-weight: 700;
+  cursor: pointer; transition: all 0.2s ease;
+  display: flex; align-items: center; justify-content: center;
+  z-index: 10; font-family: inherit;
+}
+.corner-btn:hover { background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.7); }
+.corner-lang { left: 12px; letter-spacing: 0.5px; }
+.corner-theme { right: 12px; }
+
+/* Google custom button */
+.google-btn-custom {
   display: flex; align-items: center; justify-content: center; gap: 10px;
   width: 100%; height: 48px;
   background: rgba(255,255,255,0.95); color: #0a0a0c;
   font-size: 14px; font-weight: 600;
-  border: none; border-radius: 12px;
+  border: none; border-radius: 14px;
   cursor: pointer; transition: all 0.2s ease;
 }
-.google-btn:hover { background: #fff; }
-.google-btn:active { transform: scale(0.975); }
-.google-btn:disabled { opacity: 0.3; }
-.google-error { color: #ff453a; font-size: 12px; margin-top: 8px; }
+.google-btn-custom:hover { background: #fff; }
+.google-btn-custom:active { transform: scale(0.975); }
 
 .welcome-divider {
   display: flex; align-items: center; gap: 12px;
@@ -166,7 +181,7 @@
   width: 100%; height: 48px;
   background: rgba(255,255,255,0.95); color: #0a0a0c;
   font-size: 14px; font-weight: 600;
-  border: none; border-radius: 12px;
+  border: none; border-radius: 14px;
   cursor: pointer; transition: all 0.25s ease;
   font-family: inherit;
   letter-spacing: 0;
