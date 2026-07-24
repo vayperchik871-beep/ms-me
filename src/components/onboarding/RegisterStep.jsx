@@ -1,5 +1,6 @@
 import { useState, useRef } from 'react'
 import { useAuth } from '../../context/AuthContext'
+import { t } from '../../i18n'
 import { api } from '../../api/client'
 
 export default function RegisterStep({ onComplete, onSwitchLogin }) {
@@ -23,13 +24,13 @@ export default function RegisterStep({ onComplete, onSwitchLogin }) {
   const phoneValid = phoneDigits.length >= 5 && phoneDigits.startsWith('777')
 
   const formatPhone = (val) => {
-    const digits = val.replace(/\D/g, '')
+    const digits = val.replace(/\D/g, '').slice(0, 11)
     if (!digits.startsWith('777')) return '+777'
     let formatted = '+777'
     if (digits.length > 3) formatted += ` ${digits.slice(3, 6)}`
     if (digits.length > 6) formatted += ` ${digits.slice(6, 8)}`
     if (digits.length > 8) formatted += ` ${digits.slice(8, 10)}`
-    if (digits.length > 10) formatted += ` ${digits.slice(10)}`
+    if (digits.length > 10) formatted += ` ${digits.slice(10, 11)}`
     return formatted
   }
 
@@ -63,11 +64,11 @@ export default function RegisterStep({ onComplete, onSwitchLogin }) {
     setError('')
 
     if (!canAddAccount) { setError('На устройстве уже 2 аккаунта'); return }
-    if (!name.trim()) { setError('Введите имя'); return }
-    if (!phoneValid) { setError('Номер: +777 и минимум 2 цифры'); return }
-    if (cleanId.length < 3) { setError('ID минимум 3 символа'); return }
-    if (idAvailable === false) { setError('Этот ID уже занят'); return }
-    if (password.length < 6) { setError('Пароль минимум 6 символов'); return }
+    if (!name.trim()) { setError(t('Введите имя')); return }
+    if (!phoneValid) { setError(t('Номер: +777 и минимум 2 цифры')); return }
+    if (cleanId.length < 3) { setError(t('ID минимум 3 символа')); return }
+    if (idAvailable === false) { setError(t('Этот ID уже занят')); return }
+    if (password.length < 6) { setError(t('Пароль минимум 6 символов')); return }
 
     setLoading(true)
     try {
@@ -85,8 +86,8 @@ export default function RegisterStep({ onComplete, onSwitchLogin }) {
   return (
     <form className="form-step" onSubmit={handleSubmit}>
       <div className="form-step-icon">👤</div>
-      <h2 className="form-step-title">Создать аккаунт</h2>
-      <p className="form-step-desc">Заполните все поля</p>
+      <h2 className="form-step-title">{t('Создать аккаунт')}</h2>
+      <p className="form-step-desc">{t('Заполните все поля')}</p>
 
       {error && <div className="form-error">{error}</div>}
 
@@ -104,17 +105,17 @@ export default function RegisterStep({ onComplete, onSwitchLogin }) {
         <input ref={fileInputRef} type="file" accept="image/*" hidden onChange={handleAvatarPick} />
       </div>
 
-      <div className="profile-fields">
-        <div className="profile-field">
-          <label>Имя</label>
-          <input autoFocus value={name} onChange={(e) => setName(e.target.value)} placeholder="Ваше имя" required maxLength={40} />
+      <div className="form-fields">
+        <div className="form-field">
+          <label>{t('Имя')}</label>
+          <input autoFocus value={name} onChange={(e) => setName(e.target.value)} placeholder={t('Ваше имя')} required maxLength={40} />
         </div>
-        <div className="profile-field">
-          <label>Номер +777</label>
+        <div className="form-field">
+          <label>{t('Номер +777')}</label>
           <input type="tel" value={phone} onChange={(e) => setPhone(formatPhone(e.target.value))} placeholder="+777 000 00 00" required />
         </div>
-        <div className="profile-field">
-          <label>Username</label>
+        <div className="form-field">
+          <label>{t('Username')}</label>
           <div className="id-input-row">
             <span className="id-prefix">@</span>
             <input value={userId} onChange={(e) => handleIdChange(e.target.value)} placeholder="username" required maxLength={20} />
@@ -123,18 +124,18 @@ export default function RegisterStep({ onComplete, onSwitchLogin }) {
             {idAvailable === false && <span className="id-taken">✗</span>}
           </div>
         </div>
-        <div className="profile-field">
-          <label>Пароль</label>
-          <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Минимум 6 символов" required minLength={6} />
+        <div className="form-field">
+          <label>{t('Пароль')}</label>
+          <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder={t('Минимум 6 символов')} required minLength={6} />
         </div>
       </div>
 
       <button type="submit" className="apple-btn" disabled={loading || !name.trim() || !phoneValid || cleanId.length < 3 || idAvailable === false || password.length < 6}>
-        {loading ? 'Создание...' : 'Создать аккаунт'}
+        {loading ? 'Создание...' : t('Создать аккаунт')}
       </button>
 
       <p className="form-switch">
-        Уже есть аккаунт? <button type="button" className="text-btn" onClick={onSwitchLogin}>Войти</button>
+        {t('Уже есть аккаунт?')} <button type="button" className="text-btn" onClick={onSwitchLogin}>{t('Войти')}</button>
       </p>
     </form>
   )

@@ -96,6 +96,7 @@
 .welcome-step { text-align: center; width: 100%; display: flex; flex-direction: column; min-height: 100%; position: relative; }
 .welcome-main { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; }
 .welcome-actions { margin-top: auto; padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 32px); }
+.welcome-btn-gap { height: 8px; }
 
 /* Corner buttons */
 .corner-btn {
@@ -243,54 +244,42 @@
 }
 .form-switch .text-btn:hover { color: rgba(255,255,255,0.7); }
 
-/* ─── Input Fields ─── */
+/* ─── Separate Form Fields ─── */
 
-.profile-fields {
-  display: flex; flex-direction: column;
+.form-fields {
+  display: flex; flex-direction: column; gap: 10px;
+  margin-bottom: 24px; width: 100%;
+}
+
+.form-field {
+  display: flex; flex-direction: column; gap: 5px;
+  padding: 14px 16px;
   background: rgba(255,255,255,0.02);
-  border-radius: 14px;
-  overflow: hidden; margin-bottom: 24px;
+  border-radius: 12px;
   border: 1px solid rgba(255,255,255,0.04);
-}
-
-.profile-field {
-  display: flex; flex-direction: column;
-  padding: 16px 18px;
-  border-bottom: 1px solid rgba(255,255,255,0.02);
   transition: all 0.2s ease;
-  position: relative;
 }
-.profile-field:last-child { border-bottom: none; }
-
-.profile-field::after {
-  content: '';
-  position: absolute;
-  left: 18px; bottom: 0; right: 18px;
-  height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.03), transparent);
-  opacity: 0;
-  transition: opacity 0.3s;
+.form-field:focus-within {
+  border-color: rgba(150,180,255,0.15);
+  background: rgba(255,255,255,0.03);
 }
-.profile-field:last-child::after { display: none; }
-.profile-field.focused::after { opacity: 1; }
 
-.profile-field label {
+.form-field label {
   font-size: 10px; color: rgba(255,255,255,0.2);
-  margin-bottom: 5px; text-transform: uppercase; letter-spacing: 0.8px;
+  text-transform: uppercase; letter-spacing: 0.8px;
   font-weight: 600; transition: all 0.3s ease;
 }
-.profile-field.focused label {
+.form-field:focus-within label {
   color: rgba(150, 180, 255, 0.5);
 }
 
-.profile-field input {
+.form-field input {
   font-size: 17px; color: rgba(255,255,255,0.9); background: transparent;
   outline: none; border: none; padding: 1px 0;
   font-family: inherit;
-  transition: color 0.3s;
 }
-.profile-field input::placeholder { color: rgba(255,255,255,0.15); }
-.profile-field.focused input { color: #fff; }
+.form-field input::placeholder { color: rgba(255,255,255,0.15); }
+.form-field:focus-within input { color: #fff; }
 
 .id-input-row { display: flex; align-items: center; gap: 2px; }
 .id-input-row .id-prefix { font-size: 17px; color: rgba(255,255,255,0.2); font-weight: 500; }
@@ -405,3 +394,64 @@
 
 .register-nav .apple-btn { flex: 1; }
 .register-nav .apple-btn.secondary { flex: 0 0 auto; padding: 0 20px; }
+
+/* ─── Light Mode ─── */
+
+[data-theme="light"] .onboarding { background: #f2f2f7; }
+[data-theme="light"] .welcome-title {
+  background: linear-gradient(135deg, #1a1a2e 40%, rgba(26,26,46,0.6));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+[data-theme="light"] .apple-btn { background: #0a0a0c; color: #fff; }
+[data-theme="light"] .apple-btn:hover { background: #1a1a2e; }
+[data-theme="light"] .apple-btn.secondary {
+  background: rgba(0,0,0,0.04); color: rgba(0,0,0,0.7);
+  border: 1px solid rgba(0,0,0,0.06);
+}
+[data-theme="light"] .apple-btn.secondary:hover {
+  background: rgba(0,0,0,0.06);
+  color: rgba(0,0,0,0.85);
+}
+[data-theme="light"] .corner-btn { background: rgba(0,0,0,0.04); color: rgba(0,0,0,0.4); }
+[data-theme="light"] .corner-btn:hover { background: rgba(0,0,0,0.08); color: rgba(0,0,0,0.6); }
+[data-theme="light"] .google-btn-custom { background: #0a0a0c; color: #fff; }
+[data-theme="light"] .welcome-divider { color: rgba(0,0,0,0.15); }
+[data-theme="light"] .welcome-divider::before,
+[data-theme="light"] .welcome-divider::after {
+  background: linear-gradient(90deg, transparent, rgba(0,0,0,0.05), transparent);
+}
+[data-theme="light"] .form-step-title { color: rgba(0,0,0,0.95); }
+[data-theme="light"] .form-step-desc { color: rgba(0,0,0,0.35); }
+[data-theme="light"] .form-field {
+  background: rgba(255,255,255,0.8);
+  border-color: rgba(0,0,0,0.06);
+}
+[data-theme="light"] .form-field:focus-within {
+  border-color: rgba(90,120,255,0.2);
+  background: #fff;
+}
+[data-theme="light"] .form-field label { color: rgba(0,0,0,0.3); }
+[data-theme="light"] .form-field:focus-within label { color: rgba(90,120,255,0.6); }
+[data-theme="light"] .form-field input { color: rgba(0,0,0,0.9); }
+[data-theme="light"] .form-field input::placeholder { color: rgba(0,0,0,0.15); }
+[data-theme="light"] .form-field:focus-within input { color: #000; }
+[data-theme="light"] .form-switch { color: rgba(0,0,0,0.2); }
+[data-theme="light"] .form-switch .text-btn { color: rgba(0,0,0,0.5); }
+[data-theme="light"] .form-switch .text-btn:hover { color: rgba(0,0,0,0.7); }
+[data-theme="light"] .form-error {
+  background: rgba(255,69,58,0.06); color: #d63031;
+  border-color: rgba(255,69,58,0.08);
+}
+[data-theme="light"] .id-prefix { color: rgba(0,0,0,0.2); }
+[data-theme="light"] .register-avatar {
+  background: linear-gradient(135deg, rgba(0,0,0,0.08), rgba(0,0,0,0.03));
+  color: rgba(0,0,0,0.4);
+}
+[data-theme="light"] .avatar-add-badge {
+  background: rgba(0,0,0,0.1);
+  color: rgba(0,0,0,0.4);
+  border-color: #f2f2f7;
+}
+[data-theme="light"] .welcome-logo { background: #fff; }
