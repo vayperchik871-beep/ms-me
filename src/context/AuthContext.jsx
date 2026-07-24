@@ -49,9 +49,9 @@ export function AuthProvider({ children }) {
     return result
   }
 
-  const register = async (name, userId, password) => {
+  const register = async (name, userId, password, phone) => {
     if (!canAddAccount()) throw new Error('Максимум 2 аккаунта на устройстве')
-    const result = await api.register({ name, userId, password, deviceId: getDeviceId() })
+    const result = await api.register({ name, userId, password, phone, deviceId: getDeviceId() })
     const account = { ...result.user, token: result.token }
     saveAccount(account)
     setAccounts(getAccounts())

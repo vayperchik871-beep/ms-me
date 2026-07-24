@@ -2,12 +2,13 @@ import { useState, useRef } from 'react'
 import { useAuth } from '../../context/AuthContext'
 import { api } from '../../api/client'
 
-const STEPS = ['name', 'id', 'password']
+const STEPS = ['name', 'phone', 'id', 'password']
 
 export default function RegisterStep({ onComplete, onSwitchLogin }) {
   const { register, canAddAccount } = useAuth()
   const [step, setStep] = useState(0)
   const [name, setName] = useState('')
+  const [phone, setPhone] = useState('+777')
   const [userId, setUserId] = useState('')
   const [password, setPassword] = useState('')
   const [confirm, setConfirm] = useState('')
@@ -20,6 +21,20 @@ export default function RegisterStep({ onComplete, onSwitchLogin }) {
 
   const cleanId = userId.toLowerCase().replace(/[^a-z0-9_]/g, '')
   const initial = name.trim()[0]?.toUpperCase() || '?'
+
+  const formatPhone = (val) => {
+    const digits = val.replace(/\D/g, '').slice(0, 11)
+    if (!digits.startsWith('777')) return '+777'
+    let formatted = '+7'
+    if (digits.length > 1) formatted += ` (${digits.slice(1, 4)}`
+    if (digits.length > 4) formatted += `) ${digits.slice(4, 7)}`
+    if (digits.length > 7) formatted += `-${digits.slice(7, 9)}`
+    if (digits.length > 9) formatted += `-${digits.slice(9, 11)}`
+    return formatted
+  }
+
+  const phoneDigits = phone.replace(/\D/g, '')
+  const phoneValid = phoneDigits.length === 11 && phoneDigits.startsWith('777')
 
   const handleAvatarPick = (e) => {
     const file = e.target.files?.[0]
@@ -46,10 +61,15 @@ export default function RegisterStep({ onComplete, onSwitchLogin }) {
       setError('ID минимум 3 символа')
       return
     }
+    if (!phoneValid) {
+      setError('Введите корректный номер +7 (777) XXX-XX-XX')
+      return
+    }
 
     setLoading(true)
     try {
-      const result = await register(name.trim(), cleanId, password)
+      const fullPhone = `+${phoneDigits}`
+      const result = await register(name.trim(), cleanId, password, fullPhone)
       if (avatarFile) {
         try { await api.uploadAvatar(avatarFile) } catch {}
       }
@@ -67,7 +87,11 @@ export default function RegisterStep({ onComplete, onSwitchLogin }) {
       setError('Введите имя')
       return
     }
-    if (step === 1 && cleanId.length < 3) {
+    if (step === 1 && !phoneValid) {
+      setError('Введите корректный номер +7 (777) XXX-XX-XX')
+      return
+    }
+    if (step === 2 && cleanId.length < 3) {
       setError('ID минимум 3 символа (a-z, 0-9, _)')
       return
     }
@@ -77,6 +101,10 @@ export default function RegisterStep({ onComplete, onSwitchLogin }) {
   const prevStep = () => {
     setError('')
     setStep((s) => Math.max(s - 1, 0))
+  }
+
+  const handlePhoneChange = (e) => {
+    setPhone(formatPhone(e.target.value))
   }
 
   return (
@@ -128,17 +156,52 @@ export default function RegisterStep({ onComplete, onSwitchLogin }) {
       )}
 
       {step === 1 && (
+        <div className="register-panel slide-in-right" key="phone">
+          <div className="form-step-icon">📞</div>
+          <h2 className="form-step-title">Ваш номер телефона</h2>
+          <p className="form-step-desc">Нужен для входа и поиска друзей</p>
+
+          {error && <div className="form-error">{error}</div>}
+
+          <div className="profile-fields single">
+            <div className={`profile-field ${focused === 'phone' ? 'focused' : ''}`}>
+              <label>Телефон</label>
+              <input
+                autoFocus
+                type="tel"
+                value={phone}
+                onChange={handlePhoneChange}
+                onFocus={() => setFocused('phone')}
+                onBlur={() => setFocused('')}
+                placeholder="+7 (777) 000-00-00"
+                required
+              />
+            </div>
+          </div>
+
+          <p className="id-rules">Казахстан: +7 (777) XXX-XX-XX</p>
+
+          <div className="register-nav">
+            <button type="button" className="apple-btn secondary" onClick={prevStep}>Назад</button>
+            <button type="button" className="apple-btn" onClick={nextStep} disabled={!phoneValid}>
+              Продолжить
+            </button>
+          </div>
+        </div>
+      )}
+
+      {step === 2 && (
         <div className="register-panel slide-in-right" key="id">
           <div className="id-preview-card">
             <div className="register-avatar small">{initial}</div>
             <div>
               <div className="id-preview-name">{name.trim()}</div>
-              <div className="id-preview-handle">@{cleanId || 'username'}</div>
+              <div className="id-preview-phone">{phone}</div>
             </div>
           </div>
 
           <h2 className="form-step-title">Придумайте ID</h2>
-          <p className="form-step-desc">По нему вас найдут — без номера телефона</p>
+          <p className="form-step-desc">Уникальный username для поиска</p>
 
           {error && <div className="form-error">{error}</div>}
 
@@ -172,13 +235,17 @@ export default function RegisterStep({ onComplete, onSwitchLogin }) {
         </div>
       )}
 
-      {step === 2 && (
+      {step === 3 && (
         <div className="register-panel slide-in-right" key="password">
-          <div className="form-step-icon">🔐</div>
+          <div className="id-preview-card">
+            <div className="register-avatar small">{initial}</div>
+            <div>
+              <div className="id-preview-name">{name.trim()}</div>
+              <div className="id-preview-handle">@{cleanId} · {phone}</div>
+            </div>
+          </div>
+
           <h2 className="form-step-title">Защитите аккаунт</h2>
-          <p className="form-step-desc">
-            Создаём <strong>@{cleanId}</strong> для <strong>{name.trim()}</strong>
-          </p>
 
           {error && <div className="form-error">{error}</div>}
 

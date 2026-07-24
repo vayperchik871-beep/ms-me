@@ -301,7 +301,8 @@ app.post('/api/auth/login', async (req, res) => {
   }
 
   const cleanId = sanitizeUserId(userId)
-  const user = await dbGet('SELECT * FROM users WHERE user_id = ? AND is_system = 0', cleanId)
+  let user = await dbGet('SELECT * FROM users WHERE user_id = ? AND is_system = 0', cleanId)
+  if (!user) user = await dbGet('SELECT * FROM users WHERE phone = ? AND is_system = 0', cleanId)
   if (!user) return res.status(404).json({ error: 'Пользователь не найден' })
   if (user.banned) return res.status(403).json({ error: 'Аккаунт заблокирован' })
 

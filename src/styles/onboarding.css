@@ -235,6 +235,7 @@
 }
 
 .id-preview-name { font-size: 17px; font-weight: 600; color: #fff; }
+.id-preview-phone { font-size: 13px; color: #8e8e93; margin-top: 2px; }
 .id-preview-handle { font-size: 14px; color: #FFFFFF; margin-top: 2px; }
 
 .profile-fields.single { margin-bottom: 20px; }

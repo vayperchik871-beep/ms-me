@@ -10,13 +10,17 @@ export default function LoginStep({ onComplete, onNeedsVerify, onSwitchRegister 
   const [loading, setLoading] = useState(false)
   const [focused, setFocused] = useState('')
 
+  const isPhone = userId.startsWith('+') || (userId.replace(/\D/g, '').length >= 10)
+
   const handleSubmit = async (e) => {
     e.preventDefault()
     setError('')
     setLoading(true)
     try {
-      const cleanId = userId.toLowerCase().replace(/[^a-z0-9_]/g, '')
-      const result = await login(cleanId, password)
+      const loginId = isPhone
+        ? '+' + userId.replace(/\D/g, '')
+        : userId.toLowerCase().replace(/[^a-z0-9_]/g, '')
+      const result = await login(loginId, password)
       if (result.needsVerification) {
         onNeedsVerify(result.userId)
       } else {
@@ -33,7 +37,7 @@ export default function LoginStep({ onComplete, onNeedsVerify, onSwitchRegister 
     <form className="form-step" onSubmit={handleSubmit}>
       <div className="form-step-icon">👋</div>
       <h2 className="form-step-title">Вход</h2>
-      <p className="form-step-desc">Введите ваш ID и пароль</p>
+      <p className="form-step-desc">ID, номер телефона и пароль</p>
 
       {error && <div className="form-error">{error}</div>}
 
@@ -43,15 +47,15 @@ export default function LoginStep({ onComplete, onNeedsVerify, onSwitchRegister 
 
       <div className="profile-fields">
         <div className={`profile-field ${focused === 'id' ? 'focused' : ''}`}>
-          <label>ID</label>
+          <label>ID или телефон</label>
           <div className="id-input-row">
-            <span className="id-prefix">@</span>
+            {!isPhone && <span className="id-prefix">@</span>}
             <input
               value={userId}
-              onChange={(e) => setUserId(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, ''))}
+              onChange={(e) => setUserId(e.target.value)}
               onFocus={() => setFocused('id')}
               onBlur={() => setFocused('')}
-              placeholder="username"
+              placeholder="@username или +7 (777) 000-00-00"
               required
             />
           </div>
