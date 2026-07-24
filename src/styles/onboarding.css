@@ -48,6 +48,16 @@
 .bg-bubble-avatar:nth-child(odd) { animation-delay: -3s; }
 .bg-bubble-avatar:nth-child(3n) { animation-delay: -6s; }
 
+/* Clean form screens — hide bg effects */
+.onboarding-form::before,
+.onboarding-form::after,
+.onboarding-form .bg-chat {
+  display: none;
+}
+.onboarding-form {
+  background: #08080c;
+}
+
 /* Animated mesh gradient background */
 .onboarding::before {
   content: '';

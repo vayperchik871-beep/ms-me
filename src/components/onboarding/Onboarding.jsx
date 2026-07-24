@@ -55,7 +55,7 @@ export default function Onboarding({ onComplete }) {
 
   return (
     <div
-      className="onboarding"
+      className={`onboarding ${screen === 'welcome' ? '' : 'onboarding-form'}`}
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
     >
@@ -117,11 +117,6 @@ export default function Onboarding({ onComplete }) {
         )}
       </div>
 
-      <div className="swipe-dots" aria-hidden="true">
-        {STEPS.map((_, i) => (
-          <span key={i} className={`swipe-dot ${STEPS.indexOf(screen) === i ? 'active' : ''}`} />
-        ))}
-      </div>
     </div>
   )
 }
