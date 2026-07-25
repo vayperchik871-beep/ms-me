@@ -117,6 +117,48 @@
 .corner-lang { left: 12px; padding: 0 14px; gap: 2px; letter-spacing: 0.5px; }
 .corner-theme { right: 12px; width: 40px; padding: 0; }
 
+.lang-dropdown {
+  position: absolute;
+  top: calc(env(safe-area-inset-top, 0px) + 52px);
+  left: 12px;
+  background: rgba(30,30,32,0.95);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,0.08);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+  overflow: hidden;
+  z-index: 20;
+  min-width: 140px;
+  animation: dropIn 0.15s ease;
+}
+
+@keyframes dropIn {
+  from { opacity: 0; transform: translateY(-6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.lang-option {
+  display: block; width: 100%;
+  padding: 10px 16px;
+  font-size: 14px; font-weight: 500;
+  color: rgba(255,255,255,0.6);
+  text-align: left;
+  border: none; background: none;
+  cursor: pointer; transition: all 0.15s;
+}
+.lang-option:hover { background: rgba(255,255,255,0.06); color: rgba(255,255,255,0.9); }
+.lang-option.active { color: #fff; font-weight: 600; }
+
+[data-theme="light"] .lang-dropdown {
+  background: rgba(255,255,255,0.95);
+  border-color: rgba(0,0,0,0.08);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.12);
+}
+[data-theme="light"] .lang-option { color: rgba(0,0,0,0.6); }
+[data-theme="light"] .lang-option:hover { background: rgba(0,0,0,0.04); color: rgba(0,0,0,0.9); }
+[data-theme="light"] .lang-option.active { color: #000; }
+
 /* Google custom button */
 .google-btn-custom {
   display: flex; align-items: center; justify-content: center; gap: 10px;
@@ -212,7 +254,12 @@
 
 /* ─── Form ─── */
 
-.form-step { text-align: center; width: 100%; }
+.form-step { text-align: center; width: 100%; animation: stepFadeIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) both; }
+
+@keyframes stepFadeIn {
+  from { opacity: 0; transform: translateY(16px) scale(0.97); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
 
 .form-step-title {
   font-size: 24px; font-weight: 700; letter-spacing: -0.3px;
@@ -260,6 +307,9 @@
   border: 1px solid rgba(255,255,255,0.04);
   transition: all 0.2s ease;
 }
+.form-field.rounded {
+  border-radius: 16px;
+}
 .form-field:focus-within {
   border-color: rgba(255,255,255,0.15);
   background: rgba(255,255,255,0.03);
@@ -286,8 +336,8 @@
 .id-input-row .id-prefix { font-size: 17px; color: rgba(255,255,255,0.2); font-weight: 500; }
 .id-input-row input { flex: 1; }
 .id-checking { font-size: 14px; color: rgba(255,255,255,0.2); animation: pulse 0.8s infinite; }
-.id-ok { font-size: 14px; color: #30d158; font-weight: 700; }
-.id-taken { font-size: 14px; color: #ff453a; font-weight: 700; }
+.id-ok { display: none; }
+.id-taken { display: none; }
 @keyframes pulse { 0%, 100% { opacity: 0.3; } 50% { opacity: 1; } }
 
 /* ─── Code Input ─── */
@@ -314,38 +364,8 @@
 
 /* ─── Step Indicator ─── */
 
-.step-indicator {
-  display: flex; align-items: center; justify-content: center;
-  gap: 0; margin-bottom: 24px;
-}
-
-.step-dot {
-  width: 8px; height: 8px;
-  border-radius: 50%;
-  background: rgba(255,255,255,0.08);
-  transition: all 0.3s ease;
-}
-.step-dot.active {
-  background: rgba(255,255,255,0.7);
-  box-shadow: 0 0 8px rgba(255,255,255,0.15);
-}
-
-.step-line {
-  width: 32px; height: 1px;
-  background: rgba(255,255,255,0.06);
-  margin: 0 6px;
-}
-
-.step-count {
-  font-size: 11px; color: rgba(255,255,255,0.15);
-  margin-bottom: 20px; font-feature-settings: "tnum";
-  text-align: center;
-}
-
-[data-theme="light"] .step-dot { background: rgba(0,0,0,0.08); }
-[data-theme="light"] .step-dot.active { background: rgba(0,0,0,0.5); }
-[data-theme="light"] .step-line { background: rgba(0,0,0,0.06); }
-[data-theme="light"] .step-count { color: rgba(0,0,0,0.2); }
+.step-indicator { display: none; }
+.step-count { display: none; }
 
 /* ─── Registration ─── */
 
@@ -370,21 +390,7 @@
   box-shadow: 0 0 0 2px rgba(150,180,255,0.15);
 }
 
-.avatar-add-badge {
-  position: absolute; bottom: -1px; right: -1px;
-  width: 24px; height: 24px; border-radius: 50%;
-  background: rgba(255,255,255,0.12);
-  color: rgba(255,255,255,0.5);
-  display: flex; align-items: center; justify-content: center;
-  border: 2px solid #08080c;
-  transition: all 0.3s ease;
-  font-size: 10px;
-}
-.register-avatar-wrap:hover .avatar-add-badge {
-  background: rgba(150,180,255,0.2);
-  color: rgba(255,255,255,0.7);
-  transform: scale(1.05);
-}
+.avatar-add-badge { display: none; }
 
 .register-avatar.small {
   width: 40px; height: 40px; font-size: 16px;

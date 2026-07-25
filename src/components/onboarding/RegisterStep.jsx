@@ -45,7 +45,7 @@ export default function RegisterStep({ onComplete, onSwitchLogin }) {
   }
 
   const handleIdChange = (val) => {
-    const cleaned = val.toLowerCase().replace(/[^a-z0-9_]/g, '')
+    const cleaned = val.toLowerCase().replace(/[^a-z0-9_]/g, '').slice(0, 6)
     setUserId(cleaned)
     setIdAvailable(null)
     if (cleaned.length < 3) return
@@ -65,7 +65,6 @@ export default function RegisterStep({ onComplete, onSwitchLogin }) {
     if (step === 1) {
       if (!name.trim()) { setError(t('Введите имя')); return }
       if (cleanId.length < 3) { setError(t('ID минимум 3 символа')); return }
-      if (idAvailable === false) { setError(t('Этот ID уже занят')); return }
       setStep(2)
     } else if (step === 2) {
       if (!phoneValid) { setError(t('Номер: +777 и минимум 2 цифры')); return }
@@ -95,17 +94,7 @@ export default function RegisterStep({ onComplete, onSwitchLogin }) {
   }
 
   return (
-    <form className="form-step" onSubmit={step === 3 ? handleSubmit : (e) => { e.preventDefault(); handleNext() }}>
-      <div className="step-indicator">
-        <span className={`step-dot${step === 1 ? ' active' : ''}`} />
-        <span className="step-line" />
-        <span className={`step-dot${step === 2 ? ' active' : ''}`} />
-        <span className="step-line" />
-        <span className={`step-dot${step === 3 ? ' active' : ''}`} />
-      </div>
-
-      <p className="step-count">{t('Шаг')} {step} {t('из')} 3</p>
-
+    <form className="form-step register-step" onSubmit={step === 3 ? handleSubmit : (e) => { e.preventDefault(); handleNext() }}>
       {step === 1 && (
         <>
           <h2 className="form-step-title">{t('Как вас зовут?')}</h2>
@@ -119,30 +108,24 @@ export default function RegisterStep({ onComplete, onSwitchLogin }) {
             ) : (
               <div className="register-avatar clickable">{initial}</div>
             )}
-            <div className="avatar-add-badge">
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M12 4v16M4 12h16"/></svg>
-            </div>
           </div>
           <input ref={fileInputRef} type="file" accept="image/*" hidden onChange={handleAvatarPick} />
 
           <div className="form-fields">
-            <div className="form-field">
+            <div className="form-field rounded">
               <label>{t('Имя')}</label>
               <input autoFocus value={name} onChange={(e) => setName(e.target.value)} placeholder={t('Ваше имя')} required maxLength={40} />
             </div>
-            <div className="form-field">
+            <div className="form-field rounded">
               <label>{t('Username')}</label>
               <div className="id-input-row">
                 <span className="id-prefix">@</span>
-                <input value={userId} onChange={(e) => handleIdChange(e.target.value)} placeholder="username" required maxLength={20} />
-                {checkingId && <span className="id-checking">...</span>}
-                {idAvailable === true && <span className="id-ok">&#10003;</span>}
-                {idAvailable === false && <span className="id-taken">&#10007;</span>}
+                <input value={userId} onChange={(e) => handleIdChange(e.target.value)} placeholder="username" required maxLength={6} />
               </div>
             </div>
           </div>
 
-          <button type="submit" className="apple-btn" disabled={!name.trim() || cleanId.length < 3 || idAvailable === false}>
+          <button type="submit" className="apple-btn" disabled={!name.trim() || cleanId.length < 3}>
             {t('Продолжить')}
           </button>
         </>
@@ -156,7 +139,7 @@ export default function RegisterStep({ onComplete, onSwitchLogin }) {
           {error && <div className="form-error">{error}</div>}
 
           <div className="form-fields">
-            <div className="form-field">
+            <div className="form-field rounded">
               <label>{t('Номер +777')}</label>
               <input type="tel" autoFocus value={phone} onChange={(e) => setPhone(formatPhone(e.target.value))} placeholder="+777 000 00 00" required />
             </div>
@@ -176,11 +159,11 @@ export default function RegisterStep({ onComplete, onSwitchLogin }) {
           {error && <div className="form-error">{error}</div>}
 
           <div className="form-fields">
-            <div className="form-field">
+            <div className="form-field rounded">
               <label>{t('Пароль')}</label>
               <input type="password" autoFocus value={password} onChange={(e) => setPassword(e.target.value)} placeholder={t('Минимум 6 символов')} required minLength={6} />
             </div>
-            <div className="form-field">
+            <div className="form-field rounded">
               <label>{t('Повторите пароль')}</label>
               <input type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} placeholder={t('Повторите пароль')} required minLength={6} />
             </div>

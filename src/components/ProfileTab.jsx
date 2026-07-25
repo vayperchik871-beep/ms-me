@@ -46,7 +46,7 @@ export default function ProfileTab() {
             {user?.avatar ? (
               <img src={resolveMediaUrl(user.avatar)} alt="" className="pf-avatar-img" onError={(e) => { e.target.style.display = 'none'; e.target.parentElement.classList.add('pf-avatar-fallback') }} />
             ) : null}
-            <span className="pf-avatar-letter">{user?.name?.[0]?.toUpperCase()}</span>
+            <span className="pf-avatar-letter" style={{ display: user?.avatar ? 'none' : undefined }}>{user?.name?.[0]?.toUpperCase()}</span>
           </div>
           <input ref={fileInputRef} type="file" accept="image/*" hidden onChange={handleAvatarChange} />
 

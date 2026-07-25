@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { useTheme } from '../../context/ThemeContext'
 import { setLanguage, getLanguage, t } from '../../i18n'
 import GoogleSignInButton from '../GoogleSignInButton'
@@ -5,20 +6,30 @@ import GoogleSignInButton from '../GoogleSignInButton'
 export default function WelcomeStep({ onRegister, onLogin, onComplete }) {
   const { theme, toggleTheme } = useTheme()
   const lang = getLanguage()
+  const [showLang, setShowLang] = useState(false)
 
-  const toggleLang = () => {
-    setLanguage(lang === 'ru' ? 'en' : 'ru')
+  const switchLang = (code) => {
+    setLanguage(code)
+    setShowLang(false)
     window.location.reload()
   }
 
   return (
     <div className="welcome-step">
-      <button className="corner-btn corner-lang" onClick={toggleLang}>
-        {lang === 'ru' ? 'EN' : 'RU'}
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ marginLeft: 4 }}>
+      <button className="corner-btn corner-lang" onClick={() => setShowLang(!showLang)}>
+        {lang === 'ru' ? 'Русский' : 'English'}
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ marginLeft: 2 }}>
           <polyline points="6 9 12 15 18 9"/>
         </svg>
       </button>
+
+      {showLang && (
+        <div className="lang-dropdown">
+          <button className={`lang-option ${lang === 'ru' ? 'active' : ''}`} onClick={() => switchLang('ru')}>Русский</button>
+          <button className={`lang-option ${lang === 'en' ? 'active' : ''}`} onClick={() => switchLang('en')}>English</button>
+        </div>
+      )}
+
       <button className="corner-btn corner-theme" onClick={toggleTheme}>
         {theme === 'dark' ? (
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg>

@@ -3,20 +3,20 @@ import { t } from '../i18n'
 
 const TAB_MENUS = {
   chats: [
-    { id: 'new-chat', label: () => t('Новый чат'), icon: '✏️' },
-    { id: 'search-chats', label: () => t('Поиск'), icon: '🔍' },
+    { id: 'new-chat', label: () => t('Новый чат') },
+    { id: 'search-chats', label: () => t('Поиск') },
   ],
   contacts: [
-    { id: 'add-contact', label: () => t('Добавить'), icon: '👤' },
-    { id: 'search-contacts', label: () => t('Поиск'), icon: '🔍' },
+    { id: 'add-contact', label: () => t('Добавить') },
+    { id: 'search-contacts', label: () => t('Поиск') },
   ],
   profile: [
-    { id: 'edit-profile', label: () => t('Редактировать'), icon: '✏️' },
-    { id: 'share-profile', label: () => t('Поделиться'), icon: '📤' },
+    { id: 'edit-profile', label: () => t('Редактировать') },
+    { id: 'share-profile', label: () => t('Поделиться') },
   ],
   settings: [
-    { id: 'toggle-theme', label: () => t('Тема'), icon: '🎨' },
-    { id: 'switch-lang', label: () => t('Язык'), icon: '🌐' },
+    { id: 'toggle-theme', label: () => t('Тема') },
+    { id: 'switch-lang', label: () => t('Язык') },
   ],
 }
 
@@ -146,7 +146,6 @@ export default function BottomNav({ active, onChange, onMenuAction }) {
                 data-menu-idx={i}
                 className={`bn-menu-item ${hoverIdx === i ? 'bn-menu-item-hover' : ''}`}
               >
-                <span className="bn-menu-icon">{item.icon}</span>
                 <span className="bn-menu-label">{item.label()}</span>
               </button>
             ))}
