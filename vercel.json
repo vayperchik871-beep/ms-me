@@ -1,17 +1,26 @@
 {
-  "services": {
-    "ms-messenger-server": {
-      "root": ".",
-      "framework": "vite"
-    }
-  },
   "rewrites": [
     {
-      "source": "/(.*)",
-      "destination": {
-        "type": "service",
-        "service": "ms-messenger-server"
-      }
+      "source": "/api/(.*)",
+      "destination": "https://ms-messenger-server.onrender.com/api/$1"
+    },
+    {
+      "source": "/health",
+      "destination": "https://ms-messenger-server.onrender.com/health"
+    },
+    {
+      "source": "/ws",
+      "destination": "https://ms-messenger-server.onrender.com/ws"
+    }
+  ],
+  "headers": [
+    {
+      "source": "/api/(.*)",
+      "headers": [
+        { "key": "Access-Control-Allow-Origin", "value": "*" },
+        { "key": "Access-Control-Allow-Methods", "value": "GET,POST,PUT,PATCH,DELETE,OPTIONS" },
+        { "key": "Access-Control-Allow-Headers", "value": "Content-Type,Authorization" }
+      ]
     }
   ]
 }

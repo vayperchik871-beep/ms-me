@@ -1,5 +1,5 @@
 function getApiBase() {
-  return 'https://ms-messenger-server.onrender.com'
+  return ''
 }
 
 function getApiUrl(path = '') {
@@ -58,6 +58,21 @@ export function canAddAccount() {
   return getAccounts().length < 2
 }
 
+async function requestWithRetry(url, options, retries = 2, delay = 1500) {
+  for (let i = 0; i <= retries; i++) {
+    try {
+      const res = await fetch(url, options)
+      return res
+    } catch (err) {
+      if (i < retries) {
+        await new Promise((r) => setTimeout(r, delay))
+        continue
+      }
+      throw err
+    }
+  }
+}
+
 async function request(path, options = {}) {
   const token = getToken()
   const headers = { 'Content-Type': 'application/json', ...options.headers }
@@ -65,7 +80,7 @@ async function request(path, options = {}) {
 
   const url = getApiUrl(path)
   try {
-    const res = await fetch(url, { ...options, headers })
+    const res = await requestWithRetry(url, { ...options, headers })
     const data = await res.json().catch(() => ({}))
     if (!res.ok) throw new Error(data.error || 'Ошибка сервера')
     return data
@@ -82,7 +97,7 @@ async function upload(path, field, file, extra = {}) {
   for (const [k, v] of Object.entries(extra)) form.append(k, v)
   const headers = {}
   if (token) headers.Authorization = `Bearer ${token}`
-  const res = await fetch(getApiUrl(path), { method: 'POST', headers, body: form })
+  const res = await requestWithRetry(getApiUrl(path), { method: 'POST', headers, body: form })
   const data = await res.json().catch(() => ({}))
   if (!res.ok) throw new Error(data.error || 'Ошибка загрузки')
   return data
@@ -150,5 +165,6 @@ export function resolveMediaUrl(url) {
 export function getWsUrl() {
   const token = getToken()
   if (!token) return null
-  return `wss://ms-messenger-server.onrender.com/ws?token=${token}`
+  const base = window.location.protocol === 'https:' ? 'wss' : 'ws'
+  return `${base}://${window.location.host}/ws?token=${token}`
 }
