@@ -2041,33 +2041,38 @@ input, textarea { font-family: inherit; border: none; outline: none; background:
 /* ─── Desktop Layout ─── */
 
 .desktop-app {
-  flex-direction: column;
+  flex-direction: row;
   max-width: none;
   margin: 0;
   height: 100vh;
 }
 
-.desktop-main {
+.desktop-panels {
   display: flex;
   flex: 1;
-  min-height: 0;
+  min-width: 0;
+  height: 100vh;
 }
 
-.desktop-bottom-nav {
+.desktop-side-nav {
   display: flex;
+  flex-direction: column;
+  align-items: center;
   justify-content: center;
-  padding: 0 20px 16px;
-  position: relative;
-  z-index: 50;
+  width: 80px;
+  min-width: 80px;
+  height: 100vh;
+  padding: 0 0 0 12px;
 }
 
-.desktop-bottom-nav .dn-glass {
+.dsn-glass {
   position: relative;
   display: flex;
+  flex-direction: column;
   align-items: center;
   gap: 4px;
-  padding: 6px 16px;
-  border-radius: 28px;
+  padding: 10px 8px;
+  border-radius: 24px;
   background: rgba(28, 28, 30, 0.72);
   backdrop-filter: blur(28px) saturate(1.2);
   -webkit-backdrop-filter: blur(28px) saturate(1.2);
@@ -2075,7 +2080,7 @@ input, textarea { font-family: inherit; border: none; outline: none; background:
   border: 1px solid rgba(255, 255, 255, 0.06);
 }
 
-[data-theme="light"] .desktop-bottom-nav .dn-glass {
+[data-theme="light"] .dsn-glass {
   background: rgba(242, 242, 247, 0.78);
   backdrop-filter: blur(28px) saturate(1.2);
   -webkit-backdrop-filter: blur(28px) saturate(1.2);
@@ -2083,43 +2088,43 @@ input, textarea { font-family: inherit; border: none; outline: none; background:
   border: 1px solid rgba(60, 60, 67, 0.08);
 }
 
-.desktop-bottom-nav .dn-indicator {
+.dsn-indicator {
   position: absolute;
-  top: 6px; bottom: 6px;
-  width: calc((100% - 32px) / 4 - 4px);
-  left: calc(16px + var(--active, 0) * ((100% - 32px) / 4));
-  border-radius: 22px;
+  left: 8px; right: 8px;
+  height: calc((100% - 16px) / 4 - 4px);
+  top: calc(8px + var(--active, 0) * ((100% - 16px) / 4));
+  border-radius: 18px;
   background: rgba(255, 255, 255, 0.12);
-  transition: left 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  transition: top 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
   pointer-events: none;
   z-index: 0;
-  will-change: left;
+  will-change: top;
 }
 
-[data-theme="light"] .desktop-bottom-nav .dn-indicator { background: rgba(0, 0, 0, 0.06); }
+[data-theme="light"] .dsn-indicator { background: rgba(0, 0, 0, 0.06); }
 
-.desktop-bottom-nav .dn-tab {
+.dsn-tab {
   position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 8px 14px 6px;
+  width: 64px;
+  padding: 10px 0 6px;
   z-index: 1;
-  border-radius: 22px;
+  border-radius: 18px;
   color: rgba(255, 255, 255, 0.45);
   transition: color 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
   cursor: pointer;
-  white-space: nowrap;
 }
 
-.desktop-bottom-nav .dn-tab svg {
+.dsn-tab svg {
   width: 22px;
   height: 22px;
   transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
-.desktop-bottom-nav .dn-tab span {
-  margin-top: 3px;
+.dsn-tab span {
+  margin-top: 4px;
   font-size: 10px;
   font-weight: 500;
   line-height: 1.2;
@@ -2127,12 +2132,12 @@ input, textarea { font-family: inherit; border: none; outline: none; background:
   transition: color 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
-[data-theme="light"] .desktop-bottom-nav .dn-tab { color: rgba(60, 60, 67, 0.45); }
+[data-theme="light"] .dsn-tab { color: rgba(60, 60, 67, 0.45); }
 
-.desktop-bottom-nav .dn-tab-active {
+.dsn-tab-active {
   color: var(--user-accent, #fff);
 }
-.desktop-bottom-nav .dn-tab-active svg {
+.dsn-tab-active svg {
   transform: scale(1.08);
 }
 
