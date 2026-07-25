@@ -2058,11 +2058,11 @@ input, textarea { font-family: inherit; border: none; outline: none; background:
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-end;
   width: 80px;
   min-width: 80px;
   height: 100vh;
-  padding: 0 0 0 12px;
+  padding: 0 0 20px 12px;
 }
 
 .dsn-glass {
