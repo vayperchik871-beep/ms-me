@@ -4,11 +4,13 @@ import { useTheme } from '../context/ThemeContext'
 import { getAccounts } from '../api/client'
 import { t, setLanguage, getLanguage, getLanguages } from '../i18n'
 import AdminPanel from './AdminPanel'
+import PrivacyPolicy from './PrivacyPolicy'
 
 export default function SettingsTab({ onLogout, onAddAccount }) {
   const { user, accounts, canAddAccount } = useAuth()
   const { theme, setTheme } = useTheme()
   const [showAdmin, setShowAdmin] = useState(false)
+  const [showPrivacy, setShowPrivacy] = useState(false)
   const [showLangPicker, setShowLangPicker] = useState(false)
   const currentLang = getLanguage()
 
@@ -19,9 +21,8 @@ export default function SettingsTab({ onLogout, onAddAccount }) {
     window.location.reload()
   }
 
-  if (showAdmin) {
-    return <AdminPanel onBack={() => setShowAdmin(false)} />
-  }
+  if (showPrivacy) return <PrivacyPolicy onBack={() => setShowPrivacy(false)} />
+  if (showAdmin) return <AdminPanel onBack={() => setShowAdmin(false)} />
 
   return (
     <div className="tab-content capsule-screen">
@@ -135,7 +136,7 @@ export default function SettingsTab({ onLogout, onAddAccount }) {
 
       <p className="capsule-section-label">{t('О приложении')}</p>
       <div className="capsule-section">
-        <a className="capsule-item clickable" href="/PRIVACY.md" target="_blank" rel="noreferrer" style={{ textDecoration: 'none', color: 'inherit' }}>
+        <button className="capsule-item clickable" onClick={() => setShowPrivacy(true)}>
           <div className="capsule-item-icon">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
           </div>
@@ -143,7 +144,7 @@ export default function SettingsTab({ onLogout, onAddAccount }) {
             <span className="capsule-item-title">{t('Политика конфиденциальности')}</span>
           </div>
           <svg className="capsule-item-arrow" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M9 18l6-6-6-6"/></svg>
-        </a>
+        </button>
 
         <div className="capsule-item">
           <div className="capsule-item-icon">

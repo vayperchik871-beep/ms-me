@@ -10,6 +10,7 @@ export default function RegisterStep({ onComplete, onSwitchLogin }) {
   const [phone, setPhone] = useState('+777')
   const [userId, setUserId] = useState('')
   const [password, setPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const [avatarFile, setAvatarFile] = useState(null)
@@ -25,13 +26,12 @@ export default function RegisterStep({ onComplete, onSwitchLogin }) {
   const phoneValid = phoneDigits.length >= 5 && phoneDigits.startsWith('777')
 
   const formatPhone = (val) => {
-    const digits = val.replace(/\D/g, '').slice(0, 11)
+    const digits = val.replace(/\D/g, '').slice(0, 10)
     if (!digits.startsWith('777')) return '+777'
     let formatted = '+777'
     if (digits.length > 3) formatted += ` ${digits.slice(3, 6)}`
     if (digits.length > 6) formatted += ` ${digits.slice(6, 8)}`
     if (digits.length > 8) formatted += ` ${digits.slice(8, 10)}`
-    if (digits.length > 10) formatted += ` ${digits.slice(10, 11)}`
     return formatted
   }
 
@@ -79,6 +79,7 @@ export default function RegisterStep({ onComplete, onSwitchLogin }) {
 
     if (!canAddAccount) { setError(t('На устройстве уже 2 аккаунта. Удалите один в настройках.')); return }
     if (password.length < 6) { setError(t('Минимум 6 символов')); return }
+    if (password !== confirmPassword) { setError(t('Пароли не совпадают')); return }
 
     setLoading(true)
     try {
@@ -107,7 +108,6 @@ export default function RegisterStep({ onComplete, onSwitchLogin }) {
 
       {step === 1 && (
         <>
-          <div className="form-step-icon">👤</div>
           <h2 className="form-step-title">{t('Как вас зовут?')}</h2>
           <p className="form-step-desc">{t('Это имя увидят другие пользователи')}</p>
 
@@ -135,9 +135,9 @@ export default function RegisterStep({ onComplete, onSwitchLogin }) {
               <div className="id-input-row">
                 <span className="id-prefix">@</span>
                 <input value={userId} onChange={(e) => handleIdChange(e.target.value)} placeholder="username" required maxLength={20} />
-                {checkingId && <span className="id-checking">⋯</span>}
-                {idAvailable === true && <span className="id-ok">✓</span>}
-                {idAvailable === false && <span className="id-taken">✗</span>}
+                {checkingId && <span className="id-checking">...</span>}
+                {idAvailable === true && <span className="id-ok">&#10003;</span>}
+                {idAvailable === false && <span className="id-taken">&#10007;</span>}
               </div>
             </div>
           </div>
@@ -150,7 +150,6 @@ export default function RegisterStep({ onComplete, onSwitchLogin }) {
 
       {step === 2 && (
         <>
-          <div className="form-step-icon">📱</div>
           <h2 className="form-step-title">{t('Ваш номер')}</h2>
           <p className="form-step-desc">{t('Номер +777 — без подтверждения')}</p>
 
@@ -171,7 +170,6 @@ export default function RegisterStep({ onComplete, onSwitchLogin }) {
 
       {step === 3 && (
         <>
-          <div className="form-step-icon">🔒</div>
           <h2 className="form-step-title">{t('Защитите аккаунт')}</h2>
           <p className="form-step-desc">{t('Минимум 6 символов')}</p>
 
@@ -182,9 +180,13 @@ export default function RegisterStep({ onComplete, onSwitchLogin }) {
               <label>{t('Пароль')}</label>
               <input type="password" autoFocus value={password} onChange={(e) => setPassword(e.target.value)} placeholder={t('Минимум 6 символов')} required minLength={6} />
             </div>
+            <div className="form-field">
+              <label>{t('Повторите пароль')}</label>
+              <input type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} placeholder={t('Повторите пароль')} required minLength={6} />
+            </div>
           </div>
 
-          <button type="submit" className="apple-btn" disabled={loading || password.length < 6}>
+          <button type="submit" className="apple-btn" disabled={loading || password.length < 6 || password !== confirmPassword}>
             {loading ? t('Создание...') : t('Создать аккаунт')}
           </button>
         </>

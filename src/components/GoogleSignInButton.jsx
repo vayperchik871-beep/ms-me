@@ -1,14 +1,8 @@
 export default function GoogleSignInButton({ onComplete, label }) {
   const handleClick = () => {
-    const clientId = import.meta.env.VITE_GOOGLE_WEB_CLIENT_ID
-    const redirectUri = window.location.origin + '/'
-    const url = 'https://accounts.google.com/o/oauth2/v2/auth?' +
-      'client_id=' + encodeURIComponent(clientId) +
-      '&redirect_uri=' + encodeURIComponent(redirectUri) +
-      '&response_type=id_token' +
-      '&scope=openid%20profile%20email' +
-      '&nonce=' + Math.random().toString(36).slice(2)
-    window.location.href = url
+    const apiBase = import.meta.env.VITE_API_BASE_URL || ''
+    const serverUrl = apiBase.replace(/\/$/, '') || 'https://ms-messenger-server.onrender.com'
+    window.location.href = serverUrl + '/api/auth/google/redirect'
   }
 
   return (

@@ -100,20 +100,22 @@
 
 /* Corner buttons */
 .corner-btn {
-  position: absolute; top: calc(env(safe-area-inset-top, 0px) + 8px);
-  width: 36px; height: 36px;
-  border-radius: 10px;
+  position: absolute; top: calc(env(safe-area-inset-top, 0px) + 12px);
+  height: 36px;
+  border-radius: 18px;
   border: none;
-  background: rgba(255,255,255,0.04);
-  color: rgba(255,255,255,0.4);
-  font-size: 12px; font-weight: 700;
+  background: rgba(255,255,255,0.06);
+  color: rgba(255,255,255,0.5);
+  font-size: 13px; font-weight: 600;
   cursor: pointer; transition: all 0.2s ease;
   display: flex; align-items: center; justify-content: center;
   z-index: 10; font-family: inherit;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
 }
-.corner-btn:hover { background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.7); }
-.corner-lang { left: 12px; letter-spacing: 0.5px; }
-.corner-theme { right: 12px; }
+.corner-btn:hover { background: rgba(255,255,255,0.1); color: rgba(255,255,255,0.8); }
+.corner-lang { left: 12px; padding: 0 14px; gap: 2px; letter-spacing: 0.5px; }
+.corner-theme { right: 12px; width: 40px; padding: 0; }
 
 /* Google custom button */
 .google-btn-custom {
@@ -211,7 +213,6 @@
 /* ─── Form ─── */
 
 .form-step { text-align: center; width: 100%; }
-.form-step-icon { font-size: 36px; margin-bottom: 14px; }
 
 .form-step-title {
   font-size: 24px; font-weight: 700; letter-spacing: -0.3px;
@@ -260,7 +261,7 @@
   transition: all 0.2s ease;
 }
 .form-field:focus-within {
-  border-color: rgba(150,180,255,0.15);
+  border-color: rgba(255,255,255,0.15);
   background: rgba(255,255,255,0.03);
 }
 
@@ -270,7 +271,7 @@
   font-weight: 600; transition: all 0.3s ease;
 }
 .form-field:focus-within label {
-  color: rgba(150, 180, 255, 0.5);
+  color: rgba(255, 255, 255, 0.5);
 }
 
 .form-field input {
@@ -325,8 +326,8 @@
   transition: all 0.3s ease;
 }
 .step-dot.active {
-  background: rgba(150,180,255,0.6);
-  box-shadow: 0 0 8px rgba(150,180,255,0.15);
+  background: rgba(255,255,255,0.7);
+  box-shadow: 0 0 8px rgba(255,255,255,0.15);
 }
 
 .step-line {
@@ -342,7 +343,7 @@
 }
 
 [data-theme="light"] .step-dot { background: rgba(0,0,0,0.08); }
-[data-theme="light"] .step-dot.active { background: rgba(90,120,255,0.6); }
+[data-theme="light"] .step-dot.active { background: rgba(0,0,0,0.5); }
 [data-theme="light"] .step-line { background: rgba(0,0,0,0.06); }
 [data-theme="light"] .step-count { color: rgba(0,0,0,0.2); }
 
@@ -449,8 +450,8 @@
   background: rgba(0,0,0,0.06);
   color: rgba(0,0,0,0.85);
 }
-[data-theme="light"] .corner-btn { background: rgba(0,0,0,0.04); color: rgba(0,0,0,0.4); }
-[data-theme="light"] .corner-btn:hover { background: rgba(0,0,0,0.08); color: rgba(0,0,0,0.6); }
+[data-theme="light"] .corner-btn { background: rgba(0,0,0,0.06); color: rgba(0,0,0,0.5); }
+[data-theme="light"] .corner-btn:hover { background: rgba(0,0,0,0.1); color: rgba(0,0,0,0.7); }
 [data-theme="light"] .google-btn-custom { background: #0a0a0c; color: #fff; }
 [data-theme="light"] .welcome-divider { color: rgba(0,0,0,0.15); }
 [data-theme="light"] .welcome-divider::before,
@@ -464,11 +465,11 @@
   border-color: rgba(0,0,0,0.06);
 }
 [data-theme="light"] .form-field:focus-within {
-  border-color: rgba(90,120,255,0.2);
+  border-color: rgba(0,0,0,0.15);
   background: #fff;
 }
 [data-theme="light"] .form-field label { color: rgba(0,0,0,0.3); }
-[data-theme="light"] .form-field:focus-within label { color: rgba(90,120,255,0.6); }
+[data-theme="light"] .form-field:focus-within label { color: rgba(0,0,0,0.4); }
 [data-theme="light"] .form-field input { color: rgba(0,0,0,0.9); }
 [data-theme="light"] .form-field input::placeholder { color: rgba(0,0,0,0.15); }
 [data-theme="light"] .form-field:focus-within input { color: #000; }

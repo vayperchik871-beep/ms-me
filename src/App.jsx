@@ -61,7 +61,7 @@ async function showLocalNotification(title, body) {
 }
 
 export default function App() {
-  const { user, loading, logout, refreshUser, googleLogin } = useAuth()
+  const { user, loading, logout, refreshUser, googleLogin, saveAccountAndLogin } = useAuth()
   const { toggleTheme } = useTheme()
   const [tab, setTab] = useState('chats')
   const [activeChatId, setActiveChatId] = useState(null)
@@ -84,15 +84,25 @@ export default function App() {
   useEffect(() => {
     requestNotifPermission()
     const hash = window.location.hash
-    if (hash && hash.includes('id_token=')) {
+    if (hash && hash.includes('google_token=')) {
       const params = new URLSearchParams(hash.slice(1))
-      const idToken = params.get('id_token')
-      if (idToken) {
-        googleLogin(idToken).then(() => {
+      const googleToken = params.get('google_token')
+      const googleUser = params.get('google_user')
+      if (googleToken && googleUser) {
+        try {
+          const userData = JSON.parse(decodeURIComponent(googleUser))
           window.location.hash = ''
+          saveAccountAndLogin(userData, googleToken)
           refreshUser()
-        }).catch(() => {})
+        } catch {
+          googleLogin(googleToken).then(() => {
+            window.location.hash = ''
+            refreshUser()
+          }).catch(() => {})
+        }
       }
+    } else if (hash && hash.includes('google_error=')) {
+      window.location.hash = ''
     }
   }, [])
 

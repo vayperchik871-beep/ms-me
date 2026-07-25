@@ -285,7 +285,8 @@ app.post('/api/auth/register', async (req, res) => {
 
   const token = await createToken(id, devId)
   await getOrCreateDirectChat(id, SYSTEM_BOT.id)
-  await sendBotMessage(id, `Добро пожаловать в MS Messenger, ${name.trim()}!\n\nВаш ID: @${cleanId}\nНомер: ${phone || 'не указан'}\n\nДругие пользователи могут найти вас по ID или номеру. Этот чат используется для кодов подтверждения при входе с нового устройства.`)
+  await sendBotMessage(id, `Добро пожаловать в MS Messenger, ${name.trim()}!\n\nВаш ID: @${cleanId}\nНомер: ${phone || 'не указан'}\n\nДругие пользователи могут найти вас по ID или номеру.`)
+  await sendBotMessage(id, `📋 Политика конфиденциальности MS Messenger\n\nДата вступления в силу: 13 июля 2026 г.\n\n1. Общие положения\nMS Messenger — мессенджер для обмена сообщениями. Мы стремимся обеспечить безопасность данных и обрабатываем только ту информацию, которая необходима для работы приложения.\n\n2. Какие данные мы собираем\n• Имя пользователя — отображение профиля\n• Уникальный ID — поиск и идентификация\n• Хеш пароля (bcrypt) — аутентификация\n• Зашифрованные сообщения (AES-256-GCM)\n• ID устройства — проверка входов\n\nMS Messenger НЕ собирает: номер телефона, email, геолокацию, контакты, рекламные идентификаторы.\n\n3. Безопасность\n• Пароли хранятся только в виде bcrypt-хеша\n• Сообщения шифруются AES-256-GCM\n• Данные передаются по HTTPS/WSS\n• Авторизация через JWT-токены\n\n4. Сообщения\nMS Messenger не использует содержимое переписки для рекламы, аналитики или продажи данных.\n\n5. Ваши права\nВы можете: удалить аккаунт, удалить сообщения, изменить имя, выйти со всех устройств.\n\n6. Контакты\nПо вопросам конфиденциальности обращайтесь к администратору сервера.`)
 
   res.json({
     token,
@@ -312,16 +313,20 @@ app.post('/api/auth/login', async (req, res) => {
   const devId = hashDevice(deviceId)
   const device = await dbGet('SELECT * FROM devices WHERE user_id = ? AND device_id = ?', user.id, devId)
 
-  if (device?.verified || isAdminApp) {
-    if (!device) {
-      await dbRun('INSERT INTO devices (id, user_id, device_id, verified, last_seen, created_at) VALUES (?, ?, ?, 1, ?, ?)',
-        uuidv4(), user.id, devId, Date.now(), Date.now()
-      )
-    } else if (!device.verified) {
-      await dbRun('UPDATE devices SET verified = 1, last_seen = ? WHERE id = ?', Date.now(), device.id)
-    } else {
-      await dbRun('UPDATE devices SET last_seen = ? WHERE id = ?', Date.now(), device.id)
-    }
+  if (!device) {
+    await dbRun('INSERT INTO devices (id, user_id, device_id, verified, last_seen, created_at) VALUES (?, ?, ?, 1, ?, ?)',
+      uuidv4(), user.id, devId, Date.now(), Date.now()
+    )
+    const token = await createToken(user.id, devId)
+    return res.json({
+      token,
+      user: { id: user.id, userId: user.user_id, name: user.name, phone: user.phone, bio: user.bio, avatar: user.avatar },
+      needsVerification: false,
+    })
+  }
+
+  if (device.verified || isAdminApp) {
+    await dbRun('UPDATE devices SET last_seen = ? WHERE id = ?', Date.now(), device.id)
     const token = await createToken(user.id, devId)
     return res.json({
       token,
@@ -402,6 +407,94 @@ app.get('/api/auth/me', authMiddleware, async (req, res) => {
 })
 
 // ─── Google Auth ───
+
+const GOOGLE_REDIRECT_URI = 'https://ms-messenger-server.onrender.com/api/auth/google/callback'
+
+app.get('/api/auth/google/redirect', (req, res) => {
+  if (!GOOGLE_CLIENT_ID) return res.status(500).json({ error: 'Google не настроен' })
+  const state = Math.random().toString(36).slice(2)
+  const url = 'https://accounts.google.com/o/oauth2/v2/auth?' +
+    'client_id=' + encodeURIComponent(GOOGLE_CLIENT_ID) +
+    '&redirect_uri=' + encodeURIComponent(GOOGLE_REDIRECT_URI) +
+    '&response_type=id_token' +
+    '&scope=openid%20profile%20email' +
+    '&state=' + state +
+    '&nonce=' + Math.random().toString(36).slice(2)
+  res.redirect(url)
+})
+
+app.get('/api/auth/google/callback', async (req, res) => {
+  const { id_token } = req.query
+  const frontendUrl = 'https://ms-messenger-web.vercel.app'
+  if (!id_token) {
+    return res.redirect(frontendUrl + '#google_error=no_token')
+  }
+  if (!googleAuth) {
+    return res.redirect(frontendUrl + '#google_error=no_config')
+  }
+  try {
+    let payload
+    try {
+      const ticket = await googleAuth.verifyIdToken({ idToken: id_token, audience: GOOGLE_CLIENT_ID })
+      payload = ticket.getPayload()
+    } catch {
+      const info = await googleAuth.getTokenInfo(id_token)
+      if (!info) throw new Error('Invalid token')
+      payload = { sub: info.sub, email: info.email }
+    }
+    if (!payload?.sub) return res.redirect(frontendUrl + '#google_error=invalid')
+    const googleId = payload.sub
+    const email = payload.email
+    const googleName = payload.name || (email ? email.split('@')[0] : 'User')
+    const avatarUrl = payload.picture || null
+    let user = await dbGet('SELECT * FROM users WHERE google_id = ?', googleId)
+    if (!user) {
+      const countRow = await dbGet('SELECT COUNT(*) as c FROM users WHERE is_system = 0')
+      const isFirst = countRow.c === 0
+      let baseId = email ? email.split('@')[0].toLowerCase().replace(/[^a-z0-9_]/g, '').slice(0, 18) : ''
+      if (!baseId || baseId.length < 3) baseId = 'user' + Math.random().toString(36).slice(2, 6)
+      let cleanId = baseId
+      let suffix = 1
+      while (await dbGet('SELECT id FROM users WHERE user_id = ?', cleanId)) {
+        cleanId = baseId.slice(0, 18 - String(suffix).length) + suffix
+        suffix++
+      }
+      const tempId = 'google_' + Math.random().toString(36).slice(2, 8)
+      const id = uuidv4()
+      const fakeHash = await bcrypt.hash(uuidv4(), 12)
+      const now = Date.now()
+      await dbRun(
+        'INSERT INTO users (id, user_id, name, password_hash, google_id, avatar, is_admin, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+        id, tempId, googleName, fakeHash, googleId, avatarUrl, isFirst ? 1 : 0, now
+      )
+      const devId = hashDevice('google_auth_' + googleId)
+      await dbRun('INSERT INTO devices (id, user_id, device_id, verified, last_seen, created_at) VALUES (?, ?, ?, 1, ?, ?)',
+        uuidv4(), id, devId, now, now
+      )
+      const token = await createToken(id, devId)
+      await getOrCreateDirectChat(id, SYSTEM_BOT.id)
+      await sendBotMessage(id, `Добро пожаловать в MS Messenger, ${googleName}!\n\nВы вошли через Google. Ваш временный ID: @${tempId}\n\nПожалуйста, создайте полноценный аккаунт через «Настройки» → «Аккаунт».`)
+      return res.redirect(frontendUrl + '#google_token=' + encodeURIComponent(token) + '&google_user=' + encodeURIComponent(JSON.stringify({ id, userId: tempId, name: googleName, avatar: avatarUrl, needsSetup: true })))
+    }
+    const devId = hashDevice('google_auth_' + googleId)
+    const device = await dbGet('SELECT * FROM devices WHERE user_id = ? AND device_id = ?', user.id, devId)
+    if (!device) {
+      await dbRun('INSERT INTO devices (id, user_id, device_id, verified, last_seen, created_at) VALUES (?, ?, ?, 1, ?, ?)',
+        uuidv4(), user.id, devId, Date.now(), Date.now()
+      )
+    } else {
+      await dbRun('UPDATE devices SET last_seen = ? WHERE id = ?', Date.now(), device.id)
+    }
+    if (avatarUrl && avatarUrl !== user.avatar) {
+      await dbRun('UPDATE users SET avatar = ? WHERE id = ?', avatarUrl, user.id)
+    }
+    const token = await createToken(user.id, devId)
+    return res.redirect(frontendUrl + '#google_token=' + encodeURIComponent(token) + '&google_user=' + encodeURIComponent(JSON.stringify({ id: user.id, userId: user.user_id, name: user.name, avatar: avatarUrl })))
+  } catch (err) {
+    console.error('Google callback error:', err)
+    return res.redirect(frontendUrl + '#google_error=server_error')
+  }
+})
 
 app.post('/api/auth/google', async (req, res) => {
   const { idToken, deviceId } = req.body

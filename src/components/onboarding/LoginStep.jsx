@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useAuth } from '../../context/AuthContext'
 import GoogleSignInButton from '../GoogleSignInButton'
+import { t } from '../../i18n'
 
 export default function LoginStep({ onComplete, onNeedsVerify, onSwitchRegister }) {
   const { login } = useAuth()
@@ -8,7 +9,6 @@ export default function LoginStep({ onComplete, onNeedsVerify, onSwitchRegister 
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
-  const [focused, setFocused] = useState('')
 
   const isPhone = userId.startsWith('+') || (userId.replace(/\D/g, '').length >= 10)
 
@@ -35,39 +35,34 @@ export default function LoginStep({ onComplete, onNeedsVerify, onSwitchRegister 
 
   return (
     <form className="form-step" onSubmit={handleSubmit}>
-      <div className="form-step-icon">👋</div>
-      <h2 className="form-step-title">Вход</h2>
-      <p className="form-step-desc">ID, номер телефона и пароль</p>
+      <h2 className="form-step-title">{t('Вход')}</h2>
+      <p className="form-step-desc">{t('ID, номер телефона и пароль')}</p>
 
       {error && <div className="form-error">{error}</div>}
 
-      <GoogleSignInButton onComplete={onComplete} label="Войти через Google" />
+      <GoogleSignInButton onComplete={onComplete} label={t('Продолжить с Google')} />
 
-      <div className="welcome-divider"><span>или</span></div>
+      <div className="welcome-divider"><span>{t('или')}</span></div>
 
-      <div className="profile-fields">
-        <div className={`profile-field ${focused === 'id' ? 'focused' : ''}`}>
-          <label>ID или телефон</label>
+      <div className="form-fields">
+        <div className="form-field">
+          <label>{t('ID или телефон')}</label>
           <div className="id-input-row">
             {!isPhone && <span className="id-prefix">@</span>}
             <input
               value={userId}
               onChange={(e) => setUserId(e.target.value)}
-              onFocus={() => setFocused('id')}
-              onBlur={() => setFocused('')}
-              placeholder="@username или +7 (777) 000-00-00"
+              placeholder="@username или +777 000 00 00"
               required
             />
           </div>
         </div>
-        <div className={`profile-field ${focused === 'pass' ? 'focused' : ''}`}>
-          <label>Пароль</label>
+        <div className="form-field">
+          <label>{t('Пароль')}</label>
           <input
             type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            onFocus={() => setFocused('pass')}
-            onBlur={() => setFocused('')}
             placeholder="••••••"
             required
           />
@@ -75,11 +70,11 @@ export default function LoginStep({ onComplete, onNeedsVerify, onSwitchRegister 
       </div>
 
       <button type="submit" className="apple-btn" disabled={loading || !userId || !password}>
-        {loading ? 'Вход...' : 'Войти'}
+        {loading ? t('Вход...') : t('Войти')}
       </button>
 
       <p className="form-switch">
-        Нет аккаунта? <button type="button" className="text-btn" onClick={onSwitchRegister}>Создать</button>
+        {t('Нет аккаунта?')} <button type="button" className="text-btn" onClick={onSwitchRegister}>{t('Создать')}</button>
       </p>
     </form>
   )
