@@ -158,7 +158,40 @@ export default function App() {
   if (isDesktop) {
     return (
       <div className="app desktop-app" style={{ '--user-accent': accentColor }}>
-        <nav className="desktop-nav">
+        <div className="desktop-main">
+          <div className="desktop-panel desktop-panel-list">
+            {tab === 'chats' && (
+              <ChatsTab
+                activeChatId={activeChatId}
+                onSelectChat={handleSelectChat}
+                onWsEvent={registerWsHandler}
+              />
+            )}
+            {tab === 'contacts' && (
+              <ContactsTab onStartChat={handleStartChat} />
+            )}
+            {tab === 'music' && <MusicTab />}
+            {tab === 'settings' && (
+              <SettingsTab
+                onLogout={logout}
+                onAddAccount={() => setShowOnboarding(true)}
+              />
+            )}
+          </div>
+
+          <div className="desktop-panel desktop-panel-chat">
+            {activeChatId ? (
+              <ChatWindow chatId={activeChatId} onBack={handleBack} />
+            ) : (
+              <div className="desktop-empty">
+                <img src="/logo.png" alt="" className="desktop-empty-logo" />
+                <p>Выберите чат</p>
+              </div>
+            )}
+          </div>
+        </div>
+
+        <nav className="desktop-bottom-nav">
           <div className="dn-glass" style={{ '--active': tab === 'chats' ? 0 : tab === 'contacts' ? 1 : tab === 'music' ? 2 : 3 }}>
             <div className="dn-indicator" />
             {[
@@ -186,37 +219,6 @@ export default function App() {
             ))}
           </div>
         </nav>
-
-        <div className="desktop-panel desktop-panel-list">
-          {tab === 'chats' && (
-            <ChatsTab
-              activeChatId={activeChatId}
-              onSelectChat={handleSelectChat}
-              onWsEvent={registerWsHandler}
-            />
-          )}
-          {tab === 'contacts' && (
-            <ContactsTab onStartChat={handleStartChat} />
-          )}
-          {tab === 'music' && <MusicTab />}
-          {tab === 'settings' && (
-            <SettingsTab
-              onLogout={logout}
-              onAddAccount={() => setShowOnboarding(true)}
-            />
-          )}
-        </div>
-
-        <div className="desktop-panel desktop-panel-chat">
-          {activeChatId ? (
-            <ChatWindow chatId={activeChatId} onBack={handleBack} />
-          ) : (
-            <div className="desktop-empty">
-              <img src="/logo.png" alt="" className="desktop-empty-logo" />
-              <p>Выберите чат</p>
-            </div>
-          )}
-        </div>
       </div>
     )
   }

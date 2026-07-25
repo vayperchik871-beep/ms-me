@@ -2041,31 +2041,33 @@ input, textarea { font-family: inherit; border: none; outline: none; background:
 /* ─── Desktop Layout ─── */
 
 .desktop-app {
-  flex-direction: row;
+  flex-direction: column;
   max-width: none;
   margin: 0;
   height: 100vh;
 }
 
-.desktop-nav {
+.desktop-main {
   display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  width: 80px;
-  min-width: 80px;
-  height: 100vh;
-  padding: 16px 0;
+  flex: 1;
+  min-height: 0;
 }
 
-.dn-glass {
+.desktop-bottom-nav {
+  display: flex;
+  justify-content: center;
+  padding: 0 20px 16px;
+  position: relative;
+  z-index: 50;
+}
+
+.desktop-bottom-nav .dn-glass {
   position: relative;
   display: flex;
-  flex-direction: column;
   align-items: center;
   gap: 4px;
-  padding: 8px 6px;
-  border-radius: 24px;
+  padding: 6px 16px;
+  border-radius: 28px;
   background: rgba(28, 28, 30, 0.72);
   backdrop-filter: blur(28px) saturate(1.2);
   -webkit-backdrop-filter: blur(28px) saturate(1.2);
@@ -2073,7 +2075,7 @@ input, textarea { font-family: inherit; border: none; outline: none; background:
   border: 1px solid rgba(255, 255, 255, 0.06);
 }
 
-[data-theme="light"] .dn-glass {
+[data-theme="light"] .desktop-bottom-nav .dn-glass {
   background: rgba(242, 242, 247, 0.78);
   backdrop-filter: blur(28px) saturate(1.2);
   -webkit-backdrop-filter: blur(28px) saturate(1.2);
@@ -2081,43 +2083,43 @@ input, textarea { font-family: inherit; border: none; outline: none; background:
   border: 1px solid rgba(60, 60, 67, 0.08);
 }
 
-.dn-indicator {
+.desktop-bottom-nav .dn-indicator {
   position: absolute;
-  left: 6px; right: 6px;
-  height: calc((100% - 8px) / 4 - 4px);
-  top: calc(6px + var(--active, 0) * ((100% - 8px) / 4));
-  border-radius: 18px;
+  top: 6px; bottom: 6px;
+  width: calc((100% - 32px) / 4 - 4px);
+  left: calc(16px + var(--active, 0) * ((100% - 32px) / 4));
+  border-radius: 22px;
   background: rgba(255, 255, 255, 0.12);
-  transition: top 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  transition: left 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
   pointer-events: none;
   z-index: 0;
-  will-change: top;
+  will-change: left;
 }
 
-[data-theme="light"] .dn-indicator { background: rgba(0, 0, 0, 0.06); }
+[data-theme="light"] .desktop-bottom-nav .dn-indicator { background: rgba(0, 0, 0, 0.06); }
 
-.dn-tab {
+.desktop-bottom-nav .dn-tab {
   position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
-  width: 68px;
-  padding: 10px 0 6px;
+  padding: 8px 14px 6px;
   z-index: 1;
-  border-radius: 18px;
+  border-radius: 22px;
   color: rgba(255, 255, 255, 0.45);
   transition: color 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
   cursor: pointer;
+  white-space: nowrap;
 }
 
-.dn-tab svg {
+.desktop-bottom-nav .dn-tab svg {
   width: 22px;
   height: 22px;
   transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
-.dn-tab span {
-  margin-top: 4px;
+.desktop-bottom-nav .dn-tab span {
+  margin-top: 3px;
   font-size: 10px;
   font-weight: 500;
   line-height: 1.2;
@@ -2125,17 +2127,17 @@ input, textarea { font-family: inherit; border: none; outline: none; background:
   transition: color 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
-[data-theme="light"] .dn-tab { color: rgba(60, 60, 67, 0.45); }
+[data-theme="light"] .desktop-bottom-nav .dn-tab { color: rgba(60, 60, 67, 0.45); }
 
-.dn-tab-active {
+.desktop-bottom-nav .dn-tab-active {
   color: var(--user-accent, #fff);
 }
-.dn-tab-active svg {
+.desktop-bottom-nav .dn-tab-active svg {
   transform: scale(1.08);
 }
 
 .desktop-panel {
-  height: 100vh;
+  height: 100%;
   overflow: hidden;
 }
 
@@ -2177,7 +2179,7 @@ input, textarea { font-family: inherit; border: none; outline: none; background:
   max-width: none;
   margin: 0;
   width: 100%;
-  height: 100vh;
+  height: 100%;
   border-left: none;
   border-right: none;
 }
