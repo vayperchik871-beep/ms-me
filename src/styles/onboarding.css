@@ -146,12 +146,11 @@
 
 .nw-phone-prefix-text {
   color: #7c5cfc;
-  font-size: 16px; font-weight: 600;
+  font-size: 18px; font-weight: 700;
   white-space: nowrap;
-  display: flex;
-  flex-direction: column;
-  line-height: 1.1;
+  line-height: 1;
   letter-spacing: -0.5px;
+  flex-shrink: 0;
 }
 
 .nw-phone-prefix-top {

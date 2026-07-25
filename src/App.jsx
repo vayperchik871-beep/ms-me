@@ -160,6 +160,9 @@ export default function App() {
       <div className="app desktop-app" style={{ '--user-accent': accentColor }}>
         <div className="desktop-panels">
           <div className="desktop-panel desktop-panel-list">
+            <div className="desktop-panel-header">
+              <img src="/logo.png" alt="MS" className="desktop-app-icon" />
+            </div>
             {tab === 'chats' && (
               <ChatsTab
                 activeChatId={activeChatId}

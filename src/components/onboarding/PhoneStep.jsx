@@ -52,10 +52,7 @@ export default function PhoneStep({ onNext, onBack }) {
 
         <div className="nw-phone-segments">
           <div className="nw-phone-seg nw-phone-seg-prefix">
-            <span className="nw-phone-prefix-text">
-              <span className="nw-phone-prefix-top">+7</span>
-              <span className="nw-phone-prefix-bot">77</span>
-            </span>
+            <span className="nw-phone-prefix-text">+777</span>
             <input
               ref={ref1}
               type="tel"
