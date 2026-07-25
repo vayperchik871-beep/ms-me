@@ -1230,7 +1230,6 @@ input, textarea { font-family: inherit; border: none; outline: none; background:
 
 @media (min-width: 768px) {
   .mobile-app { display: none !important; }
-  .bottom-nav { display: none !important; }
   .chat-window.full { max-width: none; border: none; }
 }
 
@@ -2041,7 +2040,7 @@ input, textarea { font-family: inherit; border: none; outline: none; background:
 /* ─── Desktop Layout ─── */
 
 .desktop-app {
-  flex-direction: row;
+  flex-direction: column;
   max-width: none;
   margin: 0;
   height: 100vh;
@@ -2050,95 +2049,7 @@ input, textarea { font-family: inherit; border: none; outline: none; background:
 .desktop-panels {
   display: flex;
   flex: 1;
-  min-width: 0;
-  height: 100vh;
-}
-
-.desktop-side-nav {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: flex-end;
-  width: 80px;
-  min-width: 80px;
-  height: 100vh;
-  padding: 0 0 20px 12px;
-}
-
-.dsn-glass {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 4px;
-  padding: 10px 8px;
-  border-radius: 24px;
-  background: rgba(28, 28, 30, 0.72);
-  backdrop-filter: blur(28px) saturate(1.2);
-  -webkit-backdrop-filter: blur(28px) saturate(1.2);
-  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.3), 0 2px 8px rgba(0, 0, 0, 0.2);
-  border: 1px solid rgba(255, 255, 255, 0.06);
-}
-
-[data-theme="light"] .dsn-glass {
-  background: rgba(242, 242, 247, 0.78);
-  backdrop-filter: blur(28px) saturate(1.2);
-  -webkit-backdrop-filter: blur(28px) saturate(1.2);
-  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06), 0 1px 4px rgba(0, 0, 0, 0.03);
-  border: 1px solid rgba(60, 60, 67, 0.08);
-}
-
-.dsn-indicator {
-  position: absolute;
-  left: 8px; right: 8px;
-  height: calc((100% - 16px) / 4 - 4px);
-  top: calc(8px + var(--active, 0) * ((100% - 16px) / 4));
-  border-radius: 18px;
-  background: rgba(255, 255, 255, 0.12);
-  transition: top 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
-  pointer-events: none;
-  z-index: 0;
-  will-change: top;
-}
-
-[data-theme="light"] .dsn-indicator { background: rgba(0, 0, 0, 0.06); }
-
-.dsn-tab {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  width: 64px;
-  padding: 10px 0 6px;
-  z-index: 1;
-  border-radius: 18px;
-  color: rgba(255, 255, 255, 0.45);
-  transition: color 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
-  cursor: pointer;
-}
-
-.dsn-tab svg {
-  width: 22px;
-  height: 22px;
-  transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
-}
-
-.dsn-tab span {
-  margin-top: 4px;
-  font-size: 10px;
-  font-weight: 500;
-  line-height: 1.2;
-  letter-spacing: -0.1px;
-  transition: color 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
-}
-
-[data-theme="light"] .dsn-tab { color: rgba(60, 60, 67, 0.45); }
-
-.dsn-tab-active {
-  color: var(--user-accent, #fff);
-}
-.dsn-tab-active svg {
-  transform: scale(1.08);
+  min-height: 0;
 }
 
 .desktop-panel {
@@ -2187,6 +2098,10 @@ input, textarea { font-family: inherit; border: none; outline: none; background:
   height: 100%;
   border-left: none;
   border-right: none;
+}
+
+.desktop-app .bottom-nav {
+  max-width: 900px;
 }
 
 @media (max-width: 767px) {

@@ -165,6 +165,5 @@ export function resolveMediaUrl(url) {
 export function getWsUrl() {
   const token = getToken()
   if (!token) return null
-  const base = window.location.protocol === 'https:' ? 'wss' : 'ws'
-  return `${base}://${window.location.host}/ws?token=${token}`
+  return `wss://ms-messenger-server.onrender.com/ws?token=${token}`
 }
