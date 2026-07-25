@@ -148,6 +148,19 @@
   color: #7c5cfc;
   font-size: 16px; font-weight: 600;
   white-space: nowrap;
+  display: flex;
+  flex-direction: column;
+  line-height: 1.1;
+  letter-spacing: -0.5px;
+}
+
+.nw-phone-prefix-top {
+  font-size: 14px;
+}
+
+.nw-phone-prefix-bot {
+  font-size: 18px;
+  font-weight: 700;
 }
 
 .nw-phone-input {
@@ -234,11 +247,10 @@
 }
 
 .nw-logo {
-  width: 120px; height: 120px;
-  border-radius: 28px;
-  background: #1c1c1e;
+  width: 140px; height: 140px;
+  border-radius: 50%;
+  background: transparent;
   display: flex; align-items: center; justify-content: center;
-  box-shadow: 0 8px 32px rgba(0,0,0,0.4);
 }
 
 .nw-welcome-title {

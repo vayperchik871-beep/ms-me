@@ -274,8 +274,8 @@ app.post('/api/auth/register', async (req, res) => {
     } catch (e) { console.error('Avatar save error:', e) }
   }
 
-  await dbRun('INSERT INTO users (id, user_id, name, password_hash, phone, bio, avatar, is_admin, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
-    id, cleanId, name.trim(), hash, phone || null, bio || null, avatarUrl, isFirst ? 1 : 0, now
+  await dbRun('INSERT INTO users (id, user_id, name, password_hash, phone, bio, avatar, is_admin, profile_color, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+    id, cleanId, name.trim(), hash, phone || null, bio || null, avatarUrl, isFirst ? 1 : 0, '#7c5cfc', now
   )
 
   const devId = hashDevice(deviceId)
@@ -464,8 +464,8 @@ app.get('/api/auth/google/callback', async (req, res) => {
       const fakeHash = await bcrypt.hash(uuidv4(), 12)
       const now = Date.now()
       await dbRun(
-        'INSERT INTO users (id, user_id, name, password_hash, google_id, avatar, is_admin, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
-        id, tempId, googleName, fakeHash, googleId, avatarUrl, isFirst ? 1 : 0, now
+        'INSERT INTO users (id, user_id, name, password_hash, google_id, avatar, is_admin, profile_color, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+        id, tempId, googleName, fakeHash, googleId, avatarUrl, isFirst ? 1 : 0, '#7c5cfc', now
       )
       const devId = hashDevice('google_auth_' + googleId)
       await dbRun('INSERT INTO devices (id, user_id, device_id, verified, last_seen, created_at) VALUES (?, ?, ?, 1, ?, ?)',
@@ -550,8 +550,8 @@ app.post('/api/auth/google', async (req, res) => {
       const now = Date.now()
 
       await dbRun(
-        'INSERT INTO users (id, user_id, name, password_hash, google_id, avatar, is_admin, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
-        id, tempId, googleName, fakeHash, googleId, avatarUrl, isFirst ? 1 : 0, now
+        'INSERT INTO users (id, user_id, name, password_hash, google_id, avatar, is_admin, profile_color, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+        id, tempId, googleName, fakeHash, googleId, avatarUrl, isFirst ? 1 : 0, '#7c5cfc', now
       )
       await dbRun('INSERT INTO devices (id, user_id, device_id, verified, last_seen, created_at) VALUES (?, ?, ?, 1, ?, ?)',
         uuidv4(), id, hashDevice(deviceId), now, now

@@ -155,7 +155,7 @@ export default function App() {
   }
 
   return (
-    <div className="app mobile-app">
+    <div className="app mobile-app" style={{ '--user-accent': user?.profileColor || '#7c5cfc' }}>
       {tab === 'chats' && (
         <ChatsTab
           activeChatId={activeChatId}
