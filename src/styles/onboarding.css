@@ -123,25 +123,27 @@
 /* ─── Phone Segmented Input ─── */
 
 .nw-phone-segments {
-  display: flex; gap: 10px;
+  display: flex; gap: 8px;
   width: 100%; margin-bottom: 24px;
 }
 
 .nw-phone-seg {
   background: #1c1c1e;
-  border-radius: 16px;
+  border-radius: 12px;
   overflow: hidden;
   display: flex; align-items: center;
   transition: background 0.2s;
+  flex: 1;
 }
 .nw-phone-seg:focus-within {
   background: #232326;
 }
 
 .nw-phone-seg-prefix {
-  min-width: 70px;
-  padding-left: 16px;
-  padding-right: 8px;
+  min-width: 60px;
+  flex: 0 0 auto;
+  padding-left: 14px;
+  padding-right: 6px;
   gap: 0;
 }
 
@@ -165,11 +167,11 @@
 
 .nw-phone-input {
   width: 100%;
-  padding: 18px 16px;
+  padding: 12px 8px;
   background: transparent;
   border: none;
   color: #fff;
-  font-size: 16px; font-weight: 400;
+  font-size: 15px; font-weight: 500;
   font-family: inherit;
   outline: none;
   text-align: center;
