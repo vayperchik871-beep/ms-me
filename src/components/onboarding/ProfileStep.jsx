@@ -33,7 +33,7 @@ export default function ProfileStep({ phone, userId, password, onComplete, onBac
       if (avatarFile) { try { await api.uploadAvatar(avatarFile) } catch {} }
       onComplete()
     } catch (err) {
-      setError(err.message)
+      setError(err.message.includes('занят') ? t('Занято') : err.message)
     } finally {
       setLoading(false)
     }

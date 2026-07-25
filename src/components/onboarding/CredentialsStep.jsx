@@ -66,7 +66,7 @@ export default function CredentialsStep({ phone, onNext, onBack }) {
                 ) : idAvailable === true ? (
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#30d158" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
                 ) : idAvailable === false ? (
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ff453a" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+                  <span style={{ color: '#ff453a', fontSize: 12 }}>{t('Занято')}</span>
                 ) : null}
               </div>
             )}
