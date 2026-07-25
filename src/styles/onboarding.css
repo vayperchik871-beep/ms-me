@@ -133,7 +133,7 @@
   overflow: hidden;
   display: flex; align-items: center;
   transition: background 0.2s;
-  flex: 1;
+  flex: 0 1 auto;
 }
 .nw-phone-seg:focus-within {
   background: #232326;
@@ -166,8 +166,8 @@
 }
 
 .nw-phone-input {
-  width: 100%;
-  padding: 12px 8px;
+  width: 70px;
+  padding: 12px 6px;
   background: transparent;
   border: none;
   color: #fff;
