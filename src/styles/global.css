@@ -1228,6 +1228,13 @@ input, textarea { font-family: inherit; border: none; outline: none; background:
   .mobile-app { border-left: 1px solid var(--border); border-right: 1px solid var(--border); }
 }
 
+@media (min-width: 768px) {
+  .mobile-app { display: none !important; }
+  .bottom-nav { display: none !important; }
+  .chat-window.full { max-width: none; border: none; }
+}
+
+
 /* ─── Profile Modal (Liquid Glass — Black Gradient) ─── */
 
 @keyframes pmOverlayIn { from { opacity: 0 } to { opacity: 1 } }
@@ -2030,3 +2037,103 @@ input, textarea { font-family: inherit; border: none; outline: none; background:
 [data-theme="light"] .screen-back { background: var(--bg-secondary); }
 [data-theme="light"] .appearance-tabs { background: var(--bg-secondary); }
 [data-theme="light"] .appearance-tab-active { background: rgba(0, 0, 0, 0.06); }
+
+/* ─── Desktop Layout ─── */
+
+.desktop-app {
+  flex-direction: row;
+  max-width: none;
+  margin: 0;
+  height: 100vh;
+}
+
+.desktop-sidebar {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 64px;
+  min-width: 64px;
+  height: 100vh;
+  background: var(--bg-secondary);
+  border-right: 1px solid var(--border);
+  padding: 12px 0;
+  gap: 4px;
+}
+
+.desktop-sidebar-tab {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  transition: background 0.15s, transform 0.15s;
+  cursor: pointer;
+}
+
+.desktop-sidebar-tab:hover {
+  background: var(--bg-tertiary);
+}
+
+.desktop-sidebar-tab-active {
+  background: var(--user-accent, #7c5cfc);
+  transform: scale(1.05);
+}
+
+.desktop-sidebar-tab-active:hover {
+  background: var(--user-accent, #7c5cfc);
+}
+
+.desktop-panel {
+  height: 100vh;
+  overflow: hidden;
+}
+
+.desktop-panel-list {
+  width: 380px;
+  min-width: 320px;
+  max-width: 420px;
+  border-right: 1px solid var(--border);
+  overflow-y: auto;
+  background: var(--bg-primary);
+}
+
+.desktop-panel-chat {
+  flex: 1;
+  display: flex;
+  min-width: 0;
+  background: var(--bg-primary);
+}
+
+.desktop-empty {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  color: var(--text-muted);
+  font-size: 15px;
+}
+
+.desktop-empty-logo {
+  width: 80px;
+  height: 80px;
+  border-radius: 20px;
+  opacity: 0.3;
+}
+
+.desktop-panel-chat .chat-window {
+  max-width: none;
+  margin: 0;
+  width: 100%;
+  height: 100vh;
+  border-left: none;
+  border-right: none;
+}
+
+@media (max-width: 767px) {
+  .desktop-app { display: none; }
+}
+
