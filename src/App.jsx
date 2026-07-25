@@ -9,6 +9,7 @@ import Onboarding from './components/onboarding/Onboarding'
 import BottomNav from './components/BottomNav'
 import ChatsTab from './components/ChatsTab'
 import ContactsTab from './components/ContactsTab'
+import MusicTab from './components/MusicTab'
 import ProfileTab from './components/ProfileTab'
 import SettingsTab from './components/SettingsTab'
 import ChatWindow from './components/ChatWindow'
@@ -34,7 +35,7 @@ async function requestNotifPermission() {
 async function showLocalNotification(title, body) {
   if (!Capacitor.isNativePlatform()) {
     if (document.visibilityState !== 'visible' && Notification.permission === 'granted') {
-      new Notification(title, { body, icon: '/logo.svg' })
+      new Notification(title, { body, icon: '/logo.png' })
     }
     return
   }
@@ -141,7 +142,7 @@ export default function App() {
   if (loading) {
     return (
       <div className="loading-screen">
-        <img src="/logo.svg" alt="MS" className="loading-logo" />
+        <img src="/logo.png" alt="MS" className="loading-logo" />
       </div>
     )
   }
@@ -166,14 +167,14 @@ export default function App() {
       {tab === 'contacts' && (
         <ContactsTab onStartChat={handleStartChat} />
       )}
-      {tab === 'profile' && <ProfileTab />}
+      {tab === 'music' && <MusicTab />}
       {tab === 'settings' && (
         <SettingsTab
           onLogout={logout}
           onAddAccount={() => setShowOnboarding(true)}
         />
       )}
-      <BottomNav active={tab} onChange={setTab} onMenuAction={handleMenuAction} />
+      <BottomNav active={tab} onChange={setTab} />
     </div>
   )
 }

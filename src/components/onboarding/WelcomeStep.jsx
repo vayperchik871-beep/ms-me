@@ -40,7 +40,7 @@ export default function WelcomeStep({ onStart, onLogin }) {
       <div className="nw-welcome-card">
         <div className="nw-logo-wrap">
           <div className="nw-logo">
-            <img src="/logo.svg" alt="MS" className="nw-logo-img" />
+            <img src="/logo.png" alt="MS" className="nw-logo-img" />
           </div>
         </div>
 

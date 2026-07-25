@@ -24,7 +24,7 @@ export default function BottomNav({ active, onChange, onMenuAction }) {
   const tabs = [
     { id: 'chats', label: t('Чаты'), icon: ChatIcon },
     { id: 'contacts', label: t('Контакты'), icon: ContactsIcon },
-    { id: 'profile', label: t('Профиль'), icon: ProfileIcon },
+    { id: 'music', label: t('Музыка'), icon: MusicIcon },
     { id: 'settings', label: t('Настройки'), icon: SettingsIcon },
   ]
 
@@ -174,11 +174,12 @@ function ContactsIcon({ active }) {
   )
 }
 
-function ProfileIcon({ active }) {
+function MusicIcon({ active }) {
   return (
     <svg width="24" height="24" viewBox="0 0 24 24" fill={active ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="1.8">
-      <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" />
-      <circle cx="12" cy="7" r="4" />
+      <path d="M9 18V5l12-2v13" />
+      <circle cx="6" cy="18" r="3" />
+      <circle cx="18" cy="16" r="3" />
     </svg>
   )
 }

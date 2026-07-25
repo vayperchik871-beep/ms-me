@@ -70,8 +70,6 @@ input, textarea { font-family: inherit; border: none; outline: none; background:
 .loading-logo { width: 80px; height: 80px; border-radius: 20px; animation: pulse 1.5s ease infinite; }
 @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
 
-.tab-content { flex: 1; display: flex; flex-direction: column; overflow: hidden; padding-bottom: var(--nav-height); }
-
 /* ─── Header ─── */
 
 .app-header { padding: 12px 16px 8px; }
@@ -241,6 +239,77 @@ input, textarea { font-family: inherit; border: none; outline: none; background:
 }
 
 [data-theme="light"] .bn-tab-active { color: var(--user-accent, #7c5cfc); }
+
+/* ─── Tab header (title + button) ─── */
+
+.tab-content { flex: 1; display: flex; flex-direction: column; overflow: hidden; padding-bottom: 100px; }
+
+.tab-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 16px 20px 8px;
+}
+.tab-title {
+  font-size: 22px; font-weight: 700; letter-spacing: -0.3px;
+  text-align: center; flex: 1;
+}
+.tab-header-btn {
+  width: 36px; height: 36px;
+  border-radius: 50%;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  color: var(--user-accent, #7c5cfc);
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+
+/* ─── Tab search ─── */
+
+.tab-search {
+  position: relative;
+  margin: 8px 20px 12px;
+  background: var(--bg-secondary);
+  border-radius: 14px;
+  display: flex; align-items: center;
+  padding: 0 14px;
+  border: 1px solid var(--border);
+}
+.tab-search svg { flex-shrink: 0; margin-right: 8px; }
+.tab-search-input {
+  flex: 1; padding: 11px 0;
+  font-size: 15px; color: var(--text-primary);
+}
+.tab-search-input::placeholder { color: var(--text-muted); }
+
+/* ─── Chat list items ─── */
+
+.chat-badge {
+  min-width: 20px; height: 20px; padding: 0 6px;
+  background: var(--user-accent, #7c5cfc); color: #fff;
+  font-size: 11px; font-weight: 700; border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+
+/* ─── Music tabs ─── */
+
+.music-tabs {
+  display: flex; gap: 8px; padding: 0 20px 12px;
+}
+.music-tab {
+  padding: 7px 16px; border-radius: 20px;
+  font-size: 13px; font-weight: 600;
+  background: var(--bg-secondary); color: var(--text-secondary);
+  border: 1px solid var(--border);
+  cursor: pointer; transition: all 0.2s;
+}
+.music-tab-active {
+  background: var(--text-primary); color: var(--bg-primary);
+  border-color: var(--text-primary);
+}
+.music-empty {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 12px; padding: 60px 16px; color: var(--text-muted); font-size: 15px;
+}
 
 [data-theme="light"] .bn-context-menu { background: rgba(242, 242, 247, 0.88); border-color: rgba(60, 60, 67, 0.08); }
 [data-theme="light"] .bn-menu-item { color: rgba(60, 60, 67, 0.9); }
@@ -1794,3 +1863,170 @@ input, textarea { font-family: inherit; border: none; outline: none; background:
 }
 
 [data-theme="light"] .privacy-content th { background: rgba(0,0,0,0.04); }
+
+/* ─── Screen (full-page with back button) ─── */
+
+.screen {
+  position: fixed; inset: 0; z-index: 150;
+  background: var(--bg-primary);
+  display: flex; flex-direction: column;
+  overflow-y: auto; -webkit-overflow-scrolling: touch;
+}
+.screen-header {
+  display: flex; align-items: center; gap: 12px;
+  padding: 12px 20px; min-height: 56px;
+  position: sticky; top: 0; z-index: 10;
+  background: var(--bg-primary);
+}
+.screen-back {
+  width: 40px; height: 40px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--text-primary); flex-shrink: 0;
+  background: var(--bg-secondary); border: none; cursor: pointer;
+  padding-left: 2px;
+}
+.screen-title {
+  font-size: 18px; font-weight: 600; color: var(--text-primary);
+  flex: 1; text-align: center; margin-right: 40px;
+}
+
+/* ─── Settings sections ─── */
+
+.settings-section-label {
+  font-size: 13px; font-weight: 500; color: var(--text-muted);
+  padding: 18px 20px 8px;
+}
+.settings-card {
+  margin: 0 20px; border-radius: 14px;
+  background: var(--bg-secondary); overflow: hidden;
+}
+.settings-card-row {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 13px 16px; width: 100%; min-height: 48px;
+}
+.settings-card-row.clickable { cursor: pointer; }
+.settings-card-left {
+  display: flex; align-items: center; gap: 14px;
+}
+.settings-card-icon {
+  width: 28px; height: 28px; border-radius: 7px;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--user-accent, #7c5cfc);
+}
+.settings-card-label {
+  font-size: 15px; color: var(--text-primary); font-weight: 400;
+}
+.settings-card-divider {
+  height: 1px; background: var(--border); margin-left: 58px;
+}
+.settings-card-hint {
+  font-size: 13px; color: var(--text-muted); padding: 12px 16px 14px; line-height: 1.4;
+}
+
+/* ─── Settings user card ─── */
+
+.settings-user-card {
+  display: flex; align-items: center; gap: 14px;
+  margin: 0 20px 4px; padding: 14px 16px;
+  border-radius: 14px; background: var(--bg-secondary);
+  cursor: pointer;
+}
+.settings-user-info {
+  flex: 1; display: flex; flex-direction: column; gap: 2px;
+}
+.settings-user-name { font-size: 16px; font-weight: 600; color: var(--text-primary); }
+.settings-user-id { font-size: 13px; color: var(--text-secondary); }
+
+/* ─── Profile ─── */
+
+.profile-card {
+  display: flex; flex-direction: column; align-items: center;
+  padding: 24px 20px;
+}
+.profile-avatar-wrap { margin-bottom: 16px; }
+.profile-avatar {
+  width: 88px; height: 88px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 36px; font-weight: 700; color: var(--user-accent, #7c5cfc);
+  background: var(--bg-secondary);
+  position: relative;
+}
+.profile-name {
+  font-size: 22px; font-weight: 700; color: var(--text-primary);
+  margin-bottom: 2px;
+}
+.profile-id {
+  font-size: 14px; color: var(--text-secondary); margin-bottom: 24px;
+}
+.profile-field {
+  display: flex; align-items: center; gap: 10px;
+  width: 100%; max-width: 340px;
+  background: var(--bg-secondary); border-radius: 12px;
+  padding: 12px 14px; margin-bottom: 14px;
+}
+.profile-field-icon { color: var(--user-accent, #7c5cfc); flex-shrink: 0; }
+.profile-field-input {
+  flex: 1; font-size: 15px; color: var(--text-primary);
+  background: none; border: none; outline: none;
+}
+.profile-save-btn {
+  width: 100%; max-width: 340px; padding: 14px;
+  border-radius: 12px; font-size: 16px; font-weight: 600;
+  background: var(--bg-secondary); color: var(--text-muted);
+  border: none; cursor: pointer; margin-bottom: 16px;
+  transition: opacity 0.2s;
+}
+.profile-save-btn:disabled { opacity: 0.6; cursor: default; }
+.profile-mcoins {
+  display: flex; align-items: center; gap: 10px;
+  width: 100%; max-width: 340px;
+  padding: 12px 16px; border-radius: 12px;
+  background: var(--bg-secondary);
+}
+.profile-mcoins-icon {
+  width: 34px; height: 34px; border-radius: 50%;
+  background: rgba(247, 147, 26, 0.15);
+  display: flex; align-items: center; justify-content: center;
+  color: #f7931a;
+}
+.profile-mcoins-label { font-size: 15px; font-weight: 600; color: var(--text-primary); }
+
+/* ─── Appearance ─── */
+
+.appearance-tabs {
+  display: flex; padding: 0 20px 16px;
+  background: var(--bg-secondary);
+  margin: 0 20px; border-radius: 14px;
+  overflow: hidden;
+}
+.appearance-tab {
+  flex: 1; padding: 10px 0; border-radius: 12px;
+  font-size: 14px; font-weight: 600;
+  background: transparent; color: var(--text-secondary);
+  border: none; cursor: pointer; transition: all 0.2s;
+  text-align: center;
+}
+.appearance-tab-active {
+  background: rgba(255, 255, 255, 0.1); color: var(--text-primary);
+}
+.toggle-switch {
+  width: 51px; height: 31px; border-radius: 16px;
+  background: var(--bg-tertiary); border: none; cursor: pointer;
+  position: relative; transition: background 0.2s;
+  flex-shrink: 0;
+}
+.toggle-on { background: rgba(255, 255, 255, 0.15); }
+.toggle-knob {
+  width: 27px; height: 27px; border-radius: 50%;
+  background: #fff; position: absolute; top: 2px; left: 2px;
+  transition: transform 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+}
+.toggle-on .toggle-knob { transform: translateX(20px); }
+
+[data-theme="light"] .settings-card { background: var(--bg-secondary); }
+[data-theme="light"] .settings-user-card { background: var(--bg-secondary); }
+[data-theme="light"] .profile-field { background: var(--bg-secondary); }
+[data-theme="light"] .profile-mcoins { background: var(--bg-secondary); }
+[data-theme="light"] .screen-back { background: var(--bg-secondary); }
+[data-theme="light"] .appearance-tabs { background: var(--bg-secondary); }
+[data-theme="light"] .appearance-tab-active { background: rgba(0, 0, 0, 0.06); }

@@ -1,13 +1,5 @@
 function getApiBase() {
-  if (typeof window === 'undefined') return '/api'
-
-  const configured = (import.meta.env?.VITE_API_BASE_URL || '').trim()
-  if (configured) return configured.replace(/\/$/, '')
-
-  const isNative = window.location.protocol === 'file:' || window.Capacitor?.isNativePlatform?.()
-  if (isNative) return 'https://ms-messenger-server.onrender.com'
-
-  return '/api'
+  return 'https://ms-messenger-server.onrender.com'
 }
 
 function getApiUrl(path = '') {
@@ -71,10 +63,16 @@ async function request(path, options = {}) {
   const headers = { 'Content-Type': 'application/json', ...options.headers }
   if (token) headers.Authorization = `Bearer ${token}`
 
-  const res = await fetch(getApiUrl(path), { ...options, headers })
-  const data = await res.json().catch(() => ({}))
-  if (!res.ok) throw new Error(data.error || 'Ошибка сервера')
-  return data
+  const url = getApiUrl(path)
+  try {
+    const res = await fetch(url, { ...options, headers })
+    const data = await res.json().catch(() => ({}))
+    if (!res.ok) throw new Error(data.error || 'Ошибка сервера')
+    return data
+  } catch (err) {
+    console.error('API request failed:', url, err)
+    throw new Error(`Ошибка подключения (${url}): ${err.message}`)
+  }
 }
 
 async function upload(path, field, file, extra = {}) {
@@ -152,18 +150,5 @@ export function resolveMediaUrl(url) {
 export function getWsUrl() {
   const token = getToken()
   if (!token) return null
-
-  const configured = (import.meta.env?.VITE_API_BASE_URL || '').trim()
-  if (configured) {
-    const base = configured.replace(/\/$/, '')
-    const wsBase = base.replace(/^http:\/\//i, 'ws://').replace(/^https:\/\//i, 'wss://')
-    return `${wsBase}/ws?token=${token}`
-  }
-
-  const isNative = window.location.protocol === 'file:' || window.Capacitor?.isNativePlatform?.()
-  if (isNative) {
-    return `wss://ms-messenger-server.onrender.com/ws?token=${token}`
-  }
-
-  return `/ws?token=${token}`
+  return `wss://ms-messenger-server.onrender.com/ws?token=${token}`
 }
