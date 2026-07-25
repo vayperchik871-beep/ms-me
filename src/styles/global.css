@@ -2064,6 +2064,14 @@ input, textarea { font-family: inherit; border: none; outline: none; background:
   border-right: 1px solid var(--border);
   overflow-y: auto;
   background: var(--bg-primary);
+  position: relative;
+}
+
+.desktop-panel-list .bottom-nav {
+  max-width: none;
+  left: 0;
+  transform: none;
+  width: 100%;
 }
 
 .desktop-panel-chat {

@@ -177,6 +177,7 @@ export default function App() {
                 onAddAccount={() => setShowOnboarding(true)}
               />
             )}
+            <BottomNav active={tab} onChange={setTab} />
           </div>
 
           <div className="desktop-panel desktop-panel-chat">
@@ -190,8 +191,6 @@ export default function App() {
             )}
           </div>
         </div>
-
-        <BottomNav active={tab} onChange={setTab} />
       </div>
     )
   }
