@@ -50,7 +50,7 @@ const rootDir = path.resolve(__dirname, '..')
 const frontendDistDir = path.join(rootDir, 'dist')
 const indexHtmlPath = path.join(frontendDistDir, 'index.html')
 
-app.use(cors({ origin: true, credentials: true }))
+app.use(cors({ origin: true }))
 app.use(express.json({ limit: '10mb' }))
 app.use(express.static(frontendDistDir))
 app.use('/uploads', express.static(path.join(rootDir, 'uploads')))
