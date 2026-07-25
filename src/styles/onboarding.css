@@ -139,8 +139,9 @@
 }
 
 .nw-phone-seg-prefix {
-  min-width: 72px;
+  min-width: auto;
   padding-left: 16px;
+  padding-right: 0;
   gap: 0;
 }
 
