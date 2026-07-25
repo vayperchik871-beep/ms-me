@@ -40,19 +40,7 @@ export default function WelcomeStep({ onStart, onLogin }) {
       <div className="nw-welcome-card">
         <div className="nw-logo-wrap">
           <div className="nw-logo">
-            <svg width="120" height="120" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <defs>
-                <radialGradient id="bubbleGrad" cx="50%" cy="40%" r="60%">
-                  <stop offset="0%" stopColor="#4a4a52"/>
-                  <stop offset="100%" stopColor="#2a2a30"/>
-                </radialGradient>
-                <filter id="bubbleShadow" x="-10%" y="-10%" width="120%" height="120%">
-                  <feDropShadow dx="0" dy="4" stdDeviation="6" floodColor="#000" floodOpacity="0.3"/>
-                </filter>
-              </defs>
-              <path d="M60 16C34 16 14 34 14 56C14 68 20 78 30 84L26 100L44 90C49 92 54 93 60 93C86 93 106 75 106 53C106 31 86 16 60 16Z" fill="url(#bubbleGrad)" filter="url(#bubbleShadow)"/>
-              <text x="60" y="64" textAnchor="middle" fill="#e8e8ec" fontFamily="SF Pro Display, -apple-system, BlinkMacSystemFont, sans-serif" fontSize="36" fontWeight="700" letterSpacing="-1">MS</text>
-            </svg>
+            <img src="/logo.svg" alt="MS" className="nw-logo-img" />
           </div>
         </div>
 

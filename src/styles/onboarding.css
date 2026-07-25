@@ -247,10 +247,15 @@
 }
 
 .nw-logo {
-  width: 140px; height: 140px;
+  width: 160px; height: 160px;
   border-radius: 50%;
-  background: transparent;
   display: flex; align-items: center; justify-content: center;
+  overflow: hidden;
+}
+
+.nw-logo-img {
+  width: 100%; height: 100%;
+  object-fit: contain;
 }
 
 .nw-welcome-title {

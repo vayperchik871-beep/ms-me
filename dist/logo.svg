@@ -1,7 +1,21 @@
 <svg width="256" height="256" viewBox="0 0 256 256" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <rect width="256" height="256" rx="64" fill="#050505" />
-  <rect x="18" y="18" width="220" height="220" rx="52" stroke="#FFFFFF" stroke-opacity="0.24" />
-
-  <path d="M58 182V74H86L128 132L170 74H198V182H171V110L128 164L85 110V182H58Z" fill="#FFFFFF" />
-  <path d="M126 76H145L128 100L111 76H126Z" fill="#FFFFFF" />
+  <defs>
+    <radialGradient id="bg" cx="50%" cy="50%" r="70%">
+      <stop offset="0%" stop-color="#2a2a32"/>
+      <stop offset="100%" stop-color="#1a1a22"/>
+    </radialGradient>
+    <radialGradient id="bubble" cx="45%" cy="35%" r="65%">
+      <stop offset="0%" stop-color="#5a5a64"/>
+      <stop offset="60%" stop-color="#3a3a44"/>
+      <stop offset="100%" stop-color="#2c2c34"/>
+    </radialGradient>
+    <filter id="sh">
+      <feDropShadow dx="0" dy="6" stdDeviation="10" flood-color="#000" flood-opacity="0.35"/>
+    </filter>
+  </defs>
+  <rect width="256" height="256" rx="64" fill="url(#bg)"/>
+  <g filter="url(#sh)">
+    <path d="M128 40C75 40 40 72 40 112C40 134 50 154 68 166L62 200L96 184C106 188 116 190 128 190C181 190 216 158 216 118C216 78 181 40 128 40Z" fill="url(#bubble)"/>
+  </g>
+  <text x="128" y="130" text-anchor="middle" dominant-baseline="central" fill="#e8e8ec" font-family="SF Pro Display, -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif" font-size="72" font-weight="700" letter-spacing="-2">MS</text>
 </svg>

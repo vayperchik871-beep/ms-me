@@ -34,7 +34,7 @@ async function requestNotifPermission() {
 async function showLocalNotification(title, body) {
   if (!Capacitor.isNativePlatform()) {
     if (document.visibilityState !== 'visible' && Notification.permission === 'granted') {
-      new Notification(title, { body, icon: '/logo.png' })
+      new Notification(title, { body, icon: '/logo.svg' })
     }
     return
   }
@@ -141,7 +141,7 @@ export default function App() {
   if (loading) {
     return (
       <div className="loading-screen">
-        <img src="/logo.png" alt="MS" className="loading-logo" />
+        <img src="/logo.svg" alt="MS" className="loading-logo" />
       </div>
     )
   }
