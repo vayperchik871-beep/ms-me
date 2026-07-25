@@ -2076,9 +2076,9 @@ input, textarea { font-family: inherit; border: none; outline: none; background:
 }
 
 .desktop-app-icon {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
   object-fit: cover;
 }
 
