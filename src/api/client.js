@@ -146,6 +146,13 @@ export const api = {
   getVerifyRequests: () => request('/admin/verify-requests'),
   approveVerify: (requestId) => request('/admin/verify/approve', { method: 'POST', body: JSON.stringify({ requestId }) }),
   rejectVerify: (requestId) => request('/admin/verify/reject', { method: 'POST', body: JSON.stringify({ requestId }) }),
+
+  // Stickers
+  getStickerPacks: () => request('/stickers/all'),
+  getMyStickerPacks: () => request('/stickers/my'),
+  purchaseStickerPack: (packId) => request('/stickers/purchase', { method: 'POST', body: JSON.stringify({ packId }) }),
+  uploadSticker: (file) => upload('/stickers/upload', 'file', file),
+  createStickerPack: (title, stickers) => request('/stickers/create', { method: 'POST', body: JSON.stringify({ title, stickers }) }),
 }
 
 export function resolveMediaUrl(url) {

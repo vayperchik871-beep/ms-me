@@ -1197,7 +1197,11 @@ app.post('/api/upload/avatar', authMiddleware, upload.single('avatar'), async (r
 app.post('/api/upload/attachment', authMiddleware, upload.single('file'), (req, res) => {
   if (!req.file) return res.status(400).json({ error: 'Файл не загружен' })
   const url = fullUrl(req, `/uploads/${req.file.filename}`)
-  const type = req.file.mimetype.startsWith('image/') ? 'image' : req.file.mimetype.startsWith('audio/') ? 'voice' : 'file'
+  const mime = req.file.mimetype || ''
+  const type = mime.startsWith('image/') ? 'image'
+    : mime.startsWith('video/') ? 'video'
+    : mime.startsWith('audio/') ? 'voice'
+    : 'file'
   const duration = req.body.duration ? parseInt(req.body.duration, 10) : null
   res.json({ url, type, name: req.file.originalname, size: req.file.size, duration })
 })
@@ -1632,6 +1636,32 @@ app.get('/api/stickers/my', authMiddleware, async (req, res) => {
     JOIN user_sticker_packs usp ON usp.pack_id = sp.id
     WHERE usp.user_id = ?`, req.user.id)
   res.json({ packs: rows })
+})
+
+app.post('/api/stickers/upload', authMiddleware, upload.single('file'), (req, res) => {
+  if (!req.file) return res.status(400).json({ error: 'Файл не загружен' })
+  const url = fullUrl(req, `/uploads/${req.file.filename}`)
+  res.json({ url })
+})
+
+app.post('/api/stickers/create', authMiddleware, async (req, res) => {
+  const { title, stickers } = req.body
+  if (!title || !stickers?.length) return res.status(400).json({ error: 'Укажите название и стикеры' })
+  const id = uuidv4()
+  await dbRun('INSERT INTO sticker_packs (id, title, author, stickers, price, created_at) VALUES (?, ?, ?, ?, ?, ?)',
+    id, title, req.user.id, JSON.stringify(stickers), 0, Date.now())
+  await dbRun('INSERT INTO user_sticker_packs (user_id, pack_id, purchased_at) VALUES (?, ?, ?)',
+    req.user.id, id, Date.now())
+  res.json({ ok: true, packId: id })
+})
+
+app.get('/api/stickers/all', authMiddleware, async (req, res) => {
+  const packs = await dbAll('SELECT * FROM sticker_packs ORDER BY created_at DESC')
+  for (const p of packs) {
+    p.stickers = JSON.parse(p.stickers || '[]')
+    p.owned = !!(await dbGet('SELECT 1 FROM user_sticker_packs WHERE user_id = ? AND pack_id = ?', req.user.id, p.id))
+  }
+  res.json({ packs })
 })
 
 // ─── Plus: Support Tickets ───

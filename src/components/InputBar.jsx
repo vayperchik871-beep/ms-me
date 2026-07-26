@@ -2,6 +2,8 @@ import { useState, useRef, useEffect } from 'react'
 import { api } from '../api/client'
 import { sendWsMessage } from '../hooks/useWebSocket'
 import { t } from '../i18n'
+import EmojiPicker from './EmojiPicker'
+import StickerPicker from './StickerPicker'
 
 export default function InputBar({ onSend, editText, onCancelEdit, chatId }) {
   const [text, setText] = useState('')
@@ -10,6 +12,8 @@ export default function InputBar({ onSend, editText, onCancelEdit, chatId }) {
   const [recording, setRecording] = useState(false)
   const [recordingTime, setRecordingTime] = useState(0)
   const [uploading, setUploading] = useState(false)
+  const [showEmoji, setShowEmoji] = useState(false)
+  const [showStickers, setShowStickers] = useState(false)
   const textareaRef = useRef(null)
   const fileInputRef = useRef(null)
   const audioFileInputRef = useRef(null)
@@ -205,107 +209,144 @@ export default function InputBar({ onSend, editText, onCancelEdit, chatId }) {
     if (audioFileInputRef.current) audioFileInputRef.current.value = ''
   }
 
+  const handleEmojiSelect = (emoji) => {
+    setText(prev => prev + emoji)
+    textareaRef.current?.focus()
+  }
+
+  const handleStickerSelect = (url) => {
+    onSend('', { url, type: 'sticker', name: 'sticker' })
+    setShowStickers(false)
+  }
+
+  const toggleEmoji = () => {
+    setShowEmoji(prev => !prev)
+    setShowStickers(false)
+  }
+
+  const toggleStickers = () => {
+    setShowStickers(prev => !prev)
+    setShowEmoji(false)
+  }
+
   return (
-    <form className="ig-bar" onSubmit={handleSubmit}>
-      <input ref={fileInputRef} type="file" accept="image/*,video/*" hidden onChange={handleAttach} />
-      <input ref={audioFileInputRef} type="file" accept="audio/*" hidden onChange={handleAudioFile} />
-
-      {recording ? (
-        <div className="ig-recording">
-          <button type="button" className="ig-rec-cancel" onClick={cancelRecording} aria-label={t('Отмена')}>
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
-          </button>
-          <div className="ig-rec-dot" />
-          <span className="ig-rec-time">{formatTime(recordingTime)}</span>
-          <button type="button" className="ig-btn ig-send" onClick={stopRecording} aria-label={t('Отправить')}>
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <line x1="22" y1="2" x2="11" y2="13" />
-              <polygon points="22 2 15 22 11 13 2 9 22 2" />
-            </svg>
-          </button>
-        </div>
-      ) : (
-        <div className="ig-row">
-          {!attachFile && !uploading && (
-            <button type="button" className="ig-btn ig-attach" onClick={() => fileInputRef.current?.click()} aria-label={t('Прикрепить')}>
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48" />
-              </svg>
-            </button>
-          )}
-
-          <div className={`ig-capsule${attachFile ? ' ig-capsule-attach' : ''}`}>
-            {editText && (
-              <button type="button" className="ig-cancel" onClick={onCancelEdit}>✕</button>
-            )}
-            {attachFile && (
-              <div className="ig-attach-preview">
-                {attachPreview ? (
-                  <img src={attachPreview} alt="" />
-                ) : (
-                  <div className="ig-attach-icon">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
-                  </div>
-                )}
-                <button type="button" className="ig-cancel" onClick={cancelAttach}>✕</button>
-              </div>
-            )}
-            {!attachFile && (
-              <>
-                <textarea
-                  ref={textareaRef}
-                  className="ig-textarea"
-                  value={text}
-                  onChange={handleChange}
-                  onKeyDown={handleKeyDown}
-                  placeholder={uploading ? t('Загрузка...') : t('Сообщение')}
-                  rows={1}
-                  disabled={uploading}
-                />
-                <button type="button" className="ig-emoji" aria-label={t('Эмодзи')}>
-                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-                    <circle cx="12" cy="12" r="10" />
-                    <path d="M8 14s1.5 2 4 2 4-2 4-2" />
-                    <line x1="9" y1="9" x2="9.01" y2="9" strokeWidth="2.5" />
-                    <line x1="15" y1="9" x2="15.01" y2="9" strokeWidth="2.5" />
-                  </svg>
-                </button>
-              </>
-            )}
-          </div>
-
-          {hasText || attachFile ? (
-            <button type="submit" className="ig-btn ig-send" disabled={uploading} aria-label={t('Отправить')}>
-              {uploading ? (
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" className="ig-spinner"><circle cx="12" cy="12" r="10" strokeDasharray="32" strokeDashoffset="32"/></svg>
-              ) : (
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <line x1="22" y1="2" x2="11" y2="13" />
-                  <polygon points="22 2 15 22 11 13 2 9 22 2" />
-                </svg>
-              )}
-            </button>
-          ) : (
-            <div style={{ display: 'flex', gap: 4 }}>
-              <button type="button" className="ig-btn ig-mic" onClick={startRecording} aria-label={t('Голосовое')}>
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-                  <path d="M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3z" />
-                  <path d="M19 10v2a7 7 0 01-14 0v-2" />
-                  <line x1="12" y1="19" x2="12" y2="23" />
-                  <line x1="8" y1="23" x2="16" y2="23" />
-                </svg>
-              </button>
-              <button type="button" className="ig-btn ig-attach-audio" onClick={() => audioFileInputRef.current?.click()} aria-label={t('Аудиофайл')}>
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
-                  <path d="M9 18V5l12-2v13"/>
-                  <circle cx="6" cy="18" r="3"/>
-                  <circle cx="18" cy="16" r="3"/>
-                </svg>
-              </button>
-            </div>
-          )}
+    <div className="ig-bar-wrap">
+      {(showEmoji || showStickers) && (
+        <div className="ig-picker-wrap">
+          {showEmoji && <EmojiPicker onSelect={handleEmojiSelect} onClose={() => setShowEmoji(false)} />}
+          {showStickers && <StickerPicker onSelect={handleStickerSelect} onClose={() => setShowStickers(false)} />}
         </div>
       )}
-    </form>
+      <form className="ig-bar" onSubmit={handleSubmit}>
+        <input ref={fileInputRef} type="file" accept="image/*,video/*" hidden onChange={handleAttach} />
+        <input ref={audioFileInputRef} type="file" accept="audio/*" hidden onChange={handleAudioFile} />
+
+        {recording ? (
+          <div className="ig-recording">
+            <button type="button" className="ig-rec-cancel" onClick={cancelRecording} aria-label={t('Отмена')}>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+            </button>
+            <div className="ig-rec-dot" />
+            <span className="ig-rec-time">{formatTime(recordingTime)}</span>
+            <button type="button" className="ig-btn ig-send" onClick={stopRecording} aria-label={t('Отправить')}>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="22" y1="2" x2="11" y2="13" />
+                <polygon points="22 2 15 22 11 13 2 9 22 2" />
+              </svg>
+            </button>
+          </div>
+        ) : (
+          <div className="ig-row">
+            {!attachFile && !uploading && (
+              <button type="button" className="ig-btn ig-attach" onClick={() => fileInputRef.current?.click()} aria-label={t('Прикрепить')}>
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48" />
+                </svg>
+              </button>
+            )}
+
+            <div className={`ig-capsule${attachFile ? ' ig-capsule-attach' : ''}`}>
+              {editText && (
+                <button type="button" className="ig-cancel" onClick={onCancelEdit}>✕</button>
+              )}
+              {attachFile && (
+                <div className="ig-attach-preview">
+                  {attachPreview ? (
+                    <img src={attachPreview} alt="" />
+                  ) : (
+                    <div className="ig-attach-icon">
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+                    </div>
+                  )}
+                  <button type="button" className="ig-cancel" onClick={cancelAttach}>✕</button>
+                </div>
+              )}
+              {!attachFile && (
+                <>
+                  <textarea
+                    ref={textareaRef}
+                    className="ig-textarea"
+                    value={text}
+                    onChange={handleChange}
+                    onKeyDown={handleKeyDown}
+                    placeholder={uploading ? t('Загрузка...') : t('Сообщение')}
+                    rows={1}
+                    disabled={uploading}
+                  />
+                  <div className="ig-capsule-actions">
+                    <button type="button" className={`ig-emoji ${showEmoji ? 'ig-emoji-active' : ''}`} onClick={toggleEmoji} aria-label={t('Эмодзи')}>
+                      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+                        <circle cx="12" cy="12" r="10" />
+                        <path d="M8 14s1.5 2 4 2 4-2 4-2" />
+                        <line x1="9" y1="9" x2="9.01" y2="9" strokeWidth="2.5" />
+                        <line x1="15" y1="9" x2="15.01" y2="9" strokeWidth="2.5" />
+                      </svg>
+                    </button>
+                    <button type="button" className={`ig-emoji ${showStickers ? 'ig-emoji-active' : ''}`} onClick={toggleStickers} aria-label={t('Стикеры')}>
+                      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+                        <circle cx="12" cy="12" r="10" />
+                        <path d="M8 8h.01M16 8h.01" />
+                        <path d="M12 16c-2 0-3.5-1-4-3h8c-.5 2-2 3-4 3z" />
+                      </svg>
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
+
+            {hasText || attachFile ? (
+              <button type="submit" className="ig-btn ig-send" disabled={uploading} aria-label={t('Отправить')}>
+                {uploading ? (
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" className="ig-spinner"><circle cx="12" cy="12" r="10" strokeDasharray="32" strokeDashoffset="32"/></svg>
+                ) : (
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <line x1="22" y1="2" x2="11" y2="13" />
+                    <polygon points="22 2 15 22 11 13 2 9 22 2" />
+                  </svg>
+                )}
+              </button>
+            ) : (
+              <div style={{ display: 'flex', gap: 4 }}>
+                <button type="button" className="ig-btn ig-mic" onClick={startRecording} aria-label={t('Голосовое')}>
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+                    <path d="M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3z" />
+                    <path d="M19 10v2a7 7 0 01-14 0v-2" />
+                    <line x1="12" y1="19" x2="12" y2="23" />
+                    <line x1="8" y1="23" x2="16" y2="23" />
+                  </svg>
+                </button>
+                <button type="button" className="ig-btn ig-attach-audio" onClick={() => audioFileInputRef.current?.click()} aria-label={t('Аудиофайл')}>
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
+                    <path d="M9 18V5l12-2v13"/>
+                    <circle cx="6" cy="18" r="3"/>
+                    <circle cx="18" cy="16" r="3"/>
+                  </svg>
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+      </form>
+    </div>
   )
 }
