@@ -1185,7 +1185,15 @@ input, textarea { font-family: inherit; border: none; outline: none; background:
 }
 .voice-bar {
   flex: 1; min-width: 3px; border-radius: 2px;
-  transition: height 0.12s ease, background 0.12s ease, opacity 0.12s ease;
+  transition: background 0.15s ease, opacity 0.15s ease;
+}
+.voice-wave-anim .voice-bar {
+  animation: voiceBarBounce 0.6s ease-in-out infinite alternate;
+  animation-delay: var(--bar-delay, 0s);
+}
+@keyframes voiceBarBounce {
+  0% { transform: scaleY(0.7); }
+  100% { transform: scaleY(1.1); }
 }
 .voice-dur { font-size: 12px; color: var(--text-muted); flex-shrink: 0; min-width: 32px; }
 
@@ -2328,5 +2336,29 @@ input, textarea { font-family: inherit; border: none; outline: none; background:
 
 @media (max-width: 767px) {
   .desktop-app { display: none; }
+}
+
+/* ─── Twemoji ─── */
+
+img.twemoji {
+  display: inline;
+  width: 1em;
+  height: 1em;
+  vertical-align: -0.15em;
+  margin: 0 1px;
+}
+
+.emoji-item img.twemoji {
+  width: 26px;
+  height: 26px;
+  vertical-align: middle;
+  margin: 0;
+}
+
+.reaction-chip img.twemoji {
+  width: 18px;
+  height: 18px;
+  vertical-align: -3px;
+  margin: 0;
 }
 

@@ -1,5 +1,5 @@
 import { useRef, useMemo, useState, useCallback, useEffect } from 'react'
-import { parseEmoji } from '../utils/emoji'
+import { parseEmoji, emojiToImg } from '../utils/emoji'
 import { resolveMediaUrl } from '../api/client'
 import { t } from '../i18n'
 
@@ -18,9 +18,8 @@ function formatTime(ts) {
 function VoiceMessage({ url, duration }) {
   const [playing, setPlaying] = useState(false)
   const [progress, setProgress] = useState(0)
-  const [bars, setBars] = useState(() => Array.from({ length: 28 }, () => 0.15 + Math.random() * 0.85))
   const audioRef = useRef(null)
-  const animRef = useRef(null)
+  const bars = useRef(Array.from({ length: 28 }, () => 0.15 + Math.random() * 0.85))
 
   const toggle = useCallback(() => {
     if (!audioRef.current) return
@@ -31,30 +30,7 @@ function VoiceMessage({ url, duration }) {
     }
   }, [playing])
 
-  useEffect(() => {
-    if (playing) {
-      const animate = () => {
-        setBars(prev => prev.map(() => 0.15 + Math.random() * 0.85))
-        animRef.current = requestAnimationFrame(() => {
-          animRef.current = setTimeout(animate, 120)
-        })
-      }
-      animate()
-    } else {
-      if (animRef.current) {
-        clearTimeout(animRef.current)
-        cancelAnimationFrame(animRef.current)
-      }
-    }
-    return () => {
-      if (animRef.current) {
-        clearTimeout(animRef.current)
-        cancelAnimationFrame(animRef.current)
-      }
-    }
-  }, [playing])
-
-  const activeBar = Math.floor((progress / 100) * bars.length)
+  const activeBar = Math.floor((progress / 100) * bars.current.length)
 
   return (
     <div className="voice-msg" onClick={(e) => { e.stopPropagation(); toggle() }}>
@@ -65,13 +41,14 @@ function VoiceMessage({ url, duration }) {
           <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z" /></svg>
         )}
       </button>
-      <div className="voice-wave">
-        {bars.map((h, i) => (
+      <div className={`voice-wave ${playing ? 'voice-wave-anim' : ''}`}>
+        {bars.current.map((h, i) => (
           <div
             key={i}
             className="voice-bar"
             style={{
               height: `${h * 100}%`,
+              '--bar-delay': `${i * 0.03}s`,
               background: i <= activeBar ? 'var(--ms-green)' : 'var(--text-muted)',
               opacity: i <= activeBar ? 1 : 0.35,
             }}
@@ -202,7 +179,7 @@ export default function MessageBubble({ message, isMine, showName, selected, sel
         {message.reactions?.length > 0 && (
           <div className="reactions-display">
             {message.reactions.map((r, i) => (
-              <span key={i} className="reaction-chip" dangerouslySetInnerHTML={{ __html: parseEmoji(r.emoji) }} />
+              <span key={i} className="reaction-chip" dangerouslySetInnerHTML={{ __html: emojiToImg(r.emoji) }} />
             ))}
           </div>
         )}
