@@ -8,11 +8,14 @@ struct ChatDetailView: View {
     @ObservedObject private var theme = ThemeManager.shared
     @FocusState private var isInputFocused: Bool
     @Environment(\.dismiss) private var dismiss
+    @State private var replyTo: Message?
 
     private let ownUUID = UserDefaults.standard.string(forKey: "user_uuid") ?? ""
 
     var body: some View {
         VStack(spacing: 0) {
+            chatHeader
+
             ScrollViewReader { proxy in
                 ScrollView {
                     LazyVStack(spacing: 4) {
@@ -30,51 +33,10 @@ struct ChatDetailView: View {
                 }
             }
 
+            if replyTo != nil { replyBar }
             messageInput
         }
         .background(theme.chatBg.ignoresSafeArea())
-        .navigationBarTitleDisplayMode(.inline)
-        .toolbarBackground(Color.clear, for: .navigationBar)
-        .toolbarBackground(.visible, for: .navigationBar)
-        .toolbar {
-            ToolbarItem(placement: .navigationBarLeading) {
-                Button(action: { dismiss() }) {
-                    Image(systemName: "chevron.left")
-                        .font(.system(size: 17, weight: .semibold))
-                        .foregroundColor(theme.textPrimary)
-                }
-            }
-            ToolbarItem(placement: .principal) {
-                HStack(spacing: 10) {
-                    if let avatar = chat.avatar, let url = URL(string: avatar) {
-                        AsyncImage(url: url) { img in
-                            img.resizable().scaledToFill()
-                        } placeholder: {
-                            Image(systemName: chat.isGroup == true ? "person.2.fill" : "person.fill")
-                                .foregroundColor(theme.textPrimary)
-                        }
-                        .frame(width: 32, height: 32)
-                        .clipShape(Circle())
-                    } else {
-                        Image(systemName: chat.isGroup == true ? "person.2.fill" : "person.fill")
-                            .font(.system(size: 14))
-                            .foregroundColor(theme.textPrimary)
-                            .frame(width: 32, height: 32)
-                            .background(theme.inputBg)
-                            .clipShape(Circle())
-                    }
-                    VStack(alignment: .leading, spacing: 1) {
-                        Text(chat.name ?? "Чат")
-                            .font(.system(size: 16, weight: .semibold))
-                            .foregroundColor(theme.textPrimary)
-                            .lineLimit(1)
-                        Text(ws.isConnected ? "online" : "offline")
-                            .font(.system(size: 11))
-                            .foregroundColor(ws.isConnected ? theme.success : theme.textSecondary)
-                    }
-                }
-            }
-        }
         .task { await load() }
         .onReceive(ws.$newMessage) { msg in
             guard let msg, msg.chatId == chat.id else { return }
@@ -82,55 +44,212 @@ struct ChatDetailView: View {
         }
     }
 
-    // MARK: - Message Input
+    // MARK: - Reply Bar
+
+    private var replyBar: some View {
+        HStack {
+            VStack(alignment: .leading, spacing: 2) {
+                Text("Ответ \(replyTo?.senderName ?? "")")
+                    .font(.system(size: 13, weight: .semibold))
+                    .foregroundColor(theme.accent)
+                Text(replyTo?.text ?? "")
+                    .font(.system(size: 13))
+                    .foregroundColor(theme.textSecondary)
+                    .lineLimit(2)
+            }
+            Spacer()
+            Button(action: { replyTo = nil }) {
+                Image(systemName: "xmark.circle.fill")
+                    .font(.system(size: 18))
+                    .foregroundColor(theme.textSecondary)
+            }
+        }
+        .padding(.horizontal, 14)
+        .padding(.vertical, 8)
+        .background(theme.surfaceColor)
+        .overlay(alignment: .top) { Divider().background(theme.borderColor) }
+    }
+
+    // MARK: - Telegram-Style Header
+
+    private var chatHeader: some View {
+        let peer = chat.peer
+        let isOnline = peer?.online ?? false
+
+        return HStack(spacing: 0) {
+            // Back button + unread badge
+            Button(action: { dismiss() }) {
+                ZStack(alignment: .topTrailing) {
+                    Image(systemName: "chevron.left")
+                        .font(.system(size: 20, weight: .semibold))
+                        .foregroundColor(theme.accent)
+                        .frame(width: 40, height: 40)
+
+                    if let unread = chat.unreadCount, unread > 0 {
+                        Text("\(unread)")
+                            .font(.system(size: 11, weight: .bold))
+                            .foregroundColor(.white)
+                            .padding(.horizontal, 6)
+                            .padding(.vertical, 2)
+                            .background(Color(hex: "#6C63FF"))
+                            .clipShape(Capsule())
+                            .offset(x: 4, y: -2)
+                    }
+                }
+            }
+
+            // Name + status capsule
+            Button(action: {}) {
+                VStack(alignment: .leading, spacing: 3) {
+                    Text(chat.name ?? "Чат")
+                        .font(.system(size: 16, weight: .semibold))
+                        .foregroundColor(theme.textPrimary)
+                        .lineLimit(1)
+
+                    HStack(spacing: 4) {
+                        if isOnline {
+                            Circle()
+                                .fill(Color.green)
+                                .frame(width: 6, height: 6)
+                        }
+                        Text(statusText)
+                            .font(.system(size: 12))
+                            .foregroundColor(isOnline ? .green : theme.textSecondary)
+                    }
+                }
+                .padding(.horizontal, 8)
+                .padding(.vertical, 6)
+                .background(
+                    Capsule()
+                        .fill(theme.isDark ? Color.white.opacity(0.06) : Color.black.opacity(0.04))
+                )
+            }
+
+            Spacer()
+
+            // Avatar
+            Button(action: {}) {
+                ZStack {
+                    Circle()
+                        .fill(peer?.profileColor.map { Color(hex: $0) } ?? theme.cardColor)
+                        .frame(width: 40, height: 40)
+
+                    if let avatar = peer?.avatar, let url = URL(string: avatar) {
+                        AsyncImage(url: url) { img in
+                            img.resizable().scaledToFill()
+                        } placeholder: {
+                            Text(peer?.name?.prefix(1).uppercased() ?? "?")
+                                .font(.system(size: 16, weight: .semibold))
+                                .foregroundColor(.white)
+                        }
+                        .frame(width: 40, height: 40)
+                        .clipShape(Circle())
+                    } else {
+                        Text(peer?.name?.prefix(1).uppercased() ?? "?")
+                            .font(.system(size: 16, weight: .semibold))
+                            .foregroundColor(.white)
+                    }
+                }
+            }
+        }
+        .padding(.horizontal, 8)
+        .padding(.vertical, 8)
+        .background(theme.surfaceColor)
+        .overlay(alignment: .bottom) { Divider().background(theme.borderColor) }
+    }
+
+    private var statusText: String {
+        let peer = chat.peer
+        if peer?.online == true { return "в сети" }
+        if let ts = peer?.lastSeen {
+            let diff = Date().timeIntervalSince1970 - ts / 1000
+            let mins = Int(diff / 60)
+            if mins < 1 { return "только что" }
+            if mins < 60 { return "\(mins) мин. назад" }
+            let hours = mins / 60
+            if hours < 24 { return "\(hours) ч. назад" }
+            let days = hours / 24
+            return "\(days) дн. назад"
+        }
+        return ""
+    }
+
+    // MARK: - Glass Input Bar
 
     private var messageInput: some View {
         HStack(spacing: 10) {
+            // Paperclip — dark circle
             Button(action: {}) {
                 Image(systemName: "paperclip")
-                    .font(.system(size: 20))
-                    .foregroundColor(theme.textSecondary)
+                    .font(.system(size: 20, weight: .medium))
+                    .foregroundColor(.white)
+                    .frame(width: 36, height: 36)
+                    .background(
+                        Circle()
+                            .fill(theme.isDark ? Color.white.opacity(0.12) : Color.black.opacity(0.08))
+                    )
             }
 
-            HStack(spacing: 0) {
+            // Glass text field with emoji
+            HStack(spacing: 6) {
                 TextField("", text: $text)
                     .focused($isInputFocused)
                     .foregroundColor(theme.inputText)
                     .tint(theme.accent)
                     .placeholder(when: text.isEmpty && !isInputFocused) {
-                        Text("Message")
+                        Text("Сообщение")
                             .foregroundColor(theme.textSecondary)
                             .allowsHitTesting(false)
                     }
+
+                if !text.trimmingCharacters(in: .whitespaces).isEmpty {
+                    Button(action: {}) {
+                        Image(systemName: "face.smiling")
+                            .font(.system(size: 20))
+                            .foregroundColor(theme.textSecondary)
+                    }
+                }
             }
             .padding(.horizontal, 14)
-            .padding(.vertical, 9)
-            .background(theme.inputBg)
-            .cornerRadius(20)
+            .padding(.vertical, 10)
+            .background(
+                RoundedRectangle(cornerRadius: 22)
+                    .fill(theme.isDark ? Color.white.opacity(0.08) : Color.black.opacity(0.05))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 22)
+                            .stroke(theme.isDark ? Color.white.opacity(0.1) : Color.black.opacity(0.08), lineWidth: 0.5)
+                    )
+            )
 
-            Button(action: {}) {
-                Image(systemName: "face.smiling")
-                    .font(.system(size: 20))
-                    .foregroundColor(theme.textSecondary)
-            }
-
+            // Mic / Send
             if text.trimmingCharacters(in: .whitespaces).isEmpty {
                 Button(action: {}) {
                     Image(systemName: "mic.fill")
-                        .font(.system(size: 20))
-                        .foregroundColor(theme.textSecondary)
+                        .font(.system(size: 18, weight: .medium))
+                        .foregroundColor(.white)
+                        .frame(width: 36, height: 36)
+                        .background(
+                            Circle()
+                                .fill(theme.isDark ? Color.white.opacity(0.12) : Color.black.opacity(0.08))
+                        )
                 }
             } else {
                 Button(action: send) {
-                    Image(systemName: "arrow.up.circle.fill")
-                        .font(.system(size: 30))
-                        .foregroundColor(theme.accent)
+                    Image(systemName: "arrow.up")
+                        .font(.system(size: 16, weight: .bold))
+                        .foregroundColor(.white)
+                        .frame(width: 36, height: 36)
+                        .background(
+                            Circle()
+                                .fill(theme.accent)
+                        )
                 }
             }
         }
         .padding(.horizontal, 12)
         .padding(.vertical, 10)
         .background(theme.surfaceColor)
+        .overlay(alignment: .top) { Divider().background(theme.borderColor) }
     }
 
     // MARK: - Helpers
