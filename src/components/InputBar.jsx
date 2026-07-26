@@ -14,6 +14,7 @@ export default function InputBar({ onSend, editText, onCancelEdit, chatId }) {
   const [uploading, setUploading] = useState(false)
   const [showEmoji, setShowEmoji] = useState(false)
   const [showStickers, setShowStickers] = useState(false)
+  const [error, setError] = useState(null)
   const textareaRef = useRef(null)
   const fileInputRef = useRef(null)
   const audioFileInputRef = useRef(null)
@@ -45,18 +46,28 @@ export default function InputBar({ onSend, editText, onCancelEdit, chatId }) {
     }
   }, [])
 
+  useEffect(() => {
+    if (error) {
+      const t = setTimeout(() => setError(null), 3000)
+      return () => clearTimeout(t)
+    }
+  }, [error])
+
   const hasText = text.trim().length > 0
 
   const handleSubmit = async (e) => {
     e.preventDefault()
     if ((!text.trim() && !attachFile) || uploading) return
+
     if (attachFile) {
       setUploading(true)
+      setError(null)
       try {
         const { url, type, duration } = await api.uploadAttachment(attachFile)
-        onSend(text, { url, type, name: attachFile.name, size: attachFile.size, duration })
+        await onSend(text, { url, type, name: attachFile.name, size: attachFile.size, duration })
       } catch (err) {
         console.error('Upload error:', err)
+        setError(t('Ошибка загрузки файла'))
       }
       setAttachFile(null)
       setAttachPreview(null)
@@ -64,15 +75,22 @@ export default function InputBar({ onSend, editText, onCancelEdit, chatId }) {
       setText('')
       return
     }
-    onSend(text)
-    setText('')
-    if (typingTimerRef.current) clearTimeout(typingTimerRef.current)
-    sendWsMessage({ type: 'typing', chatId, isTyping: false })
-    textareaRef.current?.focus()
+
+    try {
+      await onSend(text)
+      setText('')
+      if (typingTimerRef.current) clearTimeout(typingTimerRef.current)
+      sendWsMessage({ type: 'typing', chatId, isTyping: false })
+      textareaRef.current?.focus()
+    } catch (err) {
+      console.error('Send error:', err)
+      setError(t('Ошибка отправки'))
+    }
   }
 
   const handleChange = (e) => {
     setText(e.target.value)
+    setError(null)
     if (!chatId) return
     if (typingTimerRef.current) clearTimeout(typingTimerRef.current)
     sendWsMessage({ type: 'typing', chatId, isTyping: true })
@@ -91,7 +109,12 @@ export default function InputBar({ onSend, editText, onCancelEdit, chatId }) {
   const handleAttach = (e) => {
     const file = e.target.files?.[0]
     if (!file) return
+    if (file.size > 20 * 1024 * 1024) {
+      setError(t('Файл слишком большой (макс 20 МБ)'))
+      return
+    }
     setAttachFile(file)
+    setError(null)
     if (file.type.startsWith('image/')) {
       const reader = new FileReader()
       reader.onload = () => setAttachPreview(reader.result)
@@ -104,6 +127,7 @@ export default function InputBar({ onSend, editText, onCancelEdit, chatId }) {
   const cancelAttach = () => {
     setAttachFile(null)
     setAttachPreview(null)
+    setError(null)
     if (fileInputRef.current) fileInputRef.current.value = ''
   }
 
@@ -157,6 +181,7 @@ export default function InputBar({ onSend, editText, onCancelEdit, chatId }) {
           onSend('', { url, type, name: t('Голосовое сообщение'), duration: dur })
         } catch (err) {
           console.error('Voice upload error:', err)
+          setError(t('Ошибка загрузки голосового'))
         }
       }
 
@@ -164,6 +189,7 @@ export default function InputBar({ onSend, editText, onCancelEdit, chatId }) {
     } catch (err) {
       console.error('Mic permission error:', err)
       setRecording(false)
+      setError(t('Нет доступа к микрофону'))
     }
   }
 
@@ -199,11 +225,13 @@ export default function InputBar({ onSend, editText, onCancelEdit, chatId }) {
     const file = e.target.files?.[0]
     if (!file) return
     setUploading(true)
+    setError(null)
     try {
       const { url, type, duration } = await api.uploadAttachment(file)
       onSend('', { url, type, name: file.name, duration })
     } catch (err) {
       console.error('Audio file upload error:', err)
+      setError(t('Ошибка загрузки аудио'))
     }
     setUploading(false)
     if (audioFileInputRef.current) audioFileInputRef.current.value = ''
@@ -231,6 +259,9 @@ export default function InputBar({ onSend, editText, onCancelEdit, chatId }) {
 
   return (
     <div className="ig-bar-wrap">
+      {error && (
+        <div className="ig-error-toast">{error}</div>
+      )}
       {(showEmoji || showStickers) && (
         <div className="ig-picker-wrap">
           {showEmoji && <EmojiPicker onSelect={handleEmojiSelect} onClose={() => setShowEmoji(false)} />}
