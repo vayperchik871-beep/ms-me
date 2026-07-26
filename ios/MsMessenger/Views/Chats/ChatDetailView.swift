@@ -138,7 +138,7 @@ struct ChatDetailView: View {
                         AsyncImage(url: url) { img in
                             img.resizable().scaledToFill()
                         } placeholder: {
-                            Text(peer?.name?.prefix(1).uppercased() ?? "?")
+                    Text(peer?.name.prefix(1).uppercased() ?? "?")
                                 .font(.system(size: 16, weight: .semibold))
                                 .foregroundColor(.white)
                         }
@@ -162,7 +162,7 @@ struct ChatDetailView: View {
         let peer = chat.peer
         if peer?.online == true { return "в сети" }
         if let ts = peer?.lastSeen {
-            let diff = Date().timeIntervalSince1970 - ts / 1000
+            let diff = Date().timeIntervalSince1970 - Double(ts) / 1000
             let mins = Int(diff / 60)
             if mins < 1 { return "только что" }
             if mins < 60 { return "\(mins) мин. назад" }
