@@ -2063,10 +2063,12 @@ input, textarea { font-family: inherit; border: none; outline: none; background:
   max-width: 420px;
   border-right: 1px solid var(--border);
   overflow-y: auto;
+  overflow-x: hidden;
   background: var(--bg-primary);
   position: relative;
   display: flex;
   flex-direction: column;
+  padding-bottom: 80px;
 }
 
 .desktop-panel-header {
@@ -2082,79 +2084,27 @@ input, textarea { font-family: inherit; border: none; outline: none; background:
   object-fit: cover;
 }
 
-.desktop-side-nav {
-  position: absolute;
-  bottom: 12px;
-  left: 50%;
-  transform: translateX(-50%);
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  gap: 2px;
-  padding: 6px 10px;
-  border-radius: 16px;
-  background: rgba(28, 28, 30, 0.85);
-  backdrop-filter: blur(20px) saturate(1.2);
-  -webkit-backdrop-filter: blur(20px) saturate(1.2);
-  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.3);
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  z-index: 20;
-}
 
-[data-theme="light"] .desktop-side-nav {
-  background: rgba(242, 242, 247, 0.88);
-  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
-  border: 1px solid rgba(60, 60, 67, 0.08);
-}
-
-.dsn-btn {
-  width: 44px;
-  height: 44px;
-  border-radius: 14px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: rgba(255, 255, 255, 0.45);
-  cursor: pointer;
-  border: none;
-  background: none;
-  transition: all 0.2s ease;
-}
-
-[data-theme="light"] .dsn-btn { color: rgba(60, 60, 67, 0.45); }
-
-.dsn-btn:hover {
-  background: rgba(255, 255, 255, 0.1);
-  color: var(--text-primary);
-}
-
-[data-theme="light"] .dsn-btn:hover {
-  background: rgba(0, 0, 0, 0.06);
-}
-
-.dsn-btn-active {
-  color: var(--user-accent, #fff);
-  background: rgba(255, 255, 255, 0.12);
-}
-
-[data-theme="light"] .dsn-btn-active {
-  color: var(--user-accent, #7c5cfc);
-  background: rgba(0, 0, 0, 0.08);
-}
-
-.dsn-sep {
-  width: 1px;
-  height: 20px;
-  background: rgba(255, 255, 255, 0.1);
-  margin: 0 2px;
-}
-
-[data-theme="light"] .dsn-sep { background: rgba(0, 0, 0, 0.08); }
 
 .desktop-panel-list .bottom-nav {
   max-width: none;
   left: 0;
   transform: none;
+  width: 100%;
+}
+
+.desktop-bottom-nav {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 0 12px 12px;
+  z-index: 20;
+  pointer-events: none;
+}
+
+.desktop-bottom-nav .bn-glass {
+  pointer-events: auto;
   width: 100%;
 }
 

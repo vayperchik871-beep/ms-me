@@ -180,21 +180,25 @@ export default function App() {
                 onAddAccount={() => setShowOnboarding(true)}
               />
             )}
-            <div className="desktop-side-nav">
-              {[
-                { id: 'chats', icon: SideChatIcon },
-                { id: 'contacts', icon: SideContactsIcon },
-                { id: 'music', icon: SideMusicIcon },
-                { id: 'settings', icon: SideSettingsIcon },
-              ].map(({ id, icon: Icon }) => (
-                <button
-                  key={id}
-                  className={`dsn-btn ${tab === id ? 'dsn-btn-active' : ''}`}
-                  onClick={() => setTab(id)}
-                >
-                  <Icon active={tab === id} />
-                </button>
-              ))}
+            <div className="desktop-bottom-nav">
+              <div className="bn-glass" style={{ '--active': ['chats','contacts','music','settings'].indexOf(tab) }}>
+                <div className="bn-indicator" />
+                {[
+                  { id: 'chats', label: 'Чаты', icon: SideChatIcon },
+                  { id: 'contacts', label: 'Контакты', icon: SideContactsIcon },
+                  { id: 'music', label: 'Музыка', icon: SideMusicIcon },
+                  { id: 'settings', label: 'Настройки', icon: SideSettingsIcon },
+                ].map(({ id, label, icon: Icon }) => (
+                  <button
+                    key={id}
+                    className={`bn-tab ${tab === id ? 'bn-tab-active' : ''}`}
+                    onClick={() => setTab(id)}
+                  >
+                    <Icon active={tab === id} />
+                    <span>{label}</span>
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
 
