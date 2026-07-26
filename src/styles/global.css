@@ -2085,12 +2085,13 @@ input, textarea { font-family: inherit; border: none; outline: none; background:
 .desktop-side-nav {
   position: absolute;
   bottom: 12px;
-  left: 12px;
+  left: 50%;
+  transform: translateX(-50%);
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   align-items: center;
   gap: 2px;
-  padding: 6px;
+  padding: 6px 10px;
   border-radius: 16px;
   background: rgba(28, 28, 30, 0.85);
   backdrop-filter: blur(20px) saturate(1.2);
@@ -2142,10 +2143,10 @@ input, textarea { font-family: inherit; border: none; outline: none; background:
 }
 
 .dsn-sep {
-  width: 20px;
-  height: 1px;
+  width: 1px;
+  height: 20px;
   background: rgba(255, 255, 255, 0.1);
-  margin: 2px 0;
+  margin: 0 2px;
 }
 
 [data-theme="light"] .dsn-sep { background: rgba(0, 0, 0, 0.08); }
