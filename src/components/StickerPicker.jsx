@@ -12,9 +12,15 @@ export default function StickerPicker({ onSelect, onClose }) {
   const fileInputRef = useRef(null)
 
   useEffect(() => {
-    api.getMyStickerPacks().then(({ packs }) => {
-      setPacks(packs || [])
-      if (packs?.length) setActivePack(packs[0])
+    Promise.all([
+      api.getMyStickerPacks().catch(() => ({ packs: [] })),
+      api.getStickerPacks().catch(() => ({ packs: [] })),
+    ]).then(([my, all]) => {
+      const myPacks = my.packs || []
+      const allPacks = (all.packs || []).filter(p => !p.owned)
+      const combined = [...myPacks, ...allPacks]
+      setPacks(combined)
+      if (combined.length) setActivePack(combined[0])
     }).catch(() => {})
   }, [])
 

@@ -18,19 +18,21 @@ function formatTime(ts) {
 function VoiceMessage({ url, duration }) {
   const [playing, setPlaying] = useState(false)
   const [progress, setProgress] = useState(0)
+  const [loaded, setLoaded] = useState(false)
+  const [bars] = useState(() => Array.from({ length: 28 }, () => 0.15 + Math.random() * 0.85))
   const audioRef = useRef(null)
-  const bars = useRef(Array.from({ length: 28 }, () => 0.15 + Math.random() * 0.85))
 
   const toggle = useCallback(() => {
     if (!audioRef.current) return
     if (playing) {
       audioRef.current.pause()
     } else {
-      audioRef.current.play()
+      audioRef.current.play().catch(() => {})
     }
   }, [playing])
 
-  const activeBar = Math.floor((progress / 100) * bars.current.length)
+  const activeBar = Math.floor((progress / 100) * bars.length)
+  const resolvedUrl = resolveMediaUrl(url)
 
   return (
     <div className="voice-msg" onClick={(e) => { e.stopPropagation(); toggle() }}>
@@ -42,7 +44,7 @@ function VoiceMessage({ url, duration }) {
         )}
       </button>
       <div className={`voice-wave ${playing ? 'voice-wave-anim' : ''}`}>
-        {bars.current.map((h, i) => (
+        {bars.map((h, i) => (
           <div
             key={i}
             className="voice-bar"
@@ -56,18 +58,23 @@ function VoiceMessage({ url, duration }) {
         ))}
       </div>
       <span className="voice-dur">{duration ? `${Math.floor(duration / 60)}:${(duration % 60).toString().padStart(2, '0')}` : '0:00'}</span>
-      <audio
-        ref={audioRef}
-        src={resolveMediaUrl(url)}
-        onPlay={() => setPlaying(true)}
-        onPause={() => setPlaying(false)}
-        onEnded={() => { setPlaying(false); setProgress(0) }}
-        onTimeUpdate={() => {
-          if (audioRef.current) {
-            setProgress((audioRef.current.currentTime / (audioRef.current.duration || 1)) * 100)
-          }
-        }}
-      />
+      {resolvedUrl && (
+        <audio
+          ref={audioRef}
+          src={resolvedUrl}
+          preload="auto"
+          onLoadedData={() => setLoaded(true)}
+          onPlay={() => setPlaying(true)}
+          onPause={() => setPlaying(false)}
+          onEnded={() => { setPlaying(false); setProgress(0) }}
+          onTimeUpdate={() => {
+            if (audioRef.current) {
+              setProgress((audioRef.current.currentTime / (audioRef.current.duration || 1)) * 100)
+            }
+          }}
+          onError={(e) => console.error('Audio error:', e.target.error)}
+        />
+      )}
     </div>
   )
 }
@@ -165,7 +172,7 @@ export default function MessageBubble({ message, isMine, showName, selected, sel
         )}
 
         {isVoice && (
-          <VoiceMessage url={attach.url} duration={attach.duration} />
+          <VoiceMessage key={message.id} url={attach.url} duration={attach.duration} />
         )}
 
         {isFile && (

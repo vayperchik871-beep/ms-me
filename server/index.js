@@ -1635,6 +1635,9 @@ app.get('/api/stickers/my', authMiddleware, async (req, res) => {
   const rows = await dbAll(`SELECT sp.* FROM sticker_packs sp
     JOIN user_sticker_packs usp ON usp.pack_id = sp.id
     WHERE usp.user_id = ?`, req.user.id)
+  for (const p of rows) {
+    try { p.stickers = JSON.parse(p.stickers || '[]') } catch { p.stickers = [] }
+  }
   res.json({ packs: rows })
 })
 

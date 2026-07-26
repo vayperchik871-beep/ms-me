@@ -2362,3 +2362,9 @@ img.twemoji {
   margin: 0;
 }
 
+.bubble p img.twemoji {
+  width: 1.2em;
+  height: 1.2em;
+  vertical-align: -0.15em;
+}
+

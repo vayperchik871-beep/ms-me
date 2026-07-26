@@ -1,10 +1,8 @@
-const U20E3 = '\uFE0F\u20E3'
+const TWEMOJI_BASE = 'https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/svg'
 
 function codePointToHex(cp) {
   return cp.toString(16).toLowerCase()
 }
-
-const TWEMOJI_BASE = 'https://cdn.jsdelivr.net/gh/jdecked/twemoji@latest/assets/svg'
 
 export function emojiToImg(emoji) {
   if (!emoji) return ''
@@ -22,7 +20,9 @@ export function emojiToImg(emoji) {
   return `<img class="twemoji" draggable="false" alt="${emoji}" src="${TWEMOJI_BASE}/${hex}.svg" />`
 }
 
+const EMOJI_RE = /(?:\p{Emoji_Presentation}|\p{Emoji}\uFE0F)(?:\u200D\p{Emoji_Presentation})*/gu
+
 export function parseEmoji(text) {
   if (!text) return ''
-  return text
+  return text.replace(EMOJI_RE, (match) => emojiToImg(match))
 }
