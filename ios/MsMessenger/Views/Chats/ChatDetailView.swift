@@ -145,7 +145,7 @@ struct ChatDetailView: View {
                         .frame(width: 40, height: 40)
                         .clipShape(Circle())
                     } else {
-                        Text(peer?.name?.prefix(1).uppercased() ?? "?")
+                        Text(peer?.name.prefix(1).uppercased() ?? "?")
                             .font(.system(size: 16, weight: .semibold))
                             .foregroundColor(.white)
                     }
