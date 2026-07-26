@@ -13,8 +13,11 @@
     <key>CFBundleVersion</key><string>1</string>
     <key>LSRequiresIPhoneOS</key><true/>
     <key>NSAppTransportSecurity</key><dict><key>NSAllowsArbitraryLoads</key><true/></dict>
-    <key>UIApplicationSceneManifest</key><dict><key>UIApplicationSupportsMultipleScenes</key><false/></dict>
-    <key>UILaunchScreen</key><dict/>
+    <key>UILaunchScreen</key>
+    <dict>
+        <key>UIColorName</key><string></string>
+        <key>UIImageName</key><string></string>
+    </dict>
     <key>UISupportedInterfaceOrientations</key><array><string>UIInterfaceOrientationPortrait</string></array>
     <key>UIUserInterfaceStyle</key><string>Dark</string>
     <key>CFBundleURLTypes</key>

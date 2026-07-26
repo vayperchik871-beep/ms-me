@@ -45,5 +45,6 @@ struct TabBarView: View {
         }
         .tint(Color(hex: "#6C63FF"))
         .background(theme.bgColor.ignoresSafeArea())
+        .ignoresSafeArea(.all, edges: .bottom)
     }
 }
