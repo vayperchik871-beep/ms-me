@@ -36,7 +36,7 @@ struct ChatDetailView: View {
             if replyTo != nil { replyBar }
             messageInput
         }
-        .background(theme.chatBg.ignoresSafeArea(.all))
+        .background(theme.chatBg.ignoresSafeArea())
         .task { await load() }
         .onReceive(ws.$newMessage) { msg in
             guard let msg, msg.chatId == chat.id else { return }
@@ -154,10 +154,7 @@ struct ChatDetailView: View {
         }
         .padding(.horizontal, 8)
         .padding(.vertical, 8)
-        .background(
-            theme.surfaceColor
-                .ignoresSafeArea(.all, edges: .top)
-        )
+        .background(theme.surfaceColor)
         .overlay(alignment: .bottom) { Divider().background(theme.borderColor) }
     }
 
@@ -251,10 +248,7 @@ struct ChatDetailView: View {
         }
         .padding(.horizontal, 12)
         .padding(.vertical, 10)
-        .background(
-            theme.surfaceColor
-                .ignoresSafeArea(.all, edges: .bottom)
-        )
+        .background(theme.surfaceColor)
         .overlay(alignment: .top) { Divider().background(theme.borderColor) }
     }
 

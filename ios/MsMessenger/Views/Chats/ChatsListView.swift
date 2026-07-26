@@ -39,7 +39,7 @@ struct ChatsListView: View {
                 }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .background(theme.bgColor.ignoresSafeArea(.all))
+            .background(theme.bgColor.ignoresSafeArea())
             .searchable(text: $searchText, prompt: Text("Поиск").foregroundColor(theme.textSecondary))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {

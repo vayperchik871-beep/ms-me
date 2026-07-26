@@ -8,11 +8,8 @@ struct MsMessengerApp: App {
     var body: some Scene {
         WindowGroup {
             ZStack {
-                theme.bgColor.ignoresSafeArea(.all)
-
                 if isAuthenticated {
-                    ContentView()
-                        .onAppear { WebSocketService.shared.connect(token: APIClient.shared.token ?? "") }
+                    ContentView().onAppear { WebSocketService.shared.connect(token: APIClient.shared.token ?? "") }
                 } else {
                     OnboardingView(onComplete: { isAuthenticated = true })
                 }
