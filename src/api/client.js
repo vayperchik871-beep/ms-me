@@ -157,16 +157,12 @@ export const api = {
 
 export function resolveMediaUrl(url) {
   if (!url) return null
-  if (url.startsWith('https://') || url.startsWith('data:')) return url
-  const base = getApiBase()
+  if (url.startsWith('data:')) return url
+  if (url.startsWith('https://')) return url
   if (url.startsWith('http://')) {
-    if (base && url.startsWith(base.replace(/^https:/i, 'http:'))) {
-      return url.replace(/^http:/i, 'https:')
-    }
-    return url
+    return url.replace(/^http:\/\//i, 'https://')
   }
-  if (base === '/api') return url
-  return `${base}${url.startsWith('/') ? '' : '/'}${url}`
+  return `https://ms-messenger-server.onrender.com${url.startsWith('/') ? '' : '/'}${url}`
 }
 
 export function getWsUrl() {

@@ -5,6 +5,10 @@
       "destination": "https://ms-messenger-server.onrender.com/api/$1"
     },
     {
+      "source": "/uploads/(.*)",
+      "destination": "https://ms-messenger-server.onrender.com/uploads/$1"
+    },
+    {
       "source": "/health",
       "destination": "https://ms-messenger-server.onrender.com/health"
     },

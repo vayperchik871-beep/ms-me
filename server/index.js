@@ -1546,7 +1546,7 @@ app.post('/api/users/change-id', authMiddleware, requirePlus, async (req, res) =
 
 app.post('/api/users/banner', authMiddleware, requirePlus, upload.single('banner'), async (req, res) => {
   if (!req.file) return res.status(400).json({ error: 'Файл не загружен' })
-  const url = `${BASE_URL}/uploads/${req.file.filename}`
+  const url = fullUrl(req, `/uploads/${req.file.filename}`)
   await dbRun('UPDATE users SET profile_banner = ? WHERE id = ?', url, req.user.id)
   res.json({ ok: true, banner: url })
 })
@@ -1617,6 +1617,9 @@ app.get('/api/call/history', authMiddleware, requirePlus, async (req, res) => {
 
 app.get('/api/stickers/packs', authMiddleware, async (req, res) => {
   const packs = await dbAll('SELECT * FROM sticker_packs ORDER BY created_at DESC')
+  for (const p of packs) {
+    try { p.stickers = JSON.parse(p.stickers || '[]') } catch { p.stickers = [] }
+  }
   res.json({ packs })
 })
 
@@ -1661,7 +1664,7 @@ app.post('/api/stickers/create', authMiddleware, async (req, res) => {
 app.get('/api/stickers/all', authMiddleware, async (req, res) => {
   const packs = await dbAll('SELECT * FROM sticker_packs ORDER BY created_at DESC')
   for (const p of packs) {
-    p.stickers = JSON.parse(p.stickers || '[]')
+    try { p.stickers = JSON.parse(p.stickers || '[]') } catch { p.stickers = [] }
     p.owned = !!(await dbGet('SELECT 1 FROM user_sticker_packs WHERE user_id = ? AND pack_id = ?', req.user.id, p.id))
   }
   res.json({ packs })
@@ -1698,6 +1701,26 @@ app.post('/api/support/tickets/:id/messages', authMiddleware, requirePlus, async
 
 // auto cleanup disappearing messages every 5 minutes
 setInterval(cleanupDisappearingMessages, 5 * 60 * 1000)
+
+// Prevent crash on unhandled errors
+process.on('unhandledRejection', (err) => {
+  console.error('Unhandled rejection:', err)
+})
+process.on('uncaughtException', (err) => {
+  console.error('Uncaught exception:', err)
+})
+
+// Express error handler
+app.use((err, req, res, next) => {
+  if (err.code === 'LIMIT_FILE_SIZE') {
+    return res.status(400).json({ error: 'Файл слишком большой (макс 20 МБ)' })
+  }
+  if (err.message === 'Недопустимый формат файла') {
+    return res.status(400).json({ error: err.message })
+  }
+  console.error('Express error:', err)
+  res.status(500).json({ error: 'Ошибка сервера' })
+})
 
 // ─── WebSocket ───
 
