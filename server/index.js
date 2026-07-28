@@ -227,7 +227,7 @@ function sanitizeUserId(raw) {
 // ─── Auth ───
 
 app.post('/api/auth/register', async (req, res) => {
-  const { name, userId, password, deviceId, phone, bio, avatar } = req.body
+  const { name, userId, password, deviceId, phone, bio, avatar, platform } = req.body
   const isAdminApp = req.headers['x-admin-app'] === 'true'
   if (!name?.trim() || !userId?.trim() || !password || !deviceId || !phone) {
     return res.status(400).json({ error: 'Заполните все поля' })
@@ -274,8 +274,8 @@ app.post('/api/auth/register', async (req, res) => {
     } catch (e) { console.error('Avatar save error:', e) }
   }
 
-  await dbRun('INSERT INTO users (id, user_id, name, password_hash, phone, bio, avatar, is_admin, profile_color, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-    id, cleanId, name.trim(), hash, phone || null, bio || null, avatarUrl, isFirst ? 1 : 0, '#7c5cfc', now
+  await dbRun('INSERT INTO users (id, user_id, name, password_hash, phone, bio, avatar, is_admin, profile_color, created_at, platform) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+    id, cleanId, name.trim(), hash, phone || null, bio || null, avatarUrl, isFirst ? 1 : 0, '#7c5cfc', now, platform || 'web'
   )
 
   const devId = hashDevice(deviceId)
@@ -295,7 +295,7 @@ app.post('/api/auth/register', async (req, res) => {
 })
 
 app.post('/api/auth/login', async (req, res) => {
-  const { userId, password, deviceId } = req.body
+  const { userId, password, deviceId, platform } = req.body
   const isAdminApp = req.headers['x-admin-app'] === 'true'
   if (!userId || !password || !deviceId) {
     return res.status(400).json({ error: 'Заполните все поля' })
@@ -317,6 +317,7 @@ app.post('/api/auth/login', async (req, res) => {
     await dbRun('INSERT INTO devices (id, user_id, device_id, verified, last_seen, created_at) VALUES (?, ?, ?, 1, ?, ?)',
       uuidv4(), user.id, devId, Date.now(), Date.now()
     )
+    if (platform) await dbRun('UPDATE users SET platform = ? WHERE id = ?', platform, user.id)
     const token = await createToken(user.id, devId)
     return res.json({
       token,
@@ -327,6 +328,7 @@ app.post('/api/auth/login', async (req, res) => {
 
   if (device.verified || isAdminApp) {
     await dbRun('UPDATE devices SET last_seen = ? WHERE id = ?', Date.now(), device.id)
+    if (platform) await dbRun('UPDATE users SET platform = ? WHERE id = ?', platform, user.id)
     const token = await createToken(user.id, devId)
     return res.json({
       token,
@@ -613,6 +615,16 @@ app.get('/api/admin/stats', authMiddleware, adminMiddleware, async (req, res) =>
   const scamUsers = await dbGet('SELECT COUNT(*) as c FROM users WHERE scam = 1')
   const totalChats = await dbGet('SELECT COUNT(*) as c FROM chats')
   const totalMessages = await dbGet('SELECT COUNT(*) as c FROM messages WHERE deleted = 0')
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  const todayMs = today.getTime()
+  const messagesToday = await dbGet('SELECT COUNT(*) as c FROM messages WHERE deleted = 0 AND created_at >= ?', [todayMs])
+  const groupsCount = await dbGet("SELECT COUNT(*) as c FROM chats WHERE type IN ('group', 'channel')")
+  const botsCount = await dbGet('SELECT COUNT(*) as c FROM users WHERE is_system = 1')
+  const registrationsToday = await dbGet('SELECT COUNT(*) as c FROM users WHERE is_system = 0 AND created_at >= ?', [todayMs])
+  const usersByPlatform = await dbAll("SELECT platform, COUNT(*) as c FROM users WHERE is_system = 0 GROUP BY platform")
+  const platformStats = {}
+  for (const row of usersByPlatform) { platformStats[row.platform || 'web'] = row.c }
   res.json({
     totalUsers: totalUsers.c,
     onlineUsers,
@@ -620,6 +632,11 @@ app.get('/api/admin/stats', authMiddleware, adminMiddleware, async (req, res) =>
     scamUsers: scamUsers.c,
     totalChats: totalChats.c,
     totalMessages: totalMessages.c,
+    messagesToday: messagesToday.c,
+    groupsCount: groupsCount.c,
+    botsCount: botsCount.c,
+    registrationsToday: registrationsToday.c,
+    platformStats,
   })
 })
 

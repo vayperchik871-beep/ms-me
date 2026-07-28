@@ -213,6 +213,7 @@ try { await dbExec('CREATE TABLE IF NOT EXISTS gifts (id TEXT PRIMARY KEY, emoji
 
 // Subscription system
 try { await dbExec('ALTER TABLE users ADD COLUMN subscription_plan TEXT DEFAULT NULL') } catch {}
+try { await dbExec("ALTER TABLE users ADD COLUMN platform TEXT DEFAULT 'web'") } catch {}
 try { await dbExec('ALTER TABLE users ADD COLUMN subscription_until INTEGER DEFAULT NULL') } catch {}
 try { await dbExec('ALTER TABLE users ADD COLUMN profile_banner TEXT DEFAULT NULL') } catch {}
 try { await dbExec('ALTER TABLE chats ADD COLUMN disappearing_interval INTEGER DEFAULT NULL') } catch {}

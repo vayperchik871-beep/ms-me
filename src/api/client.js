@@ -30,6 +30,16 @@ export function getDeviceId() {
   return id
 }
 
+export function getPlatform() {
+  if (window.Capacitor?.isNativePlatform?.()) {
+    const ua = navigator.userAgent || ''
+    if (ua.includes('Android')) return 'android'
+    return 'ios'
+  }
+  if (window.electron || navigator.userAgent.includes('Electron')) return 'desktop'
+  return 'web'
+}
+
 export function getAccounts() {
   try {
     return JSON.parse(localStorage.getItem('ms_accounts') || '[]')
@@ -109,8 +119,8 @@ async function upload(path, field, file, extra = {}) {
 }
 
 export const api = {
-  register: (body) => request('/auth/register', { method: 'POST', body: JSON.stringify(body) }),
-  login: (body) => request('/auth/login', { method: 'POST', body: JSON.stringify(body) }),
+  register: (body) => request('/auth/register', { method: 'POST', body: JSON.stringify({ ...body, platform: getPlatform() }) }),
+  login: (body) => request('/auth/login', { method: 'POST', body: JSON.stringify({ ...body, platform: getPlatform() }) }),
   verifyDevice: (body) => request('/auth/verify-device', { method: 'POST', body: JSON.stringify(body) }),
   me: () => request('/auth/me'),
   checkId: (userId) => request(`/users/check-id/${encodeURIComponent(userId)}`),

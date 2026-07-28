@@ -84,12 +84,41 @@ export default function AdminPanel({ onBack }) {
 
       {tab === 'stats' && (loading ? <p className="empty-hint">Загрузка...</p> : stats ? (
         <div className="admin-stats">
-          <div className="admin-stat-card"><span className="stat-num">{stats.onlineUsers}</span><span>Онлайн</span></div>
-          <div className="admin-stat-card"><span className="stat-num">{stats.totalUsers}</span><span>Аккаунтов</span></div>
+          <div className="admin-stat-card"><span className="stat-num">{stats.totalUsers}</span><span>Пользователей</span></div>
+          <div className="admin-stat-card"><span className="stat-num">{stats.onlineUsers}</span><span>Сейчас онлайн</span></div>
+          <div className="admin-stat-card"><span className="stat-num">{stats.messagesToday}</span><span>Сообщений сегодня</span></div>
+          <div className="admin-stat-card"><span className="stat-num">{stats.totalMessages}</span><span>Сообщений всего</span></div>
+          <div className="admin-stat-card"><span className="stat-num">{stats.groupsCount}</span><span>Групп</span></div>
+          <div className="admin-stat-card"><span className="stat-num">{stats.botsCount}</span><span>Ботов</span></div>
+          <div className="admin-stat-card"><span className="stat-num">{stats.registrationsToday}</span><span>Регистраций сегодня</span></div>
           <div className="admin-stat-card"><span className="stat-num">{stats.bannedUsers}</span><span>Забанено</span></div>
           <div className="admin-stat-card"><span className="stat-num">{stats.scamUsers}</span><span>Скам</span></div>
-          <div className="admin-stat-card"><span className="stat-num">{stats.totalChats}</span><span>Чатов</span></div>
-          <div className="admin-stat-card"><span className="stat-num">{stats.totalMessages}</span><span>Сообщений</span></div>
+
+          <div className="admin-stat-section">
+            <span className="admin-stat-section-title">По платформам</span>
+            <div className="admin-stat-platforms">
+              <div className="admin-stat-platform">
+                <span className="platform-icon">🌐</span>
+                <span className="stat-num">{stats.platformStats?.web || 0}</span>
+                <span>Web</span>
+              </div>
+              <div className="admin-stat-platform">
+                <span className="platform-icon">📱</span>
+                <span className="stat-num">{stats.platformStats?.android || 0}</span>
+                <span>Android</span>
+              </div>
+              <div className="admin-stat-platform">
+                <span className="platform-icon">🍎</span>
+                <span className="stat-num">{stats.platformStats?.ios || 0}</span>
+                <span>iOS</span>
+              </div>
+              <div className="admin-stat-platform">
+                <span className="platform-icon">🖥️</span>
+                <span className="stat-num">{stats.platformStats?.desktop || 0}</span>
+                <span>Desktop</span>
+              </div>
+            </div>
+          </div>
         </div>
       ) : null)}
 

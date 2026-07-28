@@ -60,7 +60,7 @@ final class APIClient {
     }
 
     func register(userId: String, name: String, password: String, deviceId: String, phone: String? = nil, bio: String? = nil, avatarData: Data? = nil) async throws -> AuthResponse {
-        var body: [String: Any] = ["userId": userId, "name": name, "password": password, "deviceId": deviceId]
+        var body: [String: Any] = ["userId": userId, "name": name, "password": password, "deviceId": deviceId, "platform": "ios"]
         if let phone { body["phone"] = phone }
         if let bio { body["bio"] = bio }
         if let avatarData { body["avatar"] = avatarData.base64EncodedString() }
@@ -68,7 +68,7 @@ final class APIClient {
     }
 
     func login(userId: String, password: String, deviceId: String) async throws -> AuthResponse {
-        try await request("/auth/login", method: "POST", body: try JSONEncoder().encode(["userId": userId, "password": password, "deviceId": deviceId]))
+        try await request("/auth/login", method: "POST", body: try JSONEncoder().encode(["userId": userId, "password": password, "deviceId": deviceId, "platform": "ios"]))
     }
 
     func me() async throws -> UserResponse { try await request("/auth/me") }
