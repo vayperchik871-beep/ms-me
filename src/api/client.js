@@ -1,11 +1,12 @@
-function getApiBase() {
-  return ''
+export function getApiBase() {
+  return import.meta.env.VITE_API_BASE_URL || ''
 }
 
 function getApiUrl(path = '') {
   const base = getApiBase()
-  if (base === '/api') return `/api${path}`
-  return `${base}/api${path}`
+  if (!base || base === '/api') return `/api${path}`
+  const clean = base.replace(/\/+$/, '')
+  return `${clean}/api${path}`
 }
 
 let _tempToken = null

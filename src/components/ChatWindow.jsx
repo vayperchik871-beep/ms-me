@@ -14,6 +14,8 @@ export default function ChatWindow({ chatId, onBack }) {
   const { user } = useAuth()
   const [chat, setChat] = useState(null)
   const [messages, setMessages] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [retryCount, setRetryCount] = useState(0)
   const [replyTo, setReplyTo] = useState(null)
   const [editId, setEditId] = useState(null)
   const [contextMenu, setContextMenu] = useState(null)
@@ -24,19 +26,34 @@ export default function ChatWindow({ chatId, onBack }) {
   const messagesEndRef = useRef(null)
   const [otherUnread, setOtherUnread] = useState(0)
   const [profileUserId, setProfileUserId] = useState(null)
+  const retryTimerRef = useRef(null)
 
-  const loadChat = useCallback(async () => {
+  const loadChat = useCallback(async (attempt = 0) => {
+    setLoading(true)
     try {
       const { chats } = await api.getChats()
       const c = chats.find((ch) => ch.id === chatId)
-      setChat(c)
+      if (c) setChat(c)
       setOtherUnread(chats.reduce((s, ch) => s + (ch.id !== chatId ? (ch.unread || 0) : 0), 0))
       const { messages: msgs } = await api.getMessages(chatId)
       setMessages(msgs)
-    } catch { /* ignore */ }
+      setRetryCount(0)
+      setLoading(false)
+    } catch {
+      setRetryCount(attempt + 1)
+      const delay = Math.min(1000 * Math.pow(2, Math.min(attempt, 4)), 16000)
+      retryTimerRef.current = setTimeout(() => loadChat(attempt + 1), delay)
+      setLoading(false)
+    }
   }, [chatId])
 
   useEffect(() => { loadChat() }, [loadChat])
+
+  useEffect(() => {
+    return () => {
+      if (retryTimerRef.current) clearTimeout(retryTimerRef.current)
+    }
+  }, [])
 
   useEffect(() => {
     api.readChat(chatId).catch(() => {})
@@ -230,7 +247,13 @@ export default function ChatWindow({ chatId, onBack }) {
       </header>
 
       <div className="messages-area dark">
-        {messages.length === 0 && (
+        {loading && (
+          <div className="msg-loading-wrap">
+            <div className="msg-loading-spinner" />
+            {retryCount > 0 && <p className="msg-loading-hint">{t('Сервер запускается...')}</p>}
+          </div>
+        )}
+        {!loading && messages.length === 0 && (
           <div className="chat-empty">
             <p>{t('Здесь пока нет сообщений')}</p>
             <p className="empty-hint">{t('Отправьте сообщение, чтобы начать')}</p>

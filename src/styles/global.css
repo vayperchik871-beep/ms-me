@@ -161,7 +161,7 @@ input, textarea { font-family: inherit; border: none; outline: none; background:
 .bottom-nav {
   position: fixed; bottom: 0; left: 50%; transform: translateX(-50%);
   width: 100%; max-width: 480px;
-  padding: 0 20px calc(env(safe-area-inset-bottom, 0px) + 20px);
+  padding: 0 20px 36px;
   z-index: 50;
   pointer-events: none;
 }
@@ -487,6 +487,18 @@ input, textarea { font-family: inherit; border: none; outline: none; background:
   text-align: center; padding: 40px;
 }
 
+.msg-loading-wrap {
+  flex: 1; display: flex; flex-direction: column;
+  align-items: center; justify-content: center; gap: 12px;
+}
+.msg-loading-spinner {
+  width: 32px; height: 32px; border: 3px solid var(--border);
+  border-top-color: var(--user-accent, #7c5cfc);
+  border-radius: 50%; animation: msgSpinner 0.8s linear infinite;
+}
+@keyframes msgSpinner { to { transform: rotate(360deg); } }
+.msg-loading-hint { font-size: 13px; color: var(--text-muted); }
+
 .chat-empty p:first-child { font-size: 16px; font-weight: 500; }
 
 .quick-emojis { display: flex; gap: 12px; margin-top: 20px; }
@@ -564,18 +576,21 @@ input, textarea { font-family: inherit; border: none; outline: none; background:
 .reply-label { font-size: 12px; color: var(--ms-green); font-weight: 600; display: block; }
 .reply-text { font-size: 13px; color: var(--text-secondary); display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 280px; }
 
-/* ─── Input Bar (iOS 26 Liquid Glass) ─── */
+/* ─── Input Bar ─── */
 
 .ig-bar {
-  padding: 8px 10px calc(env(safe-area-inset-bottom, 8px) + 8px);
+  padding: 8px 10px 24px;
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
 }
 
 .ig-row {
-  display: flex; align-items: flex-end; gap: 8px;
+  display: flex; align-items: flex-end; gap: 8px; width: 100%;
 }
 
 .ig-btn {
-  width: 44px; height: 44px; border-radius: 50%;
+  width: 40px; height: 40px; border-radius: 50%;
   display: flex; align-items: center; justify-content: center;
   flex-shrink: 0;
   background: rgba(28, 28, 30, 0.72);
@@ -614,7 +629,8 @@ input, textarea { font-family: inherit; border: none; outline: none; background:
 }
 
 .ig-attach svg { transition: transform 0.15s ease; }
-.ig-mic { touch-action: none; }
+.ig-mic { touch-action: none; color: var(--user-accent, #7c5cfc); }
+.ig-mic svg { stroke: var(--user-accent, #7c5cfc); }
 
 .ig-send {
   background: rgba(255, 255, 255, 0.18);
@@ -635,9 +651,9 @@ input, textarea { font-family: inherit; border: none; outline: none; background:
 .ig-capsule {
   flex: 1;
   display: flex; align-items: center;
-  min-height: 44px;
-  padding: 6px 8px 6px 14px;
-  border-radius: 22px;
+  min-height: 40px;
+  padding: 4px 6px 4px 12px;
+  border-radius: 20px;
   background: rgba(28, 28, 30, 0.72);
   backdrop-filter: blur(28px) saturate(1.2);
   -webkit-backdrop-filter: blur(28px) saturate(1.2);
@@ -696,8 +712,10 @@ input, textarea { font-family: inherit; border: none; outline: none; background:
   -webkit-tap-highlight-color: transparent;
 }
 
+.ig-emoji:hover { background: rgba(255, 255, 255, 0.06); }
+
 .ig-emoji:active {
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.12);
   color: var(--text-secondary);
 }
 
@@ -730,7 +748,7 @@ input, textarea { font-family: inherit; border: none; outline: none; background:
 
 .ig-recording {
   display: flex; align-items: center; gap: 10px;
-  padding: 8px 12px calc(env(safe-area-inset-bottom, 8px) + 8px);
+  padding: 6px 0;
 }
 
 .ig-rec-cancel {
@@ -1170,32 +1188,45 @@ input, textarea { font-family: inherit; border: none; outline: none; background:
 
 /* ─── Voice Message ─── */
 
-.voice-msg {
-  display: flex; align-items: center; gap: 10px; cursor: pointer;
-  min-width: 200px; padding: 4px 0;
+.voice-msg { padding: 2px 0; }
+
+/* ─── Audio Player ─── */
+
+.ap-wrap {
+  display: flex; align-items: center; gap: 8px;
+  min-width: 180px; padding: 2px 0;
 }
-.voice-play-btn {
-  width: 36px; height: 36px; border-radius: 50%;
+.ap-play {
+  width: 34px; height: 34px; border-radius: 50%;
   background: var(--bg-tertiary); color: var(--text-primary);
-  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0; border: none; cursor: pointer;
+  transition: background 0.15s, transform 0.1s;
+  -webkit-tap-highlight-color: transparent;
 }
-.voice-play-btn.paused { background: var(--ms-green); color: #000; }
-.voice-wave {
-  flex: 1; height: 32px; display: flex; align-items: center; gap: 2px;
+.ap-play:active { transform: scale(0.9); }
+.ap-wave {
+  flex: 1; height: 28px; display: flex; align-items: center; gap: 2px;
+  cursor: pointer; padding: 0 2px;
 }
-.voice-bar {
-  flex: 1; min-width: 3px; border-radius: 2px;
-  transition: background 0.15s ease, opacity 0.15s ease;
+.ap-bar {
+  flex: 1; min-width: 2px; border-radius: 2px;
+  background: var(--text-muted); opacity: 0.3;
+  transition: opacity 0.1s;
 }
-.voice-wave-anim .voice-bar {
-  animation: voiceBarBounce 0.6s ease-in-out infinite alternate;
-  animation-delay: var(--bar-delay, 0s);
+.ap-bar-active { opacity: 1; background: var(--user-accent, #7c5cfc); }
+.ap-info {
+  display: flex; align-items: center; gap: 4px; flex-shrink: 0;
 }
-@keyframes voiceBarBounce {
-  0% { transform: scaleY(0.7); }
-  100% { transform: scaleY(1.1); }
+.ap-time, .ap-dur {
+  font-size: 11px; color: var(--text-muted);
+  font-variant-numeric: tabular-nums; min-width: 28px;
 }
-.voice-dur { font-size: 12px; color: var(--text-muted); flex-shrink: 0; min-width: 32px; }
+.ap-dur { color: var(--text-muted); opacity: 0.5; }
+
+.msg-audio-wrap {
+  padding: 2px 0;
+}
 
 /* ─── Video Message ─── */
 

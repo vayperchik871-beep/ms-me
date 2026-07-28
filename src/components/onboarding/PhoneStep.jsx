@@ -20,8 +20,8 @@ export default function PhoneStep({ onNext, onBack }) {
     if (d.length === max && next) next.current?.focus()
   }
 
-  const handleBack = (e, prev) => {
-    if (e.key === 'Backspace' && prev) prev.current?.focus()
+  const handleBack = (e, prev, curVal) => {
+    if (e.key === 'Backspace' && curVal === '' && prev) prev.current?.focus()
   }
 
   return (
@@ -35,55 +35,47 @@ export default function PhoneStep({ onNext, onBack }) {
         <h1 className="nw-title" style={{ textAlign: 'center' }}>{t('Придумайте номер')}</h1>
         <p className="nw-subtitle" style={{ textAlign: 'center', margin: '0 auto 32px' }}>{t('Номер начинается на +777 и будет привязан к вашему аккаунту навсегда')}</p>
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 10, width: '100%', maxWidth: 340 }}>
-          <div className="nw-field">
-            <input
-              className="nw-field-input"
-              style={{ textAlign: 'center', fontSize: 22, fontWeight: 700, letterSpacing: 2, color: '#7c5cfc' }}
-              value="+777"
-              readOnly
-            />
+        <div className="nw-phone-segments" style={{ maxWidth: 340, justifyContent: 'center' }}>
+          <div className="nw-phone-seg nw-phone-seg-prefix">
+            <span className="nw-phone-prefix-text" style={{ fontSize: 18 }}>+777</span>
           </div>
-          <div className="nw-field">
+          <div className="nw-phone-seg" style={{ minWidth: 80, flex: '0 1 auto' }}>
             <input
               ref={ref1}
-              className="nw-field-input"
+              className="nw-phone-input"
               type="tel"
               inputMode="numeric"
               value={p1}
               onChange={(e) => handle(e.target.value, 3, setP1, ref2)}
-              onKeyDown={(e) => handleBack(e, null)}
+              onKeyDown={(e) => handleBack(e, null, p1)}
               placeholder="000"
               maxLength={3}
-              style={{ textAlign: 'center', fontSize: 22, fontWeight: 600, letterSpacing: 4 }}
             />
           </div>
-          <div className="nw-field">
+          <div className="nw-phone-seg" style={{ width: 64 }}>
             <input
               ref={ref2}
-              className="nw-field-input"
+              className="nw-phone-input"
               type="tel"
               inputMode="numeric"
               value={p2}
-              onChange={(e) => handle(e.target.value, 2, setP3, ref3)}
-              onKeyDown={(e) => handleBack(e, ref1)}
+              onChange={(e) => handle(e.target.value, 2, setP2, ref3)}
+              onKeyDown={(e) => handleBack(e, ref1, p2)}
               placeholder="00"
               maxLength={2}
-              style={{ textAlign: 'center', fontSize: 22, fontWeight: 600, letterSpacing: 4 }}
             />
           </div>
-          <div className="nw-field">
+          <div className="nw-phone-seg" style={{ width: 64 }}>
             <input
               ref={ref3}
-              className="nw-field-input"
+              className="nw-phone-input"
               type="tel"
               inputMode="numeric"
               value={p3}
               onChange={(e) => handle(e.target.value, 2, setP3, null)}
-              onKeyDown={(e) => handleBack(e, ref2)}
+              onKeyDown={(e) => handleBack(e, ref2, p3)}
               placeholder="00"
               maxLength={2}
-              style={{ textAlign: 'center', fontSize: 22, fontWeight: 600, letterSpacing: 4 }}
             />
           </div>
         </div>

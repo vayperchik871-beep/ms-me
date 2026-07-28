@@ -1,6 +1,7 @@
 import { useRef, useMemo, useState, useCallback, useEffect } from 'react'
 import { parseEmoji, emojiToImg } from '../utils/emoji'
 import { resolveMediaUrl } from '../api/client'
+import AudioPlayer from './AudioPlayer'
 import { t } from '../i18n'
 
 function formatTime(ts) {
@@ -16,67 +17,7 @@ function formatTime(ts) {
 }
 
 function VoiceMessage({ url, duration }) {
-  const [playing, setPlaying] = useState(false)
-  const [progress, setProgress] = useState(0)
-  const [loaded, setLoaded] = useState(false)
-  const [bars] = useState(() => Array.from({ length: 28 }, () => 0.15 + Math.random() * 0.85))
-  const audioRef = useRef(null)
-
-  const toggle = useCallback(() => {
-    if (!audioRef.current) return
-    if (playing) {
-      audioRef.current.pause()
-    } else {
-      audioRef.current.play().catch(() => {})
-    }
-  }, [playing])
-
-  const activeBar = Math.floor((progress / 100) * bars.length)
-  const resolvedUrl = resolveMediaUrl(url)
-
-  return (
-    <div className="voice-msg" onClick={(e) => { e.stopPropagation(); toggle() }}>
-      <button className={`voice-play-btn ${playing ? 'paused' : ''}`} aria-label={playing ? t('Пауза') : t('Воспроизвести')}>
-        {playing ? (
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16" /><rect x="14" y="4" width="4" height="16" /></svg>
-        ) : (
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z" /></svg>
-        )}
-      </button>
-      <div className={`voice-wave ${playing ? 'voice-wave-anim' : ''}`}>
-        {bars.map((h, i) => (
-          <div
-            key={i}
-            className="voice-bar"
-            style={{
-              height: `${h * 100}%`,
-              '--bar-delay': `${i * 0.03}s`,
-              background: i <= activeBar ? 'var(--ms-green)' : 'var(--text-muted)',
-              opacity: i <= activeBar ? 1 : 0.35,
-            }}
-          />
-        ))}
-      </div>
-      <span className="voice-dur">{duration ? `${Math.floor(duration / 60)}:${(duration % 60).toString().padStart(2, '0')}` : '0:00'}</span>
-      {resolvedUrl && (
-        <audio
-          ref={audioRef}
-          src={resolvedUrl}
-          preload="auto"
-          onLoadedData={() => setLoaded(true)}
-          onPlay={() => setPlaying(true)}
-          onPause={() => setPlaying(false)}
-          onEnded={() => { setPlaying(false); setProgress(0) }}
-          onTimeUpdate={() => {
-            if (audioRef.current) {
-              setProgress((audioRef.current.currentTime / (audioRef.current.duration || 1)) * 100)
-            }
-          }}
-          onError={(e) => console.error('Audio error:', e.target.error)}
-        />
-      )}
-    </div>
-  )
+  return <AudioPlayer url={url} duration={duration} />
 }
 
 function VideoMessage({ url }) {
@@ -134,6 +75,7 @@ export default function MessageBubble({ message, isMine, showName, selected, sel
   const isImage = attach?.type === 'image'
   const isVideo = attach?.type === 'video'
   const isVoice = attach?.type === 'voice'
+  const isAudio = attach?.type === 'audio'
   const isFile = attach?.type === 'file'
 
   return (
@@ -173,6 +115,13 @@ export default function MessageBubble({ message, isMine, showName, selected, sel
 
         {isVoice && (
           <VoiceMessage key={message.id} url={attach.url} duration={attach.duration} />
+        )}
+
+        {isAudio && (
+          <div className="msg-audio-wrap">
+            <AudioPlayer url={attach.url} duration={attach.duration} waveform={attach.waveform} />
+            <span className="msg-file-name" style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 2 }}>{attach.name}</span>
+          </div>
         )}
 
         {isFile && (

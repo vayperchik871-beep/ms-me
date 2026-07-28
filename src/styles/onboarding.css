@@ -166,18 +166,26 @@
 }
 
 .nw-phone-input {
-  width: 70px;
-  padding: 12px 6px;
+  width: 100%;
+  min-width: 0;
+  padding: 14px 4px;
   background: transparent;
   border: none;
   color: #fff;
-  font-size: 15px; font-weight: 500;
+  font-size: 18px; font-weight: 600;
   font-family: inherit;
   outline: none;
   text-align: center;
+  letter-spacing: 2px;
 }
 .nw-phone-input::placeholder {
   color: rgba(255,255,255,0.15);
+}
+
+@media (max-width: 380px) {
+  .nw-phone-segments { gap: 4px; }
+  .nw-phone-input { padding: 10px 2px; font-size: 16px; letter-spacing: 1px; }
+  .nw-phone-seg-prefix { min-width: 48px; padding-left: 10px; }
 }
 
 /* ─── Avatar Section ─── */

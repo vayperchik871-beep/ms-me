@@ -1,8 +1,27 @@
 import { useState, useEffect, useRef } from 'react'
 import { api, resolveMediaUrl } from '../api/client'
 
+const STICKER_CACHE_KEY = 'sticker_packs_cache'
+const STICKER_CACHE_TTL = 5 * 60 * 1000
+
+function loadCachedPacks() {
+  try {
+    const raw = localStorage.getItem(STICKER_CACHE_KEY)
+    if (!raw) return null
+    const { packs, ts } = JSON.parse(raw)
+    if (Date.now() - ts > STICKER_CACHE_TTL) return null
+    return packs
+  } catch { return null }
+}
+
+function saveCachedPacks(packs) {
+  try {
+    localStorage.setItem(STICKER_CACHE_KEY, JSON.stringify({ packs, ts: Date.now() }))
+  } catch {}
+}
+
 export default function StickerPicker({ onSelect, onClose }) {
-  const [packs, setPacks] = useState([])
+  const [packs, setPacks] = useState(() => loadCachedPacks() || [])
   const [activePack, setActivePack] = useState(null)
   const [showCreate, setShowCreate] = useState(false)
   const [newTitle, setNewTitle] = useState('')
@@ -20,9 +39,19 @@ export default function StickerPicker({ onSelect, onClose }) {
       const allPacks = (all.packs || []).filter(p => !p.owned)
       const combined = [...myPacks, ...allPacks]
       setPacks(combined)
-      if (combined.length) setActivePack(combined[0])
+      saveCachedPacks(combined)
+      if (combined.length && !activePack) setActivePack(combined[0])
     }).catch(() => {})
   }, [])
+
+  useEffect(() => {
+    if (activePack?.stickers?.length) {
+      activePack.stickers.slice(0, 20).forEach(url => {
+        const img = new Image()
+        img.src = resolveMediaUrl(url)
+      })
+    }
+  }, [activePack])
 
   useEffect(() => {
     const handleClick = (e) => {

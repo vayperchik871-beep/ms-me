@@ -1,5 +1,4 @@
 import { useState, useRef, useEffect, useMemo } from 'react'
-import { emojiToImg } from '../utils/emoji'
 
 const EMOJI_CATEGORIES = [
   {
@@ -94,7 +93,7 @@ export default function EmojiPicker({ onSelect, onClose }) {
       <div className="emoji-grid" ref={gridRef} onScroll={handleScroll}>
         {visibleEmojis.map((e, i) => (
           <button key={`${activeCategory}-${i}`} className="emoji-item" onClick={() => onSelect(e)}>
-            <span dangerouslySetInnerHTML={{ __html: emojiToImg(e) }} />
+            {e}
           </button>
         ))}
       </div>

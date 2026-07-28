@@ -3,7 +3,7 @@ import { useAuth } from './context/AuthContext'
 import { useTheme } from './context/ThemeContext'
 import { useWebSocket } from './hooks/useWebSocket'
 import { useMediaQuery } from './hooks/useMediaQuery'
-import { api } from './api/client'
+import { api, getApiBase } from './api/client'
 import { Capacitor } from '@capacitor/core'
 import { LocalNotifications } from '@capacitor/local-notifications'
 import Onboarding from './components/onboarding/Onboarding'
@@ -46,8 +46,8 @@ async function showLocalNotification(title, body) {
     await LocalNotifications.createChannel({
       id: 'messages',
       name: 'Messages',
-      importance: 4, // HIGH
-      visibility: 1, // PUBLIC
+      importance: 4,
+      visibility: 1,
       vibration: true,
       sound: 'default',
     })
@@ -60,6 +60,23 @@ async function showLocalNotification(title, body) {
       }],
     })
   } catch {}
+}
+
+let keepaliveTimer = null
+
+function startKeepalive() {
+  if (keepaliveTimer) return
+  const base = getApiBase()
+  if (!base) return
+  const ping = () => {
+    Promise.all([
+      fetch(`${base}/health`, { method: 'GET', cache: 'no-store' }),
+      fetch(`${base}/health`, { method: 'GET', cache: 'no-store' }),
+      fetch(`${base}/health`, { method: 'GET', cache: 'no-store' }),
+    ]).catch(() => {})
+  }
+  ping()
+  keepaliveTimer = setInterval(ping, 3 * 60 * 1000)
 }
 
 export default function App() {
@@ -84,7 +101,10 @@ export default function App() {
     }
   }
 
+  
+
   useEffect(() => {
+    startKeepalive()
     requestNotifPermission()
     const hash = window.location.hash
     if (hash && hash.includes('google_token=')) {

@@ -189,7 +189,7 @@ export default function InputBar({ onSend, editText, onCancelEdit, chatId }) {
     } catch (err) {
       console.error('Mic permission error:', err)
       setRecording(false)
-      setError(t('Нет доступа к микрофону'))
+      setError(t('Микрофон недоступен'))
     }
   }
 
@@ -287,10 +287,10 @@ export default function InputBar({ onSend, editText, onCancelEdit, chatId }) {
             </button>
           </div>
         ) : (
-          <div className="ig-row">
+          <>
             {!attachFile && !uploading && (
               <button type="button" className="ig-btn ig-attach" onClick={() => fileInputRef.current?.click()} aria-label={t('Прикрепить')}>
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48" />
                 </svg>
               </button>
@@ -326,7 +326,7 @@ export default function InputBar({ onSend, editText, onCancelEdit, chatId }) {
                   />
                   <div className="ig-capsule-actions">
                     <button type="button" className={`ig-emoji ${showEmoji ? 'ig-emoji-active' : ''}`} onClick={toggleEmoji} aria-label={t('Эмодзи')}>
-                      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
                         <circle cx="12" cy="12" r="10" />
                         <path d="M8 14s1.5 2 4 2 4-2 4-2" />
                         <line x1="9" y1="9" x2="9.01" y2="9" strokeWidth="2.5" />
@@ -334,7 +334,7 @@ export default function InputBar({ onSend, editText, onCancelEdit, chatId }) {
                       </svg>
                     </button>
                     <button type="button" className={`ig-emoji ${showStickers ? 'ig-emoji-active' : ''}`} onClick={toggleStickers} aria-label={t('Стикеры')}>
-                      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
                         <circle cx="12" cy="12" r="10" />
                         <path d="M8 8h.01M16 8h.01" />
                         <path d="M12 16c-2 0-3.5-1-4-3h8c-.5 2-2 3-4 3z" />
@@ -357,25 +357,16 @@ export default function InputBar({ onSend, editText, onCancelEdit, chatId }) {
                 )}
               </button>
             ) : (
-              <div style={{ display: 'flex', gap: 4 }}>
-                <button type="button" className="ig-btn ig-mic" onClick={startRecording} aria-label={t('Голосовое')}>
-                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-                    <path d="M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3z" />
-                    <path d="M19 10v2a7 7 0 01-14 0v-2" />
-                    <line x1="12" y1="19" x2="12" y2="23" />
-                    <line x1="8" y1="23" x2="16" y2="23" />
-                  </svg>
-                </button>
-                <button type="button" className="ig-btn ig-attach-audio" onClick={() => audioFileInputRef.current?.click()} aria-label={t('Аудиофайл')}>
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
-                    <path d="M9 18V5l12-2v13"/>
-                    <circle cx="6" cy="18" r="3"/>
-                    <circle cx="18" cy="16" r="3"/>
-                  </svg>
-                </button>
-              </div>
+              <button type="button" className="ig-btn ig-mic" onClick={startRecording} aria-label={t('Голосовое')}>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+                  <path d="M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3z" />
+                  <path d="M19 10v2a7 7 0 01-14 0v-2" />
+                  <line x1="12" y1="19" x2="12" y2="23" />
+                  <line x1="8" y1="23" x2="16" y2="23" />
+                </svg>
+              </button>
             )}
-          </div>
+          </>
         )}
       </form>
     </div>
