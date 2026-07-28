@@ -10,6 +10,8 @@ struct ChatDetailView: View {
     @Environment(\.dismiss) private var dismiss
     @State private var replyTo: Message?
     @State private var showGiftPicker = false
+    @State private var showGiftConfirm = false
+    @State private var selectedGift: Gift?
     @State private var sentGift: Gift?
     @State private var showGiftAnimation = false
 
@@ -43,8 +45,20 @@ struct ChatDetailView: View {
         .sheet(isPresented: $showGiftPicker) {
             GiftPickerView { gift in
                 showGiftPicker = false
-                sentGift = gift
-                showGiftAnimation = true
+                selectedGift = gift
+                showGiftConfirm = true
+            }
+        }
+        .sheet(isPresented: $showGiftConfirm) {
+            if let gift = selectedGift {
+                GiftConfirmView(gift: gift, recipientName: chat.peer?.name ?? "Пользователь", onSend: { msg, anon in
+                    showGiftConfirm = false
+                    sentGift = gift
+                    showGiftAnimation = true
+                }, onCancel: {
+                    showGiftConfirm = false
+                    selectedGift = nil
+                })
             }
         }
         .fullScreenCover(isPresented: $showGiftAnimation) {
