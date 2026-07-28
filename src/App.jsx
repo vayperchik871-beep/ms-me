@@ -193,6 +193,7 @@ export default function App() {
             {tab === 'contacts' && (
               <ContactsTab onStartChat={handleStartChat} />
             )}
+            {tab === 'profile' && <ProfileTab />}
             {tab === 'music' && <MusicTab />}
             {tab === 'settings' && (
               <SettingsTab
@@ -201,12 +202,12 @@ export default function App() {
               />
             )}
             <div className="desktop-bottom-nav">
-              <div className="bn-glass" style={{ '--active': ['chats','contacts','music','settings'].indexOf(tab) }}>
+              <div className="bn-glass" style={{ '--active': ['chats','contacts','profile','settings'].indexOf(tab) }}>
                 <div className="bn-indicator" />
                 {[
                   { id: 'chats', label: 'Чаты', icon: SideChatIcon },
                   { id: 'contacts', label: 'Контакты', icon: SideContactsIcon },
-                  { id: 'music', label: 'Музыка', icon: SideMusicIcon },
+                  { id: 'profile', label: 'Профиль', icon: SideProfileIcon },
                   { id: 'settings', label: 'Настройки', icon: SideSettingsIcon },
                 ].map(({ id, label, icon: Icon }) => (
                   <button
@@ -253,6 +254,7 @@ export default function App() {
       {tab === 'contacts' && (
         <ContactsTab onStartChat={handleStartChat} />
       )}
+      {tab === 'profile' && <ProfileTab />}
       {tab === 'music' && <MusicTab />}
       {tab === 'settings' && (
         <SettingsTab
@@ -289,6 +291,15 @@ function SideMusicIcon({ active }) {
       <path d="M9 18V5l12-2v13" />
       <circle cx="6" cy="18" r="3" />
       <circle cx="18" cy="16" r="3" />
+    </svg>
+  )
+}
+
+function SideProfileIcon({ active }) {
+  return (
+    <svg width="24" height="24" viewBox="0 0 24 24" fill={active ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="1.8">
+      <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" />
+      <circle cx="12" cy="7" r="4" />
     </svg>
   )
 }

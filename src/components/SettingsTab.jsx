@@ -2,14 +2,12 @@ import { useState } from 'react'
 import { useAuth } from '../context/AuthContext'
 import { t } from '../i18n'
 import PrivacyPolicy from './PrivacyPolicy'
-import AppearanceScreen from './AppearanceScreen'
 import AccountScreen from './AccountScreen'
 
 export default function SettingsTab({ onLogout, onAddAccount }) {
   const { user } = useAuth()
   const [screen, setScreen] = useState(null)
 
-  if (screen === 'appearance') return <AppearanceScreen onBack={() => setScreen(null)} />
   if (screen === 'privacy') return <PrivacyPolicy onBack={() => setScreen(null)} />
   if (screen === 'account') return <AccountScreen onBack={() => setScreen(null)} onLogout={onLogout} onAddAccount={onAddAccount} />
 
@@ -28,19 +26,6 @@ export default function SettingsTab({ onLogout, onAddAccount }) {
           <span className="settings-user-id">@{user?.userId}</span>
         </div>
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.2)" strokeWidth="2" strokeLinecap="round"><path d="M9 18l6-6-6-6"/></svg>
-      </div>
-
-      <p className="settings-section-label">{t('Оформление')}</p>
-      <div className="settings-card">
-        <button className="settings-card-row clickable" onClick={() => setScreen('appearance')}>
-          <div className="settings-card-left">
-            <span className="settings-card-icon">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><path d="M12 2.69l5.66 5.66a8 8 0 11-11.31 0z"/></svg>
-            </span>
-            <span className="settings-card-label">{t('Навигация и тема')}</span>
-          </div>
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.2)" strokeWidth="2" strokeLinecap="round"><path d="M9 18l6-6-6-6"/></svg>
-        </button>
       </div>
 
       <p className="settings-section-label">{t('Конфиденциальность')}</p>

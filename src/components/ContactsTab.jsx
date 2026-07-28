@@ -1,10 +1,12 @@
 import { useState, useEffect } from 'react'
 import { api, resolveMediaUrl } from '../api/client'
+import UserProfileModal from './UserProfileModal'
 import { t } from '../i18n'
 
 export default function ContactsTab({ onStartChat }) {
   const [contacts, setContacts] = useState([])
   const [searchQuery, setSearchQuery] = useState('')
+  const [profileUserId, setProfileUserId] = useState(null)
 
   const load = async () => {
     try { const { contacts: data } = await api.getContacts(); setContacts(data.filter((c) => !c.isSystem)) } catch {}
@@ -44,9 +46,14 @@ export default function ContactsTab({ onStartChat }) {
               <div className="chat-name">{c.name}</div>
               <div className="chat-preview">@{c.userId}</div>
             </div>
+            <button className="text-btn" onClick={(e) => { e.stopPropagation(); setProfileUserId(c.userId) }} style={{ fontSize: 12 }}>{t('Профиль')}</button>
           </button>
         ))}
       </div>
+
+      {profileUserId && (
+        <UserProfileModal userId={profileUserId} onClose={() => setProfileUserId(null)} onStartChat={onStartChat} />
+      )}
     </div>
   )
 }

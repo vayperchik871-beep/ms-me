@@ -4,6 +4,7 @@ import { sendWsMessage } from '../hooks/useWebSocket'
 import { t } from '../i18n'
 import EmojiPicker from './EmojiPicker'
 import StickerPicker from './StickerPicker'
+import GiftPicker from './GiftPicker'
 
 export default function InputBar({ onSend, editText, onCancelEdit, chatId }) {
   const [text, setText] = useState('')
@@ -14,6 +15,7 @@ export default function InputBar({ onSend, editText, onCancelEdit, chatId }) {
   const [uploading, setUploading] = useState(false)
   const [showEmoji, setShowEmoji] = useState(false)
   const [showStickers, setShowStickers] = useState(false)
+  const [showGifts, setShowGifts] = useState(false)
   const [error, setError] = useState(null)
   const textareaRef = useRef(null)
   const fileInputRef = useRef(null)
@@ -257,15 +259,22 @@ export default function InputBar({ onSend, editText, onCancelEdit, chatId }) {
     setShowEmoji(false)
   }
 
+  const toggleGifts = () => {
+    setShowGifts(prev => !prev)
+    setShowEmoji(false)
+    setShowStickers(false)
+  }
+
   return (
     <div className="ig-bar-wrap">
       {error && (
         <div className="ig-error-toast">{error}</div>
       )}
-      {(showEmoji || showStickers) && (
+      {(showEmoji || showStickers || showGifts) && (
         <div className="ig-picker-wrap">
           {showEmoji && <EmojiPicker onSelect={handleEmojiSelect} onClose={() => setShowEmoji(false)} />}
           {showStickers && <StickerPicker onSelect={handleStickerSelect} onClose={() => setShowStickers(false)} />}
+          {showGifts && <GiftPicker onClose={() => setShowGifts(false)} />}
         </div>
       )}
       <form className="ig-bar" onSubmit={handleSubmit}>
@@ -324,7 +333,7 @@ export default function InputBar({ onSend, editText, onCancelEdit, chatId }) {
                     rows={1}
                     disabled={uploading}
                   />
-                  <div className="ig-capsule-actions">
+                    <div className="ig-capsule-actions">
                     <button type="button" className={`ig-emoji ${showEmoji ? 'ig-emoji-active' : ''}`} onClick={toggleEmoji} aria-label={t('Эмодзи')}>
                       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
                         <circle cx="12" cy="12" r="10" />
@@ -338,6 +347,15 @@ export default function InputBar({ onSend, editText, onCancelEdit, chatId }) {
                         <circle cx="12" cy="12" r="10" />
                         <path d="M8 8h.01M16 8h.01" />
                         <path d="M12 16c-2 0-3.5-1-4-3h8c-.5 2-2 3-4 3z" />
+                      </svg>
+                    </button>
+                    <button type="button" className={`ig-emoji ${showGifts ? 'ig-emoji-active' : ''}`} onClick={toggleGifts} aria-label={t('Подарки')}>
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+                        <rect x="3" y="4" width="18" height="4" rx="1" />
+                        <path d="M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8" />
+                        <line x1="12" y1="4" x2="12" y2="20" />
+                        <path d="M12 4c0-2 4-3 4 0" />
+                        <path d="M12 4c0-2-4-3-4 0" />
                       </svg>
                     </button>
                   </div>
@@ -358,7 +376,7 @@ export default function InputBar({ onSend, editText, onCancelEdit, chatId }) {
               </button>
             ) : (
               <button type="button" className="ig-btn ig-mic" onClick={startRecording} aria-label={t('Голосовое')}>
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
                   <path d="M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3z" />
                   <path d="M19 10v2a7 7 0 01-14 0v-2" />
                   <line x1="12" y1="19" x2="12" y2="23" />

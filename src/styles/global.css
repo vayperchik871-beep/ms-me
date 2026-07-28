@@ -553,6 +553,11 @@ input, textarea { font-family: inherit; border: none; outline: none; background:
 .bubble p { font-size: 15px; line-height: 1.45; }
 .bubble p img.emoji { width: 1.2em; height: 1.2em; vertical-align: -0.2em; display: inline; }
 .sender-name { display: block; font-size: 13px; font-weight: 600; color: var(--ms-green); margin-bottom: 2px; }
+.sender-name-btn {
+  display: block; font-size: 13px; font-weight: 600; color: var(--ms-green);
+  margin-bottom: 2px; cursor: pointer; border: none; background: none; padding: 0;
+  text-align: left; width: 100%;
+}
 
 .bubble-meta { display: flex; align-items: center; justify-content: flex-end; gap: 4px; margin-top: 2px; }
 .bubble-time { font-size: 11px; color: var(--text-muted); }
@@ -579,10 +584,11 @@ input, textarea { font-family: inherit; border: none; outline: none; background:
 /* ─── Input Bar ─── */
 
 .ig-bar {
-  padding: 8px 10px 24px;
+  padding: 8px 10px 48px;
   display: flex;
   align-items: flex-end;
   gap: 8px;
+  background: var(--bg-chat);
 }
 
 .ig-row {
@@ -629,8 +635,14 @@ input, textarea { font-family: inherit; border: none; outline: none; background:
 }
 
 .ig-attach svg { transition: transform 0.15s ease; }
-.ig-mic { touch-action: none; color: var(--user-accent, #7c5cfc); }
-.ig-mic svg { stroke: var(--user-accent, #7c5cfc); }
+.ig-mic {
+  touch-action: none;
+  color: #7c5cfc;
+  background: rgba(124, 92, 252, 0.15) !important;
+  border-color: rgba(124, 92, 252, 0.3) !important;
+}
+.ig-mic svg { stroke: #7c5cfc; }
+.ig-mic:active { background: rgba(124, 92, 252, 0.3) !important; }
 
 .ig-send {
   background: rgba(255, 255, 255, 0.18);
@@ -1261,7 +1273,7 @@ input, textarea { font-family: inherit; border: none; outline: none; background:
 
 /* ─── Emoji Picker ─── */
 
-.ig-bar-wrap { position: relative; width: 100%; }
+.ig-bar-wrap { position: relative; width: 100%; background: var(--bg-chat); }
 .ig-picker-wrap {
   position: absolute; bottom: 100%; left: 0; right: 0;
   max-height: 340px; z-index: 100; padding: 0 8px 8px;
@@ -2409,4 +2421,529 @@ img.twemoji {
   height: 1.2em;
   vertical-align: -0.15em;
 }
+
+/* ─── Gifts ─── */
+
+:root {
+  --g-rarity-common: #8e8e93;
+  --g-rarity-rare: #5ac8fa;
+  --g-rarity-epic: #af52de;
+  --g-rarity-legendary: #ff9500;
+  --g-rarity-mythic: #ff3b30;
+}
+
+.g-overlay {
+  position: fixed; inset: 0; z-index: 300;
+  background: rgba(0,0,0,0.6);
+  display: flex; align-items: flex-end; justify-content: center;
+  animation: gFadeIn 0.2s ease;
+}
+
+@keyframes gFadeIn {
+  from { opacity: 0 } to { opacity: 1 }
+}
+
+.g-sheet {
+  width: 100%; max-width: 480px;
+  max-height: 85vh;
+  background: rgba(28, 28, 30, 0.92);
+  backdrop-filter: blur(32px) saturate(1.3);
+  -webkit-backdrop-filter: blur(32px) saturate(1.3);
+  border-radius: 20px 20px 0 0;
+  border-top: 1px solid rgba(255,255,255,0.06);
+  display: flex; flex-direction: column;
+  animation: gSheetUp 0.35s cubic-bezier(0.32, 0.72, 0, 1);
+  overflow: hidden;
+}
+
+@keyframes gSheetUp {
+  from { transform: translateY(100%) } to { transform: translateY(0) }
+}
+
+.g-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 16px 20px 8px;
+  flex-shrink: 0;
+}
+
+.g-title {
+  font-size: 20px; font-weight: 700; color: #fff;
+  margin: 0;
+}
+
+.g-close {
+  width: 32px; height: 32px; border-radius: 50%;
+  background: rgba(255,255,255,0.08);
+  border: none; display: flex; align-items: center; justify-content: center;
+  color: rgba(255,255,255,0.5); cursor: pointer;
+  font-size: 16px; transition: background 0.15s, transform 0.1s;
+  flex-shrink: 0;
+}
+
+.g-close:active {
+  background: rgba(255,255,255,0.15);
+  transform: scale(0.9);
+}
+
+.g-categories {
+  display: flex; gap: 8px; padding: 8px 20px 12px;
+  overflow-x: auto; flex-shrink: 0;
+  scrollbar-width: none;
+}
+
+.g-categories::-webkit-scrollbar { display: none; }
+
+.g-cat-pill {
+  padding: 7px 16px; border-radius: 20px;
+  font-size: 13px; font-weight: 600;
+  background: rgba(255,255,255,0.06);
+  color: rgba(255,255,255,0.5);
+  border: 1px solid rgba(255,255,255,0.06);
+  cursor: pointer; white-space: nowrap;
+  transition: all 0.2s; flex-shrink: 0;
+}
+
+.g-cat-pill:active { transform: scale(0.95); }
+
+.g-cat-active {
+  background: rgba(255,255,255,0.12);
+  color: #fff;
+  border-color: rgba(255,255,255,0.15);
+}
+
+.g-grid {
+  display: grid; grid-template-columns: repeat(2, 1fr);
+  gap: 12px; padding: 4px 20px 20px;
+  overflow-y: auto; flex: 1;
+  scrollbar-width: thin;
+}
+
+.g-card {
+  display: flex; flex-direction: column; align-items: center;
+  padding: 16px 12px 12px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 20px;
+  cursor: pointer;
+  transition: transform 0.15s, background 0.15s;
+  text-align: center;
+  position: relative;
+  gap: 6px;
+}
+
+.g-card:active {
+  transform: scale(0.95);
+  background: rgba(255,255,255,0.08);
+}
+
+.g-card-icon-wrap {
+  width: 64px; height: 64px;
+  display: flex; align-items: center; justify-content: center;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.04);
+  box-shadow: 0 0 20px var(--g-glow, transparent);
+  margin-bottom: 4px;
+  transition: box-shadow 0.3s;
+}
+
+.g-card-icon { font-size: 48px; line-height: 1; }
+
+.g-card-info {
+  display: flex; flex-direction: column; gap: 2px;
+}
+
+.g-card-name {
+  font-size: 14px; font-weight: 600; color: #fff;
+  line-height: 1.2;
+}
+
+.g-card-price {
+  font-size: 12px; color: rgba(255,255,255,0.4);
+}
+
+.g-rarity-badge {
+  font-size: 10px; font-weight: 700; color: #fff;
+  padding: 2px 8px; border-radius: 8px;
+  text-transform: uppercase; letter-spacing: 0.5px;
+  display: inline-block;
+}
+
+.g-rarity-badge-lg {
+  font-size: 12px; padding: 4px 14px; border-radius: 10px;
+}
+
+.g-limited-bar-wrap {
+  width: 100%; display: flex; flex-direction: column;
+  align-items: center; gap: 3px; margin-top: 4px;
+}
+
+.g-limited-bar {
+  width: 100%; height: 4px;
+  background: rgba(255,255,255,0.08);
+  border-radius: 2px; overflow: hidden;
+}
+
+.g-limited-bar-lg { height: 6px; border-radius: 3px; }
+
+.g-limited-fill {
+  height: 100%; background: #ff9500;
+  border-radius: 2px; transition: width 0.5s ease;
+}
+
+.g-limited-text {
+  font-size: 10px; color: rgba(255,255,255,0.4);
+  white-space: nowrap;
+}
+
+/* ─── Gift Confirm ─── */
+
+.g-confirm { padding-bottom: 24px; }
+
+.g-confirm-hero {
+  display: flex; flex-direction: column; align-items: center;
+  padding: 12px 20px 16px; gap: 8px;
+}
+
+.g-confirm-icon-wrap {
+  width: 96px; height: 96px;
+  display: flex; align-items: center; justify-content: center;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.04);
+  box-shadow: 0 0 30px var(--g-glow, transparent);
+  margin-bottom: 4px;
+}
+
+.g-confirm-icon { font-size: 64px; line-height: 1; }
+
+.g-confirm-name {
+  font-size: 20px; font-weight: 700; color: #fff;
+  margin: 0;
+}
+
+.g-confirm-price {
+  font-size: 18px; font-weight: 600; color: rgba(255,255,255,0.7);
+}
+
+.g-confirm-recipient {
+  font-size: 14px; color: rgba(255,255,255,0.45);
+}
+
+.g-message-input {
+  width: 100%;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 14px;
+  padding: 12px 14px;
+  font-size: 14px; color: #fff;
+  resize: none; font-family: inherit;
+  margin: 8px 0 12px;
+  box-sizing: border-box;
+  transition: border-color 0.2s;
+}
+
+.g-message-input:focus {
+  border-color: rgba(255,255,255,0.15);
+}
+
+.g-message-input::placeholder {
+  color: rgba(255,255,255,0.2);
+}
+
+.g-toggle-row {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 4px 0 16px;
+  cursor: pointer;
+}
+
+.g-toggle-label {
+  font-size: 15px; color: rgba(255,255,255,0.7);
+}
+
+.g-toggle {
+  width: 51px; height: 31px; border-radius: 16px;
+  background: rgba(255,255,255,0.08);
+  position: relative; flex-shrink: 0;
+  transition: background 0.2s;
+}
+
+.g-toggle-on { background: rgba(255,255,255,0.2); }
+
+.g-toggle-knob {
+  width: 27px; height: 27px; border-radius: 50%;
+  background: #fff; position: absolute; top: 2px; left: 2px;
+  transition: transform 0.2s;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+}
+
+.g-toggle-on .g-toggle-knob { transform: translateX(20px); }
+
+.g-send-btn {
+  width: 100%; padding: 14px;
+  border-radius: 14px; border: none;
+  font-size: 16px; font-weight: 700; color: #fff;
+  cursor: pointer; transition: transform 0.12s, opacity 0.2s;
+}
+
+.g-send-btn:active { transform: scale(0.97); opacity: 0.9; }
+
+/* ─── Gift Animation ─── */
+
+.g-anim-overlay {
+  position: fixed; inset: 0; z-index: 400;
+  display: flex; align-items: center; justify-content: center;
+  overflow: hidden;
+}
+
+.g-anim-bg {
+  position: absolute; inset: 0;
+  background: rgba(0,0,0,0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+.g-anim-particles {
+  position: absolute; inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.g-anim-particle {
+  position: absolute; top: -20px;
+  animation: gParticleFall linear forwards;
+  opacity: 0;
+}
+
+@keyframes gParticleFall {
+  0% { transform: translateY(-20px) rotate(0deg); opacity: 1; }
+  100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+}
+
+.g-anim-content {
+  position: relative; z-index: 1;
+  display: flex; flex-direction: column; align-items: center;
+  gap: 16px; text-align: center;
+  padding: 40px 24px;
+}
+
+.g-anim-emoji-wrap {
+  width: 1px; height: 1px;
+  display: flex; align-items: center; justify-content: center;
+  transition: all 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.g-anim-emoji-visible {
+  width: 200px; height: 200px;
+}
+
+.g-anim-emoji {
+  font-size: 180px; line-height: 1;
+  transform: scale(0);
+  transition: transform 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.g-anim-emoji-visible .g-anim-emoji {
+  transform: scale(1);
+}
+
+.g-anim-title {
+  font-size: 28px; font-weight: 800; color: #fff;
+  margin: 0;
+  animation: gAnimFadeUp 0.5s ease 0.3s both;
+}
+
+@keyframes gAnimFadeUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.g-anim-details {
+  display: flex; flex-direction: column; gap: 4px;
+  animation: gAnimFadeUp 0.5s ease 0.5s both;
+}
+
+.g-anim-gift-name {
+  font-size: 18px; font-weight: 600; color: rgba(255,255,255,0.8);
+}
+
+.g-anim-from {
+  font-size: 14px; color: rgba(255,255,255,0.4);
+}
+
+.g-anim-actions {
+  display: flex; gap: 12px;
+  animation: gAnimFadeUp 0.5s ease 0.7s both;
+}
+
+.g-anim-btn {
+  padding: 12px 28px; border-radius: 14px;
+  font-size: 15px; font-weight: 600;
+  border: none; cursor: pointer;
+  transition: transform 0.1s, opacity 0.2s;
+}
+
+.g-anim-btn:active { transform: scale(0.95); }
+
+.g-anim-btn-thanks {
+  background: rgba(255,255,255,0.08);
+  color: rgba(255,255,255,0.7);
+}
+
+.g-anim-btn-open {
+  background: #fff;
+  color: #000;
+}
+
+/* ─── Gift Profile ─── */
+
+.g-profile-screen {
+  position: fixed; inset: 0; z-index: 300;
+  background: #000;
+  display: flex; flex-direction: column;
+  overflow: hidden;
+}
+
+.g-profile-header {
+  display: flex; align-items: center; gap: 12px;
+  padding: 12px 16px; flex-shrink: 0;
+}
+
+.g-profile-back {
+  width: 40px; height: 40px; border-radius: 50%;
+  background: rgba(255,255,255,0.08);
+  border: none; display: flex; align-items: center; justify-content: center;
+  color: #fff; font-size: 18px; cursor: pointer;
+  transition: background 0.15s;
+}
+
+.g-profile-back:active { background: rgba(255,255,255,0.15); }
+
+.g-profile-title {
+  font-size: 17px; font-weight: 600; color: #fff;
+  flex: 1; text-align: center; margin: 0; margin-right: 40px;
+}
+
+.g-profile-hero {
+  display: flex; flex-direction: column; align-items: center;
+  padding: 24px 20px 16px; gap: 12px;
+}
+
+.g-profile-emoji-wrap {
+  width: 160px; height: 160px;
+  display: flex; align-items: center; justify-content: center;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.03);
+  box-shadow: 0 0 40px var(--g-glow, transparent);
+  animation: gGlowPulse 2s ease-in-out infinite;
+}
+
+@keyframes gGlowPulse {
+  0%, 100% { box-shadow: 0 0 40px var(--g-glow, transparent); }
+  50% { box-shadow: 0 0 80px var(--g-glow, transparent); }
+}
+
+.g-profile-emoji { font-size: 120px; line-height: 1; }
+
+.g-profile-name {
+  font-size: 28px; font-weight: 800; color: #fff;
+  margin: 0;
+}
+
+.g-profile-body {
+  flex: 1; overflow-y: auto; padding: 0 20px 20px;
+}
+
+.g-profile-desc {
+  font-size: 15px; color: rgba(255,255,255,0.5);
+  line-height: 1.5; margin: 8px 0 20px; text-align: center;
+}
+
+.g-profile-details {
+  display: flex; flex-direction: column; gap: 0;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 16px; overflow: hidden;
+}
+
+.g-profile-row {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 14px 16px;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+
+.g-profile-row:last-child { border-bottom: none; }
+
+.g-profile-label {
+  font-size: 14px; color: rgba(255,255,255,0.45);
+}
+
+.g-profile-value {
+  font-size: 14px; font-weight: 600; color: #fff;
+}
+
+.g-profile-limited-info {
+  display: flex; flex-direction: column; gap: 8px;
+  margin-top: 16px; padding: 14px 16px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 16px;
+}
+
+.g-profile-limited-text {
+  font-size: 12px; color: rgba(255,255,255,0.4);
+  text-align: center;
+}
+
+.g-profile-footer {
+  padding: 12px 20px 24px; flex-shrink: 0;
+}
+
+.g-share-btn {
+  width: 100%; padding: 14px;
+  border-radius: 14px; border: 1px solid rgba(255,255,255,0.08);
+  font-size: 16px; font-weight: 600; color: #fff;
+  background: rgba(255,255,255,0.06);
+  cursor: pointer; transition: background 0.15s, transform 0.1s;
+}
+
+.g-share-btn:active {
+  background: rgba(255,255,255,0.1);
+  transform: scale(0.97);
+}
+
+/* ─── Light theme overrides ─── */
+
+[data-theme="light"] .g-sheet {
+  background: rgba(242, 242, 247, 0.92);
+  border-color: rgba(60, 60, 67, 0.08);
+}
+
+[data-theme="light"] .g-title { color: #000; }
+[data-theme="light"] .g-close { background: rgba(0,0,0,0.06); color: rgba(0,0,0,0.4); }
+[data-theme="light"] .g-cat-pill { background: rgba(0,0,0,0.04); color: rgba(0,0,0,0.4); border-color: rgba(0,0,0,0.06); }
+[data-theme="light"] .g-cat-active { background: rgba(0,0,0,0.08); color: #000; border-color: rgba(0,0,0,0.1); }
+[data-theme="light"] .g-card { background: rgba(0,0,0,0.03); border-color: rgba(0,0,0,0.06); }
+[data-theme="light"] .g-card:active { background: rgba(0,0,0,0.06); }
+[data-theme="light"] .g-card-name { color: #000; }
+[data-theme="light"] .g-card-price { color: rgba(0,0,0,0.4); }
+[data-theme="light"] .g-card-icon-wrap { background: rgba(0,0,0,0.03); }
+[data-theme="light"] .g-limited-bar { background: rgba(0,0,0,0.06); }
+[data-theme="light"] .g-limited-text { color: rgba(0,0,0,0.4); }
+[data-theme="light"] .g-message-input { background: rgba(0,0,0,0.03); border-color: rgba(0,0,0,0.08); color: #000; }
+[data-theme="light"] .g-toggle-label { color: rgba(0,0,0,0.6); }
+[data-theme="light"] .g-toggle { background: rgba(0,0,0,0.08); }
+[data-theme="light"] .g-toggle-on { background: rgba(0,0,0,0.15); }
+[data-theme="light"] .g-gift-sheet { background: rgba(242, 242, 247, 0.92); }
+[data-theme="light"] .g-profile-screen { background: #fff; }
+[data-theme="light"] .g-profile-title { color: #000; }
+[data-theme="light"] .g-profile-back { background: rgba(0,0,0,0.06); }
+[data-theme="light"] .g-profile-emoji-wrap { background: rgba(0,0,0,0.02); }
+[data-theme="light"] .g-profile-name { color: #000; }
+[data-theme="light"] .g-profile-desc { color: rgba(0,0,0,0.4); }
+[data-theme="light"] .g-profile-details { background: rgba(0,0,0,0.03); border-color: rgba(0,0,0,0.06); }
+[data-theme="light"] .g-profile-row { border-color: rgba(0,0,0,0.06); }
+[data-theme="light"] .g-profile-label { color: rgba(0,0,0,0.4); }
+[data-theme="light"] .g-profile-value { color: #000; }
+[data-theme="light"] .g-profile-limited-info { background: rgba(0,0,0,0.03); border-color: rgba(0,0,0,0.06); }
+[data-theme="light"] .g-profile-limited-text { color: rgba(0,0,0,0.4); }
+[data-theme="light"] .g-share-btn { background: rgba(0,0,0,0.04); color: #000; }
 

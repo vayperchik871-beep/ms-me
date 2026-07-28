@@ -233,7 +233,7 @@ export default function ChatWindow({ chatId, onBack }) {
           </span>
         </button>
 
-        <div className="ch-capsule ch-avatar-btn">
+        <button className="ch-capsule ch-avatar-btn" onClick={() => peer?.userId && setProfileUserId(peer.userId)}>
           <div className="ch-avatar" style={{ background: peer?.profileColor ? `linear-gradient(135deg, ${peer.profileColor}, ${peer.profileColor}cc)` : 'var(--bg-tertiary)' }}>
             {peer?.avatar ? (
               <img src={resolveMediaUrl(peer.avatar)} alt="" className="ch-avatar-img"
@@ -243,7 +243,7 @@ export default function ChatWindow({ chatId, onBack }) {
               {peer?.name?.[0] || '?'}
             </div>
           </div>
-        </div>
+        </button>
       </header>
 
       <div className="messages-area dark">
@@ -272,6 +272,7 @@ export default function ChatWindow({ chatId, onBack }) {
               key={msg.id}
               message={msg}
               isMine={isMine}
+              showName={true}
               selected={selected.has(msg.id)}
               selectMode={selectMode}
               onLongPress={handleLongPress}
@@ -284,6 +285,7 @@ export default function ChatWindow({ chatId, onBack }) {
                   })
                 }
               }}
+              onSenderClick={(userId) => setProfileUserId(userId)}
             />
           )
         })}

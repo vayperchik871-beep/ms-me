@@ -57,7 +57,7 @@ function FileMessage({ url, name, size }) {
   )
 }
 
-export default function MessageBubble({ message, isMine, showName, selected, selectMode, onLongPress, onClick }) {
+export default function MessageBubble({ message, isMine, showName, selected, selectMode, onLongPress, onClick, onSenderClick }) {
   const timerRef = useRef(null)
   const attach = message.attachment
 
@@ -94,7 +94,7 @@ export default function MessageBubble({ message, isMine, showName, selected, sel
       )}
       <div className={`bubble ${isMine ? 'bubble-mine' : 'bubble-theirs'} ${isImage ? 'bubble-img' : ''} ${isSticker ? 'bubble-sticker' : ''}`}>
         {showName && message.senderName && (
-          <span className="sender-name">{message.senderName}</span>
+          <button className="sender-name-btn" onClick={(e) => { e.stopPropagation(); onSenderClick?.(message.senderUserId || message.senderId) }}>{message.senderName}</button>
         )}
 
         {isSticker && (
