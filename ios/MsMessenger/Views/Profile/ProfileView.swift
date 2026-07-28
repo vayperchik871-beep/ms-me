@@ -143,7 +143,7 @@ struct ProfileView: View {
         }
         .toolbarBackground(Color.clear, for: .navigationBar)
         .toolbarBackground(.visible, for: .navigationBar)
-        .sheet(isPresented: $showGiftDetail) {
+        .fullScreenCover(isPresented: $showGiftDetail) {
             if let gift = selectedGift {
                 NavigationStack {
                     GiftDetailView(gift: gift, ownerName: user.name, receivedDate: Date())

@@ -10,10 +10,9 @@ struct ChatDetailView: View {
     @Environment(\.dismiss) private var dismiss
     @State private var replyTo: Message?
     @State private var showGiftPicker = false
-    @State private var showGiftConfirm = false
+    @State private var giftStep = 0 // 0=picker, 1=confirm, 2=animation
     @State private var selectedGift: Gift?
     @State private var sentGift: Gift?
-    @State private var showGiftAnimation = false
 
     private let ownUUID = UserDefaults.standard.string(forKey: "user_uuid") ?? ""
 
@@ -42,29 +41,25 @@ struct ChatDetailView: View {
             messageInput
         }
         .background(theme.chatBg.ignoresSafeArea())
-        .sheet(isPresented: $showGiftPicker) {
-            GiftPickerView { gift in
-                showGiftPicker = false
-                selectedGift = gift
-                showGiftConfirm = true
-            }
-        }
-        .sheet(isPresented: $showGiftConfirm) {
-            if let gift = selectedGift {
+        .fullScreenCover(isPresented: $showGiftPicker) {
+            if giftStep == 0 {
+                GiftPickerView { gift in
+                    selectedGift = gift
+                    giftStep = 1
+                }
+            } else if giftStep == 1, let gift = selectedGift {
                 GiftConfirmView(gift: gift, recipientName: chat.peer?.name ?? "Пользователь", onSend: { msg, anon in
-                    showGiftConfirm = false
                     sentGift = gift
-                    showGiftAnimation = true
+                    giftStep = 2
                 }, onCancel: {
-                    showGiftConfirm = false
+                    giftStep = 0
                     selectedGift = nil
                 })
-            }
-        }
-        .fullScreenCover(isPresented: $showGiftAnimation) {
-            if let gift = sentGift {
+            } else if giftStep == 2, let gift = sentGift {
                 GiftAnimationView(gift: gift) {
-                    showGiftAnimation = false
+                    showGiftPicker = false
+                    giftStep = 0
+                    selectedGift = nil
                     sentGift = nil
                 }
             }

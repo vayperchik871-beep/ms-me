@@ -6,20 +6,22 @@ struct ProfileTabView: View {
 
     var body: some View {
         NavigationStack {
-            if let user {
-                ProfileView(user: user)
-            } else {
-                VStack {
-                    ProgressView()
-                        .tint(Color(hex: "#6C63FF"))
-                    Text("Загрузка...")
-                        .font(.system(size: 15))
-                        .foregroundColor(theme.textSecondary)
-                        .padding(.top, 8)
+            Group {
+                if let user {
+                    ProfileView(user: user)
+                } else {
+                    VStack {
+                        ProgressView()
+                            .tint(Color(hex: "#6C63FF"))
+                        Text("Загрузка...")
+                            .font(.system(size: 15))
+                            .foregroundColor(theme.textSecondary)
+                            .padding(.top, 8)
+                    }
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
                 }
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .background(theme.bgColor.ignoresSafeArea())
             }
+            .background(theme.bgColor.ignoresSafeArea())
         }
         .tint(Color(hex: "#6C63FF"))
         .task { await loadUser() }

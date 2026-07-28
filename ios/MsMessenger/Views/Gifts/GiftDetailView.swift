@@ -71,6 +71,7 @@ struct GiftDetailView: View {
 
                 Spacer(minLength: 40)
             }
+            .frame(maxWidth: .infinity, minHeight: UIScreen.main.bounds.height - 100)
         }
         .background(theme.bgColor.ignoresSafeArea())
         .navigationTitle("Подарок")
