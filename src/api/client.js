@@ -61,10 +61,14 @@ export function canAddAccount() {
 
 async function requestWithRetry(url, options, retries = 2, delay = 1500) {
   for (let i = 0; i <= retries; i++) {
+    const controller = new AbortController()
+    const timer = setTimeout(() => controller.abort(), 20000)
     try {
-      const res = await fetch(url, options)
+      const res = await fetch(url, { ...options, signal: controller.signal })
+      clearTimeout(timer)
       return res
     } catch (err) {
+      clearTimeout(timer)
       if (i < retries) {
         await new Promise((r) => setTimeout(r, delay))
         continue
