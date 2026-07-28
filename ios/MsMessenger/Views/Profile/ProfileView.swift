@@ -5,6 +5,13 @@ struct ProfileView: View {
     @State private var newName = ""
     @State private var saving = false
     @ObservedObject private var theme = ThemeManager.shared
+    @State private var selectedGift: Gift?
+    @State private var showGiftDetail = false
+
+    private var receivedGifts: [Gift] {
+        let ids = UserDefaults.standard.array(forKey: "received_gift_ids_\(user.userId)") as? [String] ?? []
+        return allGifts.filter { ids.contains($0.id) }
+    }
 
     var body: some View {
         ScrollView {
@@ -86,6 +93,41 @@ struct ProfileView: View {
                     .cornerRadius(12)
                     .padding(.horizontal, 40)
                 }
+
+                // MARK: - Received Gifts
+                if !receivedGifts.isEmpty {
+                    VStack(alignment: .leading, spacing: 10) {
+                        Text("Полученные подарки")
+                            .font(.system(size: 16, weight: .semibold))
+                            .foregroundColor(theme.textPrimary)
+                            .padding(.horizontal, 40)
+
+                        ScrollView(.horizontal, showsIndicators: false) {
+                            HStack(spacing: 10) {
+                                ForEach(receivedGifts) { gift in
+                                    Button(action: {
+                                        selectedGift = gift
+                                        showGiftDetail = true
+                                    }) {
+                                        VStack(spacing: 4) {
+                                            Text(gift.icon)
+                                                .font(.system(size: 32))
+                                            Text(gift.name)
+                                                .font(.system(size: 11))
+                                                .foregroundColor(theme.textPrimary)
+                                                .lineLimit(1)
+                                        }
+                                        .padding(10)
+                                        .background(Color.white.opacity(0.06))
+                                        .cornerRadius(12)
+                                    }
+                                    .buttonStyle(.plain)
+                                }
+                            }
+                            .padding(.horizontal, 40)
+                        }
+                    }
+                }
             }
             .padding(.top, 20)
         }
@@ -101,6 +143,14 @@ struct ProfileView: View {
         }
         .toolbarBackground(Color.clear, for: .navigationBar)
         .toolbarBackground(.visible, for: .navigationBar)
+        .sheet(isPresented: $showGiftDetail) {
+            if let gift = selectedGift {
+                NavigationStack {
+                    GiftDetailView(gift: gift, ownerName: user.name, receivedDate: Date())
+                }
+                .tint(Color(hex: "#6C63FF"))
+            }
+        }
     }
 
     private func save() {

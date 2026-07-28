@@ -9,6 +9,9 @@ struct ChatDetailView: View {
     @FocusState private var isInputFocused: Bool
     @Environment(\.dismiss) private var dismiss
     @State private var replyTo: Message?
+    @State private var showGiftPicker = false
+    @State private var sentGift: Gift?
+    @State private var showGiftAnimation = false
 
     private let ownUUID = UserDefaults.standard.string(forKey: "user_uuid") ?? ""
 
@@ -37,6 +40,21 @@ struct ChatDetailView: View {
             messageInput
         }
         .background(theme.chatBg.ignoresSafeArea())
+        .sheet(isPresented: $showGiftPicker) {
+            GiftPickerView { gift in
+                showGiftPicker = false
+                sentGift = gift
+                showGiftAnimation = true
+            }
+        }
+        .fullScreenCover(isPresented: $showGiftAnimation) {
+            if let gift = sentGift {
+                GiftAnimationView(gift: gift) {
+                    showGiftAnimation = false
+                    sentGift = nil
+                }
+            }
+        }
         .task { await load() }
         .onReceive(ws.$newMessage) { msg in
             guard let msg, msg.chatId == chat.id else { return }
@@ -178,6 +196,17 @@ struct ChatDetailView: View {
 
     private var messageInput: some View {
         HStack(spacing: 10) {
+            // Gift
+            Button(action: { showGiftPicker = true }) {
+                Text("🎁")
+                    .font(.system(size: 18))
+                    .frame(width: 36, height: 36)
+                    .background(
+                        Circle()
+                            .fill(theme.isDark ? Color.white.opacity(0.12) : Color.black.opacity(0.08))
+                    )
+            }
+
             // Paperclip — dark circle
             Button(action: {}) {
                 Image(systemName: "paperclip")

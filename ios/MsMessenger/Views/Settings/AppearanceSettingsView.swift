@@ -39,7 +39,7 @@ struct AppearanceSettingsView: View {
                 navRow(icon: "message.fill", label: "Чаты", key: "nav_chats")
                 navRow(icon: "person.2.fill", label: "Контакты", key: "nav_contacts")
                 navRow(icon: "music.note.list", label: "Музыка", key: "nav_music")
-                navRow(icon: "phone.fill", label: "Звонки", key: "nav_calls")
+                navRow(icon: "person.circle.fill", label: "Профиль", key: "nav_profile")
             } header: {
                 Text("Вкладки навигации")
             } footer: {

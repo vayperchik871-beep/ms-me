@@ -7,7 +7,7 @@ struct SettingsView: View {
     @AppStorage("nav_chats") private var navChats = true
     @AppStorage("nav_contacts") private var navContacts = true
     @AppStorage("nav_music") private var navMusic = true
-    @AppStorage("nav_calls") private var navCalls = true
+    @AppStorage("nav_profile") private var navProfile = true
 
     var body: some View {
         NavigationStack {
