@@ -463,6 +463,40 @@ input, textarea { font-family: inherit; border: none; outline: none; background:
 [data-theme="light"] .ch-status.online { color: #34c759; }
 [data-theme="light"] .ch-avatar { background: #e5e5ea; }
 [data-theme="light"] .ch-avatar-fb { color: #000; }
+[data-theme="light"] .ai-model-popup { background: #fff; }
+[data-theme="light"] .ai-model-item { background: rgba(0,0,0,0.04); }
+[data-theme="light"] .ai-model-item.active { background: rgba(124,92,252,0.1); }
+
+/* ─── AI Model Selector ─── */
+.ai-model-btn { flex-shrink: 0; height: 32px; border-radius: 16px; padding: 0 10px; margin-right: 4px; }
+.ai-model-badge { font-size: 12px; font-weight: 600; white-space: nowrap; }
+.ai-model-overlay {
+  position: fixed; inset: 0; z-index: 1000;
+  background: rgba(0,0,0,0.5);
+  display: flex; align-items: center; justify-content: center;
+}
+.ai-model-popup {
+  background: var(--bg-primary); border-radius: 16px;
+  padding: 20px; width: 300px; max-width: 90vw;
+  box-shadow: 0 8px 40px rgba(0,0,0,0.3);
+}
+.ai-model-header { font-size: 16px; font-weight: 700; margin-bottom: 16px; text-align: center; }
+.ai-model-list { display: flex; flex-direction: column; gap: 8px; }
+.ai-model-item {
+  display: flex; align-items: center; gap: 12px;
+  padding: 12px 14px; border-radius: 12px;
+  background: var(--bg-secondary); border: 2px solid transparent;
+  cursor: pointer; transition: all 0.15s; text-align: left;
+}
+.ai-model-item:hover { border-color: var(--accent); }
+.ai-model-item.active { border-color: var(--accent); background: var(--accent-alpha); }
+.ai-model-item.locked { opacity: 0.5; cursor: not-allowed; }
+.ai-model-icon { font-size: 24px; flex-shrink: 0; }
+.ai-model-info { flex: 1; }
+.ai-model-name { font-weight: 600; font-size: 14px; }
+.ai-model-desc { font-size: 12px; color: var(--text-secondary); margin-top: 2px; }
+.ai-model-check { color: var(--accent); font-weight: 700; font-size: 16px; }
+.ai-model-lock { font-size: 14px; }
 
 .icon-btn {
   display: flex; align-items: center; justify-content: center;
@@ -2169,6 +2203,9 @@ input, textarea { font-family: inherit; border: none; outline: none; background:
 }
 .settings-card-label {
   font-size: 15px; color: var(--text-primary); font-weight: 400;
+}
+.settings-card-value {
+  font-size: 13px; color: var(--text-muted); margin-left: auto; padding-right: 4px;
 }
 .settings-card-divider {
   height: 1px; background: var(--border); margin-left: 58px;

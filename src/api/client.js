@@ -168,6 +168,7 @@ export const api = {
   purchaseStickerPack: (packId) => request('/stickers/purchase', { method: 'POST', body: JSON.stringify({ packId }) }),
   uploadSticker: (file) => upload('/stickers/upload', 'file', file),
   createStickerPack: (title, stickers) => request('/stickers/create', { method: 'POST', body: JSON.stringify({ title, stickers }) }),
+  request: (path, options) => request(path, options),
 }
 
 export function resolveMediaUrl(url) {

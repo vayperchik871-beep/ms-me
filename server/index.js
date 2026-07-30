@@ -9,7 +9,7 @@ import http from 'http'
 import path from 'path'
 import fs from 'fs'
 import { fileURLToPath } from 'url'
-import { dbGet, dbAll, dbRun, dbExec, SYSTEM_BOT } from './db.js'
+import { dbGet, dbAll, dbRun, dbExec, SYSTEM_BOT, AI_ASSISTANT } from './db.js'
 import multer from 'multer'
 import { encrypt, decrypt, generateCode, hashDevice } from './crypto.js'
 import { OAuth2Client } from 'google-auth-library'
@@ -164,6 +164,18 @@ async function sendBotMessage(userId, text) {
   return { chatId, messageId: msgId }
 }
 
+async function sendAiMessage(chatId, botId, targetUserId, text) {
+  const msgId = uuidv4()
+  const enc = encrypt(text)
+  const now = Date.now()
+  await dbRun(`
+    INSERT INTO messages (id, chat_id, sender_id, content_enc, content_iv, content_tag, created_at)
+    VALUES (?, ?, ?, ?, ?, ?, ?)
+  `, msgId, chatId, botId, enc.content_enc, enc.content_iv, enc.content_tag, now)
+  broadcastToUser(targetUserId, { type: 'new_message', chatId, message: await formatMessage(msgId, targetUserId) })
+  return msgId
+}
+
 async function formatMessage(msgId, viewerId) {
   const m = await dbGet('SELECT * FROM messages WHERE id = ?', msgId)
   if (!m || m.deleted) return null
@@ -285,12 +297,14 @@ app.post('/api/auth/register', async (req, res) => {
 
   const token = await createToken(id, devId)
   await getOrCreateDirectChat(id, SYSTEM_BOT.id)
+  const aiChatId = await getOrCreateDirectChat(id, AI_ASSISTANT.id)
   await sendBotMessage(id, `Добро пожаловать в MS Messenger, ${name.trim()}!\n\nВаш ID: @${cleanId}\nНомер: ${phone || 'не указан'}\n\nДругие пользователи могут найти вас по ID или номеру.`)
   await sendBotMessage(id, `Политика конфиденциальности обновилась. Ознакомиться с ней можно в настройках приложения.`)
+  await sendAiMessage(aiChatId, AI_ASSISTANT.id, id, `Привет! Я MSM Assistant — твой AI-помощник. Спрашивай что угодно о мессенджере, функциях или настройках.\n\nДоступные модели: Lite (всегда) и Pro (Premium). Выбрать можно в шапке чата.`)
 
   res.json({
     token,
-    user: { id, userId: cleanId, name: name.trim(), phone: phone || null, bio: bio || null, avatar: avatarUrl },
+    user: { id, userId: cleanId, name: name.trim(), phone: phone || null, bio: bio || null, avatar: avatarUrl, premium: false, aiModel: 'lite' },
   })
 })
 
@@ -318,10 +332,11 @@ app.post('/api/auth/login', async (req, res) => {
       uuidv4(), user.id, devId, Date.now(), Date.now()
     )
     if (platform) await dbRun('UPDATE users SET platform = ? WHERE id = ?', platform, user.id)
+    const isPremium1 = user?.subscription_plan && user.subscription_until > Date.now()
     const token = await createToken(user.id, devId)
     return res.json({
       token,
-      user: { id: user.id, userId: user.user_id, name: user.name, phone: user.phone, bio: user.bio, avatar: user.avatar },
+      user: { id: user.id, userId: user.user_id, name: user.name, phone: user.phone, bio: user.bio, avatar: user.avatar, premium: isPremium1, aiModel: user.ai_model || 'lite' },
       needsVerification: false,
     })
   }
@@ -329,10 +344,11 @@ app.post('/api/auth/login', async (req, res) => {
   if (device.verified || isAdminApp) {
     await dbRun('UPDATE devices SET last_seen = ? WHERE id = ?', Date.now(), device.id)
     if (platform) await dbRun('UPDATE users SET platform = ? WHERE id = ?', platform, user.id)
+    const isPremium2 = user?.subscription_plan && user.subscription_until > Date.now()
     const token = await createToken(user.id, devId)
     return res.json({
       token,
-      user: { id: user.id, userId: user.user_id, name: user.name, phone: user.phone, bio: user.bio, avatar: user.avatar },
+      user: { id: user.id, userId: user.user_id, name: user.name, phone: user.phone, bio: user.bio, avatar: user.avatar, premium: isPremium2, aiModel: user.ai_model || 'lite' },
       needsVerification: false,
     })
   }
@@ -389,8 +405,9 @@ app.post('/api/auth/verify-device', async (req, res) => {
 })
 
 app.get('/api/auth/me', authMiddleware, async (req, res) => {
-  const u = await dbGet('SELECT id, user_id, name, phone, bio, is_system, avatar, birthday, gender, profile_color, mcoins FROM users WHERE id = ?', req.user.id)
+  const u = await dbGet('SELECT id, user_id, name, phone, bio, is_system, avatar, birthday, gender, profile_color, mcoins, subscription_plan, subscription_until, ai_model FROM users WHERE id = ?', req.user.id)
   const extra = await dbGet('SELECT is_admin, banned FROM users WHERE id = ?', req.user.id)
+  const isPremium = u?.subscription_plan && u.subscription_until > Date.now()
   res.json({ user: {
     id: u.id,
     userId: u.user_id,
@@ -405,6 +422,10 @@ app.get('/api/auth/me', authMiddleware, async (req, res) => {
     mcoins: u.mcoins || 0,
     isAdmin: !!extra?.is_admin,
     banned: !!extra?.banned,
+    premium: isPremium,
+    subscriptionPlan: u?.subscription_plan || null,
+    subscriptionUntil: u?.subscription_until || null,
+    aiModel: u?.ai_model || 'lite',
   } })
 })
 
@@ -930,8 +951,8 @@ app.post('/api/admin/command', authMiddleware, adminMiddleware, async (req, res)
         if (!args[0]) return res.json(say('Укажите userId: unsub <id>'))
         const user = await dbGet('SELECT id FROM users WHERE user_id = ? AND is_system = 0', args[0])
         if (!user) return res.json(say('Пользователь не найден'))
-        await dbRun('UPDATE users SET subscription_plan = NULL, subscription_until = NULL WHERE id = ?', user.id)
-        return res.json(say(`Подписка @${args[0]} отменена`))
+        await dbRun("UPDATE users SET subscription_plan = NULL, subscription_until = NULL, ai_model = 'lite' WHERE id = ?", user.id)
+        return res.json(say(`Подписка @${args[0]} отменена, модель сброшена на Lite`))
       }
       case 'subcodes': {
         const n = parseInt(args[0])
@@ -1328,6 +1349,23 @@ app.post('/api/chats/:chatId/messages', authMiddleware, async (req, res) => {
 
   const message = await formatMessage(msgId, req.user.id)
   await broadcastToChat(req.params.chatId, { type: 'new_message', chatId: req.params.chatId, message }, req.user.id)
+
+  // AI Assistant auto-reply
+  const chatRow = await dbGet('SELECT * FROM chats WHERE id = ?', req.params.chatId)
+  if (chatRow && chatRow.type === 'direct') {
+    const otherParticipant = await dbGet(
+      'SELECT user_id FROM chat_participants WHERE chat_id = ? AND user_id != ?',
+      req.params.chatId, req.user.id
+    )
+    if (otherParticipant && (otherParticipant.user_id === AI_ASSISTANT.id || otherParticipant.user_id === AI_ASSISTANT.user_id)) {
+      // Don't reply to empty/attachment-only messages
+      if (text?.trim()) {
+        const aiResponse = await callAiApi(content, req.user.id)
+        await sendAiMessage(req.params.chatId, AI_ASSISTANT.id, req.user.id, aiResponse)
+      }
+    }
+  }
+
   res.json({ message })
 })
 
@@ -1801,7 +1839,91 @@ wss.on('connection', (ws, req) => {
   }
 })
 
+// ─── AI Chat ───
+
+const AI_LITE_URL = process.env.AI_LITE_URL || ''
+const AI_PRO_URL = process.env.AI_PRO_URL || ''
+
+async function callAiApi(question, userId) {
+  const user = await dbGet('SELECT ai_model, subscription_plan, subscription_until FROM users WHERE id = ?', userId)
+  const model = user?.ai_model || 'lite'
+  const isPremium = isSubActive(user)
+
+  if (model === 'pro' && !isPremium) {
+    return 'Модель Pro доступна только для Premium-подписчиков. Вы можете переключиться на Lite в настройках.'
+  }
+
+  const baseUrl = model === 'pro' ? AI_PRO_URL : AI_LITE_URL
+  if (!baseUrl) return mockAiResponse()
+
+  try {
+    const response = await fetch(`${baseUrl}/chat`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ question }),
+    })
+    if (!response.ok) throw new Error(`AI: ${response.status}`)
+    const data = await response.json()
+    return data.response
+  } catch (e) {
+    console.error('AI error:', e.message)
+    return mockAiResponse()
+  }
+}
+
+function mockAiResponse() {
+  const resp = [
+    'В профиле можно поменять имя и аватар, перейти в Настройки → Профиль.',
+    'Чтобы отправить голосовое сообщение, зажми иконку микрофона в чате.',
+    'Подарки можно отправить из чата — нажми 🎁 в поле ввода.',
+    'Тёмная тема включается в Настройках → Оформление.',
+    'Для видеозвонков нажми 📹 в шапке чата.',
+    'Группы создаются через кнопку в Контактах → Создать группу.',
+    'Верификация аккаунта — в Настройках → Верификация.',
+    'История сообщений хранится на сервере, доступна с любого устройства.',
+    'Уведомления настраиваются в Настройках → Уведомления.',
+    'Команда /help в чате покажет список доступных команд.',
+  ]
+  return resp[Math.floor(Math.random() * resp.length)]
+}
+
+app.get('/api/ai/models', (req, res) => {
+  res.json({
+    models: [
+      { id: 'lite', name: 'Lite', description: 'Быстрая модель для ежедневных вопросов', premium: false },
+      { id: 'pro', name: 'Pro', description: 'Улучшенная модель с глубокими ответами', premium: true },
+    ],
+  })
+})
+
+app.get('/api/ai/model', authMiddleware, async (req, res) => {
+  const user = await dbGet('SELECT ai_model FROM users WHERE id = ?', req.user.id)
+  res.json({ model: user?.ai_model || 'lite' })
+})
+
+app.post('/api/ai/model', authMiddleware, async (req, res) => {
+  const { model } = req.body
+  if (!['lite', 'pro'].includes(model)) return res.status(400).json({ error: 'Неверная модель' })
+  const user = await dbGet('SELECT subscription_plan, subscription_until FROM users WHERE id = ?', req.user.id)
+  if (model === 'pro' && !isSubActive(user)) {
+    return res.status(403).json({ error: 'Требуется подписка Premium' })
+  }
+  await dbRun('UPDATE users SET ai_model = ? WHERE id = ?', model, req.user.id)
+  res.json({ model })
+})
+
+app.get('/api/premium/status', authMiddleware, async (req, res) => {
+  const user = await dbGet('SELECT subscription_plan, subscription_until FROM users WHERE id = ?', req.user.id)
+  const premium = isSubActive(user)
+  res.json({
+    premium,
+    plan: user?.subscription_plan || null,
+    until: user?.subscription_until || null,
+  })
+})
+
 server.listen(PORT, HOST, () => {
   console.log(`MS Messenger server: http://${HOST}:${PORT}`)
   console.log(`WebSocket: ws://${HOST}:${PORT}/ws`)
+  console.log(`AI: Lite=${AI_LITE_URL || 'mock'}, Pro=${AI_PRO_URL || 'mock'}`)
 })

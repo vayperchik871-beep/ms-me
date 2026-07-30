@@ -6,6 +6,7 @@ import MessageBubble from './MessageBubble'
 import InputBar from './InputBar'
 import MessageContextMenu from './MessageContextMenu'
 import UserProfileModal from './UserProfileModal'
+import AiModelSelector from './AiModelSelector'
 import { parseEmoji } from '../utils/emoji'
 import { resolveMediaUrl } from '../api/client'
 import { t } from '../i18n'
@@ -26,6 +27,7 @@ export default function ChatWindow({ chatId, onBack }) {
   const messagesEndRef = useRef(null)
   const [otherUnread, setOtherUnread] = useState(0)
   const [profileUserId, setProfileUserId] = useState(null)
+  const [showAiModel, setShowAiModel] = useState(false)
   const retryTimerRef = useRef(null)
 
   const loadChat = useCallback(async (attempt = 0) => {
@@ -233,6 +235,12 @@ export default function ChatWindow({ chatId, onBack }) {
           </span>
         </button>
 
+        {peer?.userId === 'msm-assistant-bot' && (
+          <button className="ch-capsule ai-model-btn" onClick={() => setShowAiModel(true)} title="Выбрать модель">
+            <span className="ai-model-badge">{user?.aiModel === 'pro' ? '⭐ Pro' : '⚡ Lite'}</span>
+          </button>
+        )}
+
         <button className="ch-capsule ch-avatar-btn" onClick={() => peer?.userId && setProfileUserId(peer.userId)}>
           <div className="ch-avatar" style={{ background: peer?.profileColor ? `linear-gradient(135deg, ${peer.profileColor}, ${peer.profileColor}cc)` : 'var(--bg-tertiary)' }}>
             {peer?.avatar ? (
@@ -326,6 +334,14 @@ export default function ChatWindow({ chatId, onBack }) {
           onClose={() => setProfileUserId(null)}
           onStartChat={(chatId, userId) => { onBack(); }}
         />
+      )}
+
+      {showAiModel && (
+        <div className="ai-model-overlay" onClick={() => setShowAiModel(false)}>
+          <div className="ai-model-popup" onClick={(e) => e.stopPropagation()}>
+            <AiModelSelector onClose={() => setShowAiModel(false)} />
+          </div>
+        </div>
       )}
     </main>
   )

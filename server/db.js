@@ -300,6 +300,8 @@ try {
   await dbRun(`UPDATE messages SET attachment = REPLACE(attachment, '"http://', '"https://') WHERE attachment LIKE '%"http://ms-messenger-server.onrender.com%'`)
 } catch {}
 
+try { await dbExec("ALTER TABLE users ADD COLUMN ai_model TEXT DEFAULT 'lite'") } catch {}
+
 const SYSTEM_BOT = {
   id: 'system-ms-messenger',
   user_id: 'ms-messenger',
@@ -315,4 +317,19 @@ if (!existingBot) {
   )
 }
 
-export { dbGet, dbAll, dbRun, dbExec, SYSTEM_BOT }
+const AI_ASSISTANT = {
+  id: 'ai-msm-assistant',
+  user_id: 'msm-assistant-bot',
+  name: 'MSM Assistant',
+  is_system: 1,
+}
+
+const existingAi = await dbGet('SELECT id FROM users WHERE user_id = ?', AI_ASSISTANT.user_id)
+if (!existingAi) {
+  await dbRun(
+    'INSERT INTO users (id, user_id, name, password_hash, is_system, created_at) VALUES (?, ?, ?, ?, ?, ?)',
+    AI_ASSISTANT.id, AI_ASSISTANT.user_id, AI_ASSISTANT.name, '', 1, Date.now()
+  )
+}
+
+export { dbGet, dbAll, dbRun, dbExec, SYSTEM_BOT, AI_ASSISTANT }
