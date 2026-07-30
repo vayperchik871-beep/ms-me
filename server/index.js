@@ -1845,7 +1845,7 @@ const AI_LITE_URL = process.env.AI_LITE_URL || ''
 const AI_PRO_URL = process.env.AI_PRO_URL || ''
 const HF_TOKEN = process.env.HF_TOKEN || ''
 
-const HF_MODEL_LITE = 'Qwen/Qwen2.5-1.5B-Instruct'
+const HF_MODEL_LITE = 'TinyLlama/TinyLlama-1.1B-Chat-v1.0'
 const HF_MODEL_PRO = 'Qwen/Qwen2.5-7B-Instruct'
 
 async function callAiApi(question, userId) {
@@ -1878,25 +1878,35 @@ async function callAiApi(question, userId) {
   const headers = { 'Content-Type': 'application/json' }
   if (HF_TOKEN) headers['Authorization'] = `Bearer ${HF_TOKEN}`
 
-  const prompt = `Ты — MS Assistant, официальный AI-помощник мессенджера MS Messenger. Ты знаешь всё о платформе: функции, настройки, возможности. Отвечай коротко и по делу. Не говори что ты модель, AI, нейросеть или fine-tune. Ты — просто помощник мессенджера.
-
-Вопрос: ${question}
-
-Ответ:`
+  const prompt = `<|user|>\n${question}\n<|assistant|>\n`
 
   try {
-    const response = await fetch(`https://api-inference.huggingface.co/models/${hfModel}`, {
+    const url = `https://api-inference.huggingface.co/models/${hfModel}`
+    console.log(`HF Inference: calling ${hfModel}...`)
+    const controller = new AbortController()
+    const timeout = setTimeout(() => controller.abort(), 15000)
+    const response = await fetch(url, {
       method: 'POST',
       headers,
       body: JSON.stringify({
         inputs: prompt,
-        parameters: { max_new_tokens: 512, temperature: 0.7, repetition_penalty: 1.1 },
+        parameters: { max_new_tokens: 256, temperature: 0.7, repetition_penalty: 1.1 },
       }),
+      signal: controller.signal,
     })
-    if (!response.ok) throw new Error(`HF: ${response.status}`)
+    clearTimeout(timeout)
+    if (!response.ok) {
+      const errorBody = await response.text().catch(() => '')
+      console.error(`HF error ${response.status}: ${errorBody}`)
+      throw new Error(`HF: ${response.status}`)
+    }
     const data = await response.json()
-    const text = Array.isArray(data) ? data[0]?.generated_text : data?.generated_text
-    if (text) return text.replace(prompt, '').trim()
+    const generated = Array.isArray(data) ? data[0]?.generated_text : data?.generated_text
+    if (generated) {
+      const answer = generated.replace(prompt, '').trim()
+      if (answer) return answer
+    }
+    console.error('HF: empty response', JSON.stringify(data).slice(0, 200))
     return mockAiResponse()
   } catch (e) {
     console.error('HF Inference error:', e.message)
