@@ -1843,10 +1843,7 @@ wss.on('connection', (ws, req) => {
 
 const AI_LITE_URL = process.env.AI_LITE_URL || ''
 const AI_PRO_URL = process.env.AI_PRO_URL || ''
-const HF_TOKEN = process.env.HF_TOKEN || ''
-
-const HF_MODEL_LITE = 'TinyLlama/TinyLlama-1.1B-Chat-v1.0'
-const HF_MODEL_PRO = 'Qwen/Qwen2.5-7B-Instruct'
+const GEMINI_API_KEY = process.env.GEMINI_API_KEY || ''
 
 async function callAiApi(question, userId) {
   const user = await dbGet('SELECT ai_model, subscription_plan, subscription_until FROM users WHERE id = ?', userId)
@@ -1857,61 +1854,69 @@ async function callAiApi(question, userId) {
     return 'Модель Pro доступна только для Premium-подписчиков. Вы можете переключиться на Lite в настройках.'
   }
 
+  // 1) Self-hosted URL (custom HF Space / Gradio)
   const selfHostedUrl = model === 'pro' ? AI_PRO_URL : AI_LITE_URL
   if (selfHostedUrl) {
     try {
-      const response = await fetch(`${selfHostedUrl}/chat`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      const res = await fetch(`${selfHostedUrl}/chat`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ question }),
       })
-      if (!response.ok) throw new Error(`AI: ${response.status}`)
-      const data = await response.json()
-      return data.response
-    } catch (e) {
-      console.error('Self-hosted AI error:', e.message)
-    }
+      if (res.ok) { const d = await res.json(); if (d.response) return d.response }
+    } catch {}
+    try {
+      const res = await fetch(`${selfHostedUrl}/api/predict`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ data: [question, []] }),
+      })
+      if (res.ok) { const d = await res.json(); if (d?.data?.[0]) return d.data[0] }
+    } catch {}
   }
 
-  // Fallback: Hugging Face free Inference API
-  const hfModel = model === 'pro' ? HF_MODEL_PRO : HF_MODEL_LITE
-  const headers = { 'Content-Type': 'application/json' }
-  if (HF_TOKEN) headers['Authorization'] = `Bearer ${HF_TOKEN}`
+  // 2) Google Gemini API (free tier, 60 req/min)
+  const geminiModel = model === 'pro' ? 'gemini-2.0-flash' : 'gemini-2.0-flash-lite'
+  if (GEMINI_API_KEY) {
+    try {
+      const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${geminiModel}:generateContent?key=${GEMINI_API_KEY}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{
+            parts: [{ text: `Ты — MS Assistant, официальный AI-помощник мессенджера MS Messenger. Отвечай коротко и по делу на русском языке.\n\nВопрос: ${question}` }],
+          }],
+          generationConfig: { maxOutputTokens: 256, temperature: 0.7 },
+        }),
+      })
+      if (res.ok) {
+        const d = await res.json()
+        const text = d?.candidates?.[0]?.content?.parts?.[0]?.text
+        if (text) return text.trim()
+      }
+    } catch (e) { console.error('Gemini error:', e.message) }
+  }
 
-  const prompt = `<|user|>\n${question}\n<|assistant|>\n`
-
+  // 3) Hugging Face Inference API
   try {
-    const url = `https://api-inference.huggingface.co/models/${hfModel}`
-    console.log(`HF Inference: calling ${hfModel}...`)
+    const hfModel = model === 'pro' ? 'Qwen/Qwen2.5-7B-Instruct' : 'TinyLlama/TinyLlama-1.1B-Chat-v1.0'
+    const headers = { 'Content-Type': 'application/json' }
+    if (process.env.HF_TOKEN) headers['Authorization'] = `Bearer ${process.env.HF_TOKEN}`
+    const prompt = `<|user|>\n${question}\n<|assistant|>\n`
     const controller = new AbortController()
-    const timeout = setTimeout(() => controller.abort(), 15000)
-    const response = await fetch(url, {
-      method: 'POST',
-      headers,
-      body: JSON.stringify({
-        inputs: prompt,
-        parameters: { max_new_tokens: 256, temperature: 0.7, repetition_penalty: 1.1 },
-      }),
+    const timeout = setTimeout(() => controller.abort(), 10000)
+    const res = await fetch(`https://api-inference.huggingface.co/models/${hfModel}`, {
+      method: 'POST', headers,
+      body: JSON.stringify({ inputs: prompt, parameters: { max_new_tokens: 256, temperature: 0.7 } }),
       signal: controller.signal,
     })
     clearTimeout(timeout)
-    if (!response.ok) {
-      const errorBody = await response.text().catch(() => '')
-      console.error(`HF error ${response.status}: ${errorBody}`)
-      throw new Error(`HF: ${response.status}`)
+    if (res.ok) {
+      const d = await res.json()
+      const gen = Array.isArray(d) ? d[0]?.generated_text : d?.generated_text
+      if (gen) { const a = gen.replace(prompt, '').trim(); if (a) return a }
     }
-    const data = await response.json()
-    const generated = Array.isArray(data) ? data[0]?.generated_text : data?.generated_text
-    if (generated) {
-      const answer = generated.replace(prompt, '').trim()
-      if (answer) return answer
-    }
-    console.error('HF: empty response', JSON.stringify(data).slice(0, 200))
-    return mockAiResponse()
-  } catch (e) {
-    console.error('HF Inference error:', e.message)
-    return mockAiResponse()
-  }
+  } catch (e) { console.error('HF error:', e.message) }
+
+  return mockAiResponse()
 }
 
 function mockAiResponse() {
