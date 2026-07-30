@@ -66,7 +66,7 @@ export function switchAccount(userId) {
 }
 
 export function canAddAccount() {
-  return getAccounts().length < 2
+  return true
 }
 
 async function requestWithRetry(url, options, retries = 2, delay = 1500) {
