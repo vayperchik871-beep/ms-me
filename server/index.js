@@ -1843,6 +1843,10 @@ wss.on('connection', (ws, req) => {
 
 const AI_LITE_URL = process.env.AI_LITE_URL || ''
 const AI_PRO_URL = process.env.AI_PRO_URL || ''
+const HF_TOKEN = process.env.HF_TOKEN || ''
+
+const HF_MODEL_LITE = 'Qwen/Qwen2.5-1.5B-Instruct'
+const HF_MODEL_PRO = 'Qwen/Qwen2.5-7B-Instruct'
 
 async function callAiApi(question, userId) {
   const user = await dbGet('SELECT ai_model, subscription_plan, subscription_until FROM users WHERE id = ?', userId)
@@ -1853,20 +1857,49 @@ async function callAiApi(question, userId) {
     return 'Модель Pro доступна только для Premium-подписчиков. Вы можете переключиться на Lite в настройках.'
   }
 
-  const baseUrl = model === 'pro' ? AI_PRO_URL : AI_LITE_URL
-  if (!baseUrl) return mockAiResponse()
+  const selfHostedUrl = model === 'pro' ? AI_PRO_URL : AI_LITE_URL
+  if (selfHostedUrl) {
+    try {
+      const response = await fetch(`${selfHostedUrl}/chat`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ question }),
+      })
+      if (!response.ok) throw new Error(`AI: ${response.status}`)
+      const data = await response.json()
+      return data.response
+    } catch (e) {
+      console.error('Self-hosted AI error:', e.message)
+    }
+  }
+
+  // Fallback: Hugging Face free Inference API
+  const hfModel = model === 'pro' ? HF_MODEL_PRO : HF_MODEL_LITE
+  const headers = { 'Content-Type': 'application/json' }
+  if (HF_TOKEN) headers['Authorization'] = `Bearer ${HF_TOKEN}`
+
+  const prompt = `Ты — MS Assistant, официальный AI-помощник мессенджера MS Messenger. Ты знаешь всё о платформе: функции, настройки, возможности. Отвечай коротко и по делу. Не говори что ты модель, AI, нейросеть или fine-tune. Ты — просто помощник мессенджера.
+
+Вопрос: ${question}
+
+Ответ:`
 
   try {
-    const response = await fetch(`${baseUrl}/chat`, {
+    const response = await fetch(`https://api-inference.huggingface.co/models/${hfModel}`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ question }),
+      headers,
+      body: JSON.stringify({
+        inputs: prompt,
+        parameters: { max_new_tokens: 512, temperature: 0.7, repetition_penalty: 1.1 },
+      }),
     })
-    if (!response.ok) throw new Error(`AI: ${response.status}`)
+    if (!response.ok) throw new Error(`HF: ${response.status}`)
     const data = await response.json()
-    return data.response
+    const text = Array.isArray(data) ? data[0]?.generated_text : data?.generated_text
+    if (text) return text.replace(prompt, '').trim()
+    return mockAiResponse()
   } catch (e) {
-    console.error('AI error:', e.message)
+    console.error('HF Inference error:', e.message)
     return mockAiResponse()
   }
 }
