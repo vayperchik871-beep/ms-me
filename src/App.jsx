@@ -3,7 +3,7 @@ import { useAuth } from './context/AuthContext'
 import { useTheme } from './context/ThemeContext'
 import { useWebSocket } from './hooks/useWebSocket'
 import { useMediaQuery } from './hooks/useMediaQuery'
-import { api, getApiBase } from './api/client'
+import { api } from './api/client'
 import { Capacitor } from '@capacitor/core'
 import { LocalNotifications } from '@capacitor/local-notifications'
 import Onboarding from './components/onboarding/Onboarding'
@@ -66,13 +66,12 @@ let keepaliveTimer = null
 
 function startKeepalive() {
   if (keepaliveTimer) return
-  const base = getApiBase()
-  if (!base) return
+  const HEALTH_URL = 'https://ms-messenger-server.onrender.com/health'
   const ping = () => {
     Promise.all([
-      fetch(`${base}/health`, { method: 'GET', cache: 'no-store' }),
-      fetch(`${base}/health`, { method: 'GET', cache: 'no-store' }),
-      fetch(`${base}/health`, { method: 'GET', cache: 'no-store' }),
+      fetch(HEALTH_URL, { method: 'GET', cache: 'no-store' }),
+      fetch(HEALTH_URL, { method: 'GET', cache: 'no-store' }),
+      fetch(HEALTH_URL, { method: 'GET', cache: 'no-store' }),
     ]).catch(() => {})
   }
   ping()

@@ -3,10 +3,7 @@ export function getApiBase() {
 }
 
 function getApiUrl(path = '') {
-  const base = getApiBase()
-  if (!base || base === '/api') return `/api${path}`
-  const clean = base.replace(/\/+$/, '')
-  return `${clean}/api${path}`
+  return `/api${path}`
 }
 
 let _tempToken = null
@@ -178,7 +175,7 @@ export function resolveMediaUrl(url) {
   if (url.startsWith('http://')) {
     return url.replace(/^http:\/\//i, 'https://')
   }
-  return `https://ms-messenger-server.onrender.com${url.startsWith('/') ? '' : '/'}${url}`
+  return url
 }
 
 export function getWsUrl() {
