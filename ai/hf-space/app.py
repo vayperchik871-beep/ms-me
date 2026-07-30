@@ -1,52 +1,39 @@
-import os, json, torch
+import os
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
-from huggingface_hub import snapshot_download
 from transformers import AutoModelForCausalLM, AutoTokenizer
+import torch
 
 app = FastAPI()
 
-MODEL_DIR = os.environ.get("MODEL_DIR", "/model")
-MODEL_REPO = os.environ.get("MODEL_REPO", "vayperchik871-beep/ms-messenger-assistant")
+MODEL_ID = os.environ.get("MODEL_ID", "TinyLlama/TinyLlama-1.1B-Chat-v1.0")
 
-if not os.path.exists(MODEL_DIR):
-    print(f"Downloading model from {MODEL_REPO}...")
-    snapshot_download(repo_id=MODEL_REPO, local_dir=MODEL_DIR)
-
-print("Loading model...")
-tokenizer = AutoTokenizer.from_pretrained(MODEL_DIR, trust_remote_code=True)
+print(f"Loading {MODEL_ID}...")
+tokenizer = AutoTokenizer.from_pretrained(MODEL_ID, trust_remote_code=True)
 model = AutoModelForCausalLM.from_pretrained(
-    MODEL_DIR,
-    torch_dtype=torch.float16,
+    MODEL_ID,
+    torch_dtype=torch.bfloat16,
     device_map="auto",
     trust_remote_code=True,
 )
 print("Model loaded!")
 
-SYSTEM_PROMPT = "Ты — MS Assistant, официальный AI-помощник мессенджера MS Messenger. Ты знаешь всё о платформе: функции, настройки, возможности. Отвечай коротко и по делу. Никогда не говори что ты модель, AI, нейросеть или fine-tune. Ты — просто помощник этого мессенджера."
-
 class Query(BaseModel):
-    messages: list[dict] = None
-    question: str = None
-
-class Response(BaseModel):
-    response: str
+    question: str
 
 @app.get("/health")
 def health():
     return {"ok": True}
 
-@app.post("/chat", response_model=Response)
+@app.post("/chat")
 def chat(query: Query):
-    if query.question:
-        messages = [
-            {"role": "system", "content": SYSTEM_PROMPT},
-            {"role": "user", "content": query.question},
-        ]
-    elif query.messages:
-        messages = query.messages
-    else:
-        raise HTTPException(400, "Provide 'question' or 'messages'")
+    if not query.question:
+        raise HTTPException(400, "question is required")
+
+    messages = [
+        {"role": "system", "content": "Ты — MS Assistant, официальный AI-помощник мессенджера MS Messenger. Отвечай коротко и по делу на русском языке. Не говори что ты модель или AI."},
+        {"role": "user", "content": query.question},
+    ]
 
     inputs = tokenizer.apply_chat_template(
         messages, tokenize=True, add_generation_prompt=True, return_tensors="pt"
@@ -55,11 +42,12 @@ def chat(query: Query):
     with torch.no_grad():
         outputs = model.generate(
             input_ids=inputs,
-            max_new_tokens=512,
+            max_new_tokens=256,
             temperature=0.7,
             top_p=0.9,
             repetition_penalty=1.1,
+            pad_token_id=tokenizer.eos_token_id,
         )
 
     response = tokenizer.decode(outputs[0][inputs.shape[1]:], skip_special_tokens=True)
-    return Response(response=response.strip())
+    return {"response": response.strip()}
