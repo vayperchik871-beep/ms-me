@@ -69,6 +69,7 @@ html, body {
 .conn-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--muted); }
 .conn-status.ok .conn-dot { background: var(--green); box-shadow: 0 0 8px var(--green); }
 .conn-status.err .conn-dot { background: var(--red); box-shadow: 0 0 8px var(--red); }
+.conn-status.wait .conn-dot { background: var(--orange); box-shadow: 0 0 8px var(--orange); animation: pulse 1s infinite; }
 
 /* ─── Main ─── */
 main { padding: 24px 28px 12px; max-width: 1100px; margin: 0 auto; }

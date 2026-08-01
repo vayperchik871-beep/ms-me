@@ -301,6 +301,7 @@ try {
 } catch {}
 
 try { await dbExec("ALTER TABLE users ADD COLUMN ai_model TEXT DEFAULT 'lite'") } catch {}
+try { await dbExec("ALTER TABLE users ADD COLUMN country TEXT DEFAULT NULL") } catch {}
 
 const SYSTEM_BOT = {
   id: 'system-ms-messenger',

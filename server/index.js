@@ -236,6 +236,27 @@ function sanitizeUserId(raw) {
   return raw.toLowerCase().replace(/[^a-z0-9_]/g, '').slice(0, 20)
 }
 
+const countryCache = new Map()
+
+async function detectCountry(ip) {
+  if (!ip || ip === '::1' || ip === '127.0.0.1' || ip.startsWith('::ffff:127')) return null
+  const cleanIp = ip.replace(/^::ffff:/, '')
+  if (countryCache.has(cleanIp)) return countryCache.get(cleanIp)
+  try {
+    const controller = new AbortController()
+    const timer = setTimeout(() => controller.abort(), 3000)
+    const r = await fetch(`http://ip-api.com/json/${cleanIp}?fields=country,countryCode`, { signal: controller.signal })
+    clearTimeout(timer)
+    if (!r.ok) return null
+    const d = await r.json()
+    const result = d.status === 'success' && d.country ? { name: d.country, code: d.countryCode || null } : null
+    countryCache.set(cleanIp, result)
+    return result
+  } catch (e) {
+    return null
+  }
+}
+
 // ─── Auth ───
 
 app.post('/api/auth/register', async (req, res) => {
@@ -289,6 +310,11 @@ app.post('/api/auth/register', async (req, res) => {
   await dbRun('INSERT INTO users (id, user_id, name, password_hash, phone, bio, avatar, is_admin, profile_color, created_at, platform) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
     id, cleanId, name.trim(), hash, phone || null, bio || null, avatarUrl, isFirst ? 1 : 0, '#7c5cfc', now, platform || 'web'
   )
+
+  const country = await detectCountry(req.headers['x-forwarded-for']?.split(',')[0]?.trim() || req.ip)
+  if (country) {
+    await dbRun('UPDATE users SET country = ? WHERE id = ?', `${country.name}|${country.code || ''}`, id).catch(() => {})
+  }
 
   const devId = hashDevice(deviceId)
   await dbRun('INSERT INTO devices (id, user_id, device_id, verified, last_seen, created_at) VALUES (?, ?, ?, 1, ?, ?)',
@@ -661,6 +687,12 @@ app.get('/api/dashboard', async (req, res) => {
   const platformStats = {}
   for (const row of usersByPlatform) platformStats[row.platform || 'web'] = row.c
 
+  const byCountry = await dbAll("SELECT country, COUNT(*) as c FROM users WHERE is_system = 0 AND country IS NOT NULL GROUP BY country ORDER BY c DESC LIMIT 12")
+  const countryStats = byCountry.map((row) => {
+    const [name, code] = String(row.country).split('|')
+    return { name, code: code || null, count: row.c }
+  })
+
   res.json({
     totalUsers: totalUsers.c,
     onlineUsers,
@@ -671,6 +703,7 @@ app.get('/api/dashboard', async (req, res) => {
     newMonth: month,
     registrationsPerDay: perDay,
     platformStats,
+    countryStats,
     serverTime: now,
     uptime: process.uptime(),
   })

@@ -15,7 +15,8 @@ function setConn(cls, text) {
 
 async function load() {
   try {
-    const r = await fetch(API, { signal: AbortSignal.timeout(10000) })
+    setConn('wait', 'Сервер просыпается…')
+    const r = await fetch(API, { signal: AbortSignal.timeout(60000) })
     if (!r.ok) throw new Error('HTTP ' + r.status)
     const d = await r.json()
     $('#err').classList.add('hidden')
@@ -29,6 +30,7 @@ async function load() {
 
     renderChart(d.registrationsPerDay || [])
     renderPlatforms(d.platformStats || {})
+    renderCountries(d.countryStats || [])
 
     $('#last-update').textContent = 'обновлено ' + new Date().toLocaleTimeString('ru-RU')
     setConn('ok', 'Подключено')
@@ -38,7 +40,7 @@ async function load() {
     $('#footer').textContent = `Сервер: ${API.replace('/api/dashboard', '')} · аптайм ${upStr}`
   } catch (e) {
     $('#err').classList.remove('hidden')
-    setConn('err', 'Нет связи с сервером')
+    setConn('err', 'Нет связи — повторяю…')
   }
 }
 
@@ -71,7 +73,31 @@ function renderPlatforms(stats) {
   })
 }
 
+function renderCountries(countries) {
+  const total = countries.reduce((a, c) => a + c.count, 0) || 1
+  $('#countries').innerHTML = countries.length
+    ? countries.map((c) => `
+        <div class="p-row">
+          <span class="p-name">${flagEmoji(c.code)} ${c.name}</span>
+          <div class="p-track"><div class="p-fill" data-w="${(c.count / total) * 100}"></div></div>
+          <span class="p-count">${fmt(c.count)}</span>
+        </div>
+      `).join('')
+    : '<div style="color:#8a8aa0;font-size:13px">Страны определяются при регистрации</div>'
+  requestAnimationFrame(() => {
+    $$('#countries .p-fill').forEach((f) => { f.style.width = f.dataset.w + '%' })
+  })
+}
+
+function flagEmoji(code) {
+  if (!code || code.length !== 2) return ''
+  const base = 127397
+  return String.fromCodePoint(...code.toUpperCase().split('').map((c) => base + c.charCodeAt(0)))
+}
+
 $('#retry-btn').addEventListener('click', load)
 
 load()
 setInterval(load, 15000)
+window.addEventListener('online', load)
+window.addEventListener('focus', load)
