@@ -1,17 +1,18 @@
 :root {
-  --bg: #0d0d14;
-  --bg-2: #13131e;
-  --panel: #171724;
-  --panel-2: #1c1c2b;
-  --border: #262636;
-  --text: #e8e8f0;
-  --muted: #8a8aa0;
-  --accent: #7c5cfc;
+  --bg: #ffffff;
+  --bg-2: #f8f8f9;
+  --panel: #ffffff;
+  --panel-2: #f3f3f5;
+  --border: #ececee;
+  --text: #111111;
+  --muted: #8a8a93;
+  --tiktok-red: #fe2c55;
+  --tiktok-cyan: #25f4ee;
+  --tiktok-dark: #161823;
   --green: #2dd4a7;
-  --red: #f0565c;
-  --orange: #f5a623;
+  --red: #fe2c55;
+  --orange: #ffa200;
   --blue: #4da3ff;
-  --cyan: #35c4e8;
   --purple: #a86bff;
 }
 
@@ -19,9 +20,7 @@
 
 html, body {
   height: 100%;
-  background:
-    radial-gradient(900px 500px at 80% -10%, rgba(124, 92, 252, 0.07), transparent 60%),
-    var(--bg);
+  background: var(--bg);
   color: var(--text);
   font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
   font-size: 14px;
@@ -29,7 +28,7 @@ html, body {
 
 ::-webkit-scrollbar { width: 8px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: #2c2c40; border-radius: 4px; }
+::-webkit-scrollbar-thumb { background: #ddd; border-radius: 4px; }
 
 .hidden { display: none !important; }
 
@@ -40,8 +39,8 @@ html, body {
   justify-content: space-between;
   padding: 18px 28px;
   border-bottom: 1px solid var(--border);
-  background: rgba(13, 13, 20, 0.8);
-  backdrop-filter: blur(10px);
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(12px);
   position: sticky;
   top: 0;
   z-index: 10;
@@ -51,14 +50,15 @@ html, body {
 
 .brand-logo {
   width: 42px; height: 42px;
-  border-radius: 12px;
-  background: linear-gradient(135deg, var(--accent), #a86bff);
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--tiktok-red), #ff5c8a);
   display: flex; align-items: center; justify-content: center;
   font-weight: 800; font-size: 15px;
-  box-shadow: 0 8px 24px rgba(124, 92, 252, 0.35);
+  color: #fff;
+  box-shadow: 0 8px 24px rgba(254, 44, 85, 0.3);
 }
 
-.brand h1 { font-size: 18px; }
+.brand h1 { font-size: 18px; color: var(--tiktok-dark); }
 .brand-sub { color: var(--muted); font-size: 12px; margin-top: 2px; }
 
 .topbar-right { display: flex; align-items: center; gap: 14px; }
@@ -78,9 +78,9 @@ main { padding: 24px 28px 12px; max-width: 1100px; margin: 0 auto; }
   display: flex;
   align-items: center;
   gap: 14px;
-  background: rgba(240, 86, 92, 0.1);
-  border: 1px solid rgba(240, 86, 92, 0.4);
-  color: #f0565c;
+  background: rgba(254, 44, 85, 0.06);
+  border: 1px solid rgba(254, 44, 85, 0.25);
+  color: var(--tiktok-red);
   padding: 12px 16px;
   border-radius: 12px;
   margin-bottom: 20px;
@@ -97,24 +97,24 @@ main { padding: 24px 28px 12px; max-width: 1100px; margin: 0 auto; }
 
 .online-pill {
   display: flex; align-items: center; gap: 10px;
-  background: rgba(45, 212, 167, 0.08);
-  border: 1px solid rgba(45, 212, 167, 0.3);
-  color: var(--green);
-  padding: 9px 18px;
+  background: linear-gradient(135deg, var(--tiktok-red), #ff5c8a);
+  color: #fff;
+  padding: 10px 20px;
   border-radius: 24px;
   font-size: 15px;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
+  box-shadow: 0 8px 20px rgba(254, 44, 85, 0.25);
 }
 
 .dot {
   width: 9px; height: 9px; border-radius: 50%;
-  background: var(--green);
-  box-shadow: 0 0 8px var(--green);
+  background: #fff;
+  box-shadow: 0 0 8px rgba(255, 255, 255, 0.8);
   animation: pulse 1.6s infinite;
 }
 
-@keyframes pulse { 50% { opacity: 0.35; } }
+@keyframes pulse { 50% { opacity: 0.4; } }
 
 .online-sub { color: var(--muted); font-size: 13px; }
 
@@ -129,38 +129,45 @@ main { padding: 24px 28px 12px; max-width: 1100px; margin: 0 auto; }
 .stat-card {
   background: var(--panel);
   border: 1px solid var(--border);
-  border-radius: 16px;
+  border-radius: 18px;
   padding: 18px 20px;
   position: relative;
   overflow: hidden;
+  box-shadow: 0 2px 12px rgba(22, 24, 35, 0.04);
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+
+.stat-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(22, 24, 35, 0.08);
 }
 
 .stat-card::before {
   content: '';
   position: absolute;
   top: 0; left: 0; right: 0;
-  height: 3px;
-  background: var(--card-color, var(--accent));
-  opacity: 0.85;
+  height: 4px;
+  background: var(--card-color, var(--tiktok-red));
 }
 
-.stat-card.accent { --card-color: var(--accent); }
+.stat-card.accent { --card-color: var(--tiktok-red); }
 .stat-card.green { --card-color: var(--green); }
 .stat-card.purple { --card-color: var(--purple); }
 .stat-card.blue { --card-color: var(--blue); }
 .stat-card.orange { --card-color: var(--orange); }
 
-.stat-label { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
-.stat-value { font-size: 32px; font-weight: 700; margin: 6px 0 2px; font-variant-numeric: tabular-nums; }
+.stat-label { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; font-weight: 600; }
+.stat-value { font-size: 32px; font-weight: 800; margin: 6px 0 2px; font-variant-numeric: tabular-nums; color: var(--tiktok-dark); }
 .stat-sub { font-size: 12px; color: var(--muted); }
 
 /* ─── Panels ─── */
 .panel {
   background: var(--panel);
   border: 1px solid var(--border);
-  border-radius: 16px;
+  border-radius: 18px;
   margin-bottom: 20px;
   overflow: hidden;
+  box-shadow: 0 2px 12px rgba(22, 24, 35, 0.04);
 }
 
 .panel-header {
@@ -171,15 +178,16 @@ main { padding: 24px 28px 12px; max-width: 1100px; margin: 0 auto; }
   border-bottom: 1px solid var(--border);
 }
 
-.panel-header h2 { font-size: 15px; font-weight: 600; }
+.panel-header h2 { font-size: 15px; font-weight: 700; color: var(--tiktok-dark); }
 
 .panel-tag {
   font-size: 12px;
-  color: var(--purple);
-  background: rgba(168, 107, 255, 0.1);
-  border: 1px solid rgba(168, 107, 255, 0.3);
+  color: var(--tiktok-red);
+  background: rgba(254, 44, 85, 0.06);
+  border: 1px solid rgba(254, 44, 85, 0.2);
   padding: 3px 10px;
   border-radius: 16px;
+  font-weight: 600;
 }
 
 /* ─── Chart ─── */
@@ -193,23 +201,23 @@ main { padding: 24px 28px 12px; max-width: 1100px; margin: 0 auto; }
 
 .bar {
   flex: 1;
-  background: linear-gradient(180deg, var(--accent), #4a3599);
-  border-radius: 4px 4px 0 0;
+  background: linear-gradient(180deg, var(--tiktok-red), #ff8fab);
+  border-radius: 6px 6px 0 0;
   position: relative;
   min-width: 4px;
   transition: filter 0.15s;
   cursor: pointer;
 }
 
-.bar:hover { filter: brightness(1.35); }
+.bar:hover { filter: brightness(1.1); }
 
 .bar .tip {
   position: absolute;
   bottom: calc(100% + 6px);
   left: 50%;
   transform: translateX(-50%);
-  background: var(--panel-2);
-  border: 1px solid #3a3a52;
+  background: var(--tiktok-dark);
+  color: #fff;
   padding: 4px 8px;
   border-radius: 6px;
   font-size: 11px;
@@ -226,7 +234,7 @@ main { padding: 24px 28px 12px; max-width: 1100px; margin: 0 auto; }
   display: flex;
   justify-content: space-between;
   padding: 0 20px 14px;
-  color: #6a6a82;
+  color: var(--muted);
   font-size: 11px;
 }
 
@@ -236,12 +244,12 @@ main { padding: 24px 28px 12px; max-width: 1100px; margin: 0 auto; }
 .p-row { display: flex; align-items: center; gap: 12px; }
 .p-name { width: 90px; color: var(--muted); font-size: 13px; }
 .p-track { flex: 1; height: 8px; background: var(--bg-2); border-radius: 4px; overflow: hidden; }
-.p-fill { height: 100%; background: linear-gradient(90deg, var(--accent), var(--purple)); border-radius: 4px; transition: width 0.6s ease; width: 0; }
-.p-count { width: 50px; text-align: right; font-weight: 600; font-size: 13px; font-variant-numeric: tabular-nums; }
+.p-fill { height: 100%; background: linear-gradient(90deg, var(--tiktok-red), #ff5c8a); border-radius: 4px; transition: width 0.6s ease; width: 0; }
+.p-count { width: 50px; text-align: right; font-weight: 700; font-size: 13px; font-variant-numeric: tabular-nums; color: var(--tiktok-dark); }
 
 /* ─── Footer ─── */
 footer {
-  color: #6a6a82;
+  color: var(--muted);
   font-size: 12px;
   text-align: center;
   padding: 8px 0 24px;
@@ -259,4 +267,4 @@ footer {
   transition: all 0.15s;
 }
 
-.btn-ghost:hover { color: var(--text); border-color: #3a3a52; }
+.btn-ghost:hover { color: var(--tiktok-dark); border-color: #d4d4d8; }

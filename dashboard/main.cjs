@@ -7,7 +7,7 @@ function createWindow() {
     height: 700,
     minWidth: 700,
     minHeight: 500,
-    backgroundColor: '#0d0d14',
+    backgroundColor: '#ffffff',
     title: 'MS Messenger — Дашборд',
     icon: path.join(__dirname, '..', 'public', 'app-icon.png'),
     autoHideMenuBar: true,
