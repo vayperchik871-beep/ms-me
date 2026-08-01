@@ -1,4 +1,4 @@
-const $ = (id) => document.getElementById(id)
+const $ = (id) => document.getElementById(id.startsWith('#') ? id.slice(1) : id)
 const $$ = (sel) => document.querySelectorAll(sel)
 
 const API = 'https://ms-messenger-server.onrender.com/api/dashboard'
