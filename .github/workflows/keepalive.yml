@@ -2,7 +2,7 @@ name: Keepalive
 
 on:
   schedule:
-    - cron: '*/9 * * * *'
+    - cron: '*/5 * * * *'
   workflow_dispatch:
 
 jobs:
@@ -11,7 +11,4 @@ jobs:
     steps:
       - name: Ping Render server
         run: |
-          for i in 1 2 3; do
-            curl -s https://ms-messenger-server.onrender.com/health && break
-            sleep 30
-          done
+          curl -s --max-time 30 https://ms-messenger-server.onrender.com/health
