@@ -3,19 +3,17 @@ const path = require('path')
 
 function createWindow() {
   const win = new BrowserWindow({
-    width: 1360,
-    height: 860,
-    minWidth: 1000,
-    minHeight: 640,
+    width: 900,
+    height: 700,
+    minWidth: 700,
+    minHeight: 500,
     backgroundColor: '#0d0d14',
-    title: 'MS Messenger — Админ-дашборд',
+    title: 'MS Messenger — Дашборд',
     icon: path.join(__dirname, '..', 'public', 'app-icon.png'),
     autoHideMenuBar: true,
     webPreferences: {
-      preload: path.join(__dirname, 'preload.cjs'),
-      nodeIntegration: false,
       contextIsolation: true,
-      sandbox: true,
+      nodeIntegration: false,
     },
   })
 
