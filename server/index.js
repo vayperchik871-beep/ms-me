@@ -619,6 +619,63 @@ app.post('/api/auth/google', async (req, res) => {
   }
 })
 
+// ─── Public Dashboard (без авторизации) ───
+
+app.get('/api/dashboard', async (req, res) => {
+  const DAY = 86400000
+  const now = Date.now()
+
+  const totalUsers = await dbGet('SELECT COUNT(*) as c FROM users WHERE is_system = 0')
+  const onlineUsers = Array.from(clients.values()).filter((c) => c.readyState === 1).length
+  const totalMessages = await dbGet('SELECT COUNT(*) as c FROM messages WHERE deleted = 0')
+  const totalChats = await dbGet('SELECT COUNT(*) as c FROM chats')
+
+  const byPeriod = async (days) => {
+    const r = await dbGet(
+      'SELECT COUNT(*) as c FROM users WHERE is_system = 0 AND created_at >= ?',
+      now - days * DAY
+    )
+    return r.c
+  }
+
+  const [today, week, month] = await Promise.all([byPeriod(1), byPeriod(7), byPeriod(30)])
+
+  const registrations = await dbAll(`
+    SELECT created_at FROM users WHERE is_system = 0 AND created_at >= ?
+  `, now - 30 * DAY)
+
+  const perDay = []
+  const nowDate = new Date()
+  nowDate.setHours(0, 0, 0, 0)
+  const todayStart = nowDate.getTime()
+  for (let i = 29; i >= 0; i--) {
+    const dayStart = todayStart - i * DAY
+    const d = new Date(dayStart)
+    perDay.push({
+      date: `${d.getDate().toString().padStart(2, '0')}.${(d.getMonth() + 1).toString().padStart(2, '0')}`,
+      count: registrations.filter((r) => r.created_at >= dayStart && r.created_at < dayStart + DAY).length,
+    })
+  }
+
+  const usersByPlatform = await dbAll("SELECT platform, COUNT(*) as c FROM users WHERE is_system = 0 GROUP BY platform")
+  const platformStats = {}
+  for (const row of usersByPlatform) platformStats[row.platform || 'web'] = row.c
+
+  res.json({
+    totalUsers: totalUsers.c,
+    onlineUsers,
+    totalMessages: totalMessages.c,
+    totalChats: totalChats.c,
+    newToday: today,
+    newWeek: week,
+    newMonth: month,
+    registrationsPerDay: perDay,
+    platformStats,
+    serverTime: now,
+    uptime: process.uptime(),
+  })
+})
+
 // ─── Admin ───
 
 app.post('/api/admin/promote', authMiddleware, async (req, res) => {

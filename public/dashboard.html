@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MS Messenger — Дашборд</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: #0d0d14;
+      color: #e8e8f0;
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      min-height: 100vh;
+      padding: 32px 24px 48px;
+    }
+    .wrap { max-width: 1000px; margin: 0 auto; }
+
+    header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 28px; flex-wrap: wrap; gap: 12px; }
+    .brand { display: flex; align-items: center; gap: 12px; }
+    .brand img, .brand .logo-fallback { width: 40px; height: 40px; border-radius: 10px; }
+    .brand h1 { font-size: 20px; }
+    .brand p { color: #8a8aa0; font-size: 13px; margin-top: 2px; }
+
+    .online-pill {
+      display: flex; align-items: center; gap: 8px;
+      background: rgba(45, 212, 167, 0.1);
+      border: 1px solid rgba(45, 212, 167, 0.35);
+      color: #2dd4a7;
+      padding: 8px 16px; border-radius: 24px;
+      font-size: 14px; font-weight: 600;
+    }
+    .dot { width: 9px; height: 9px; border-radius: 50%; background: #2dd4a7; box-shadow: 0 0 8px #2dd4a7; animation: pulse 1.6s infinite; }
+    @keyframes pulse { 50% { opacity: 0.4; } }
+
+    .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; margin-bottom: 28px; }
+    .card {
+      background: #171724;
+      border: 1px solid #262636;
+      border-radius: 14px;
+      padding: 18px;
+    }
+    .card .label { color: #8a8aa0; font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; }
+    .card .value { font-size: 28px; font-weight: 700; margin-top: 6px; font-variant-numeric: tabular-nums; }
+    .card .sub { color: #8a8aa0; font-size: 12px; margin-top: 4px; }
+    .card.accent { border-top: 3px solid #7c5cfc; }
+    .card.green { border-top: 3px solid #2dd4a7; }
+    .card.purple { border-top: 3px solid #a86bff; }
+    .card.blue { border-top: 3px solid #4da3ff; }
+    .card.orange { border-top: 3px solid #f5a623; }
+
+    .panel { background: #171724; border: 1px solid #262636; border-radius: 14px; padding: 20px; margin-bottom: 24px; }
+    .panel h2 { font-size: 15px; margin-bottom: 16px; color: #c8c8d8; }
+
+    .chart { display: flex; align-items: flex-end; gap: 4px; height: 160px; }
+    .bar { flex: 1; background: #262636; border-radius: 4px 4px 0 0; position: relative; min-width: 4px; transition: background 0.2s; cursor: pointer; }
+    .bar:hover { background: #7c5cfc; }
+    .bar .tip {
+      position: absolute; bottom: calc(100% + 6px); left: 50%; transform: translateX(-50%);
+      background: #1c1c2b; border: 1px solid #3a3a52; padding: 4px 8px; border-radius: 6px;
+      font-size: 11px; white-space: nowrap; opacity: 0; pointer-events: none; transition: opacity 0.15s;
+      z-index: 5;
+    }
+    .bar:hover .tip { opacity: 1; }
+    .chart-x { display: flex; justify-content: space-between; margin-top: 8px; color: #6a6a82; font-size: 11px; }
+
+    .platforms { display: flex; flex-direction: column; gap: 10px; }
+    .p-row { display: flex; align-items: center; gap: 12px; }
+    .p-name { width: 90px; color: #8a8aa0; font-size: 13px; }
+    .p-track { flex: 1; height: 8px; background: #10101a; border-radius: 4px; overflow: hidden; }
+    .p-fill { height: 100%; background: linear-gradient(90deg, #7c5cfc, #a86bff); border-radius: 4px; transition: width 0.6s ease; }
+    .p-count { width: 50px; text-align: right; font-weight: 600; font-size: 13px; font-variant-numeric: tabular-nums; }
+
+    footer { color: #6a6a82; font-size: 12px; text-align: center; margin-top: 12px; }
+    .err-banner {
+      background: rgba(240, 86, 92, 0.1); border: 1px solid rgba(240, 86, 92, 0.4);
+      color: #f0565c; padding: 14px 18px; border-radius: 12px; margin-bottom: 20px; font-size: 14px;
+    }
+    @media (max-width: 640px) { body { padding: 20px 14px; } }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div class="brand">
+        <img src="logo.png" alt="MS" onerror="this.classList.add('logo-fallback'); this.style.display='none'">
+        <div>
+          <h1>MS Messenger — Дашборд</h1>
+          <p>Статистика сервера</p>
+        </div>
+      </div>
+      <div class="online-pill"><span class="dot"></span><span id="online">…</span> онлайн</div>
+    </header>
+
+    <div id="err" class="err-banner hidden">Не удалось подключиться к серверу. Проверьте, что он запущен.</div>
+
+    <div class="cards">
+      <div class="card accent">
+        <div class="label">Всего пользователей</div>
+        <div class="value" id="c-users">—</div>
+        <div class="sub" id="s-users">из них системных ботов</div>
+      </div>
+      <div class="card green">
+        <div class="label">Новые за сегодня</div>
+        <div class="value" id="c-today">—</div>
+        <div class="sub" id="s-today">за 24 часа</div>
+      </div>
+      <div class="card purple">
+        <div class="label">За 7 дней</div>
+        <div class="value" id="c-week">—</div>
+        <div class="sub" id="s-week">неделя</div>
+      </div>
+      <div class="card blue">
+        <div class="label">За месяц</div>
+        <div class="value" id="c-month">—</div>
+        <div class="sub" id="s-month">30 дней</div>
+      </div>
+      <div class="card orange">
+        <div class="label">Сообщений</div>
+        <div class="value" id="c-msgs">—</div>
+        <div class="sub" id="s-msgs">всего за всё время</div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2>Регистрации — последние 30 дней</h2>
+      <div class="chart" id="chart"></div>
+      <div class="chart-x"><span>30 дней назад</span><span>сегодня</span></div>
+    </div>
+
+    <div class="panel">
+      <h2>Платформы</h2>
+      <div class="platforms" id="platforms"></div>
+    </div>
+
+    <footer id="footer"></footer>
+  </div>
+
+  <script>
+    const $ = (id) => document.getElementById(id)
+    const API = '/api/dashboard'
+
+    function fmt(n) { return Number(n || 0).toLocaleString('ru-RU') }
+
+    const PLATFORM_NAMES = { web: 'Web', android: 'Android', ios: 'iOS', desktop: 'PC' }
+
+    async function load() {
+      try {
+        const r = await fetch(API)
+        if (!r.ok) throw new Error('HTTP ' + r.status)
+        const d = await r.json()
+        $('err').classList.add('hidden')
+
+        $('online').textContent = d.onlineUsers
+        $('c-users').textContent = fmt(d.totalUsers)
+        $('c-today').textContent = fmt(d.newToday)
+        $('c-week').textContent = fmt(d.newWeek)
+        $('c-month').textContent = fmt(d.newMonth)
+        $('c-msgs').textContent = fmt(d.totalMessages)
+
+        renderChart(d.registrationsPerDay || [])
+        renderPlatforms(d.platformStats || {})
+
+        const up = d.uptime
+        const upStr = up > 86400 ? Math.round(up / 86400) + ' дн.' : up > 3600 ? Math.round(up / 3600) + ' ч.' : Math.round(up / 60) + ' мин.'
+        $('footer').textContent = 'Аптайм: ' + upStr + ' · обновлено ' + new Date().toLocaleTimeString('ru-RU')
+      } catch (e) {
+        $('err').classList.remove('hidden')
+      }
+    }
+
+    function renderChart(perDay) {
+      const chart = $('chart')
+      const max = Math.max(1, ...perDay.map((d) => d.count))
+      chart.innerHTML = perDay.map((d, i) => `
+        <div class="bar" style="height:${Math.max(4, (d.count / max) * 100)}%" title="">
+          <span class="tip">${d.date}: ${d.count}</span>
+        </div>
+      `).join('')
+    }
+
+    function renderPlatforms(stats) {
+      const entries = Object.entries(stats)
+      const total = entries.reduce((a, [, v]) => a + v, 0) || 1
+      $('platforms').innerHTML = entries.length
+        ? entries.map(([k, v]) => `
+            <div class="p-row">
+              <span class="p-name">${PLATFORM_NAMES[k] || k}</span>
+              <div class="p-track"><div class="p-fill" data-w="${(v / total) * 100}"></div></div>
+              <span class="p-count">${fmt(v)}</span>
+            </div>
+          `).join('')
+        : '<div style="color:#8a8aa0;font-size:13px">Нет данных</div>'
+      requestAnimationFrame(() => {
+        document.querySelectorAll('.p-fill').forEach((f) => { f.style.width = f.dataset.w + '%' })
+      })
+    }
+
+    load()
+    setInterval(load, 15000)
+  </script>
+</body>
+</html>
