@@ -16,7 +16,7 @@ import { OAuth2Client } from 'google-auth-library'
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    const dir = path.join(rootDir, 'uploads')
+    const dir = uploadsDir
     if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true })
     cb(null, dir)
   },
@@ -49,11 +49,13 @@ const __dirname = path.dirname(__filename)
 const rootDir = path.resolve(__dirname, '..')
 const frontendDistDir = path.join(rootDir, 'dist')
 const indexHtmlPath = path.join(frontendDistDir, 'index.html')
+const dataDir = process.env.DATA_DIR || (fs.existsSync('/data') ? '/data' : null)
+const uploadsDir = dataDir ? path.join(dataDir, 'uploads') : path.join(rootDir, 'uploads')
 
 app.use(cors({ origin: true }))
 app.use(express.json({ limit: '10mb' }))
 app.use(express.static(frontendDistDir))
-app.use('/uploads', express.static(path.join(rootDir, 'uploads')))
+app.use('/uploads', express.static(uploadsDir))
 
 const clients = new Map()
 
@@ -299,7 +301,7 @@ app.post('/api/auth/register', async (req, res) => {
   if (avatar) {
     try {
       const buf = Buffer.from(avatar, 'base64')
-      const avatarsDir = path.join(rootDir, 'uploads', 'avatars')
+      const avatarsDir = path.join(uploadsDir, 'avatars')
       if (!fs.existsSync(avatarsDir)) fs.mkdirSync(avatarsDir, { recursive: true })
       const fileName = `${id}.png`
       fs.writeFileSync(path.join(avatarsDir, fileName), buf)

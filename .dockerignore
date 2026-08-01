@@ -1,0 +1,14 @@
+node_modules/
+dist/
+dist-electron/
+server/node_modules/
+server/data/
+uploads/
+dashboard/node_modules/
+dashboard/release/
+android/
+ios/
+ios-ms-messenger/
+*.log
+.env
+server/.env
