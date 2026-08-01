@@ -7,6 +7,8 @@ struct ContactsListView: View {
     @State private var loading = true
     @State private var navigateChat: Chat?
     @State private var showChat = false
+    @State private var selectedContact: User?
+    @State private var showContactDetail = false
     @ObservedObject private var theme = ThemeManager.shared
 
     var body: some View {
@@ -19,13 +21,13 @@ struct ContactsListView: View {
                         LazyVStack(spacing: 2) {
                             if !search.isEmpty {
                                 ForEach(searchResults) { user in
-                                    Button(action: { openChat(user: user) }) {
+                                    Button(action: { selectedContact = user; showContactDetail = true }) {
                                         ContactRowView(user: user)
                                     }.buttonStyle(.plain)
                                 }
                             } else {
                                 ForEach(contacts) { c in
-                                    Button(action: { openChat(user: c) }) {
+                                    Button(action: { selectedContact = c; showContactDetail = true }) {
                                         ContactRowView(user: c)
                                     }.buttonStyle(.plain)
                                 }
@@ -60,6 +62,13 @@ struct ContactsListView: View {
             .background(
                 NavigationLink("", destination: ChatDetailView(chat: navigateChat ?? Chat(id: "", type: nil, name: nil, peer: nil, lastMessage: nil, lastTime: nil, unread: nil, lastMessageAt: nil)), isActive: $showChat).hidden()
             )
+            .fullScreenCover(isPresented: $showContactDetail) {
+                if let contact = selectedContact {
+                    NavigationStack {
+                        ContactDetailView(user: contact)
+                    }
+                }
+            }
         }
         .tint(Color(hex: "#6C63FF"))
     }

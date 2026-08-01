@@ -3,6 +3,9 @@ export function getApiBase() {
 }
 
 function getApiUrl(path = '') {
+  if (window.Capacitor?.isNativePlatform?.()) {
+    return `https://ms-messenger-server.onrender.com/api${path}`
+  }
   return `/api${path}`
 }
 
@@ -174,6 +177,9 @@ export function resolveMediaUrl(url) {
   if (url.startsWith('https://')) return url
   if (url.startsWith('http://')) {
     return url.replace(/^http:\/\//i, 'https://')
+  }
+  if (window.Capacitor?.isNativePlatform?.()) {
+    return `https://ms-messenger-server.onrender.com${url}`
   }
   return url
 }
