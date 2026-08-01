@@ -1,19 +1,14 @@
 :root {
-  --bg: #ffffff;
-  --bg-2: #f8f8f9;
-  --panel: #ffffff;
-  --panel-2: #f3f3f5;
-  --border: #ececee;
-  --text: #111111;
+  --bg: #fff;
+  --line: #ececee;
+  --text: #161823;
   --muted: #8a8a93;
-  --tiktok-red: #fe2c55;
-  --tiktok-cyan: #25f4ee;
-  --tiktok-dark: #161823;
-  --green: #2dd4a7;
   --red: #fe2c55;
+  --green: #20d5a5;
   --orange: #ffa200;
   --blue: #4da3ff;
   --purple: #a86bff;
+  --card: #fff;
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -24,11 +19,12 @@ html, body {
   color: var(--text);
   font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
   font-size: 14px;
+  -webkit-font-smoothing: antialiased;
 }
 
 ::-webkit-scrollbar { width: 8px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: #ddd; border-radius: 4px; }
+::-webkit-scrollbar-thumb { background: #e2e2e6; border-radius: 4px; }
 
 .hidden { display: none !important; }
 
@@ -37,156 +33,144 @@ html, body {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 18px 28px;
-  border-bottom: 1px solid var(--border);
-  background: rgba(255, 255, 255, 0.85);
-  backdrop-filter: blur(12px);
+  padding: 16px 24px;
+  border-bottom: 1px solid var(--line);
+  background: #fff;
   position: sticky;
   top: 0;
   z-index: 10;
 }
 
-.brand { display: flex; align-items: center; gap: 14px; }
+.brand { display: flex; align-items: center; gap: 12px; }
 
 .brand-logo {
-  width: 42px; height: 42px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, var(--tiktok-red), #ff5c8a);
-  display: flex; align-items: center; justify-content: center;
-  font-weight: 800; font-size: 15px;
+  width: 34px; height: 34px;
+  background: var(--text);
   color: #fff;
-  box-shadow: 0 8px 24px rgba(254, 44, 85, 0.3);
+  border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 800; font-size: 14px;
+  letter-spacing: 0.02em;
 }
 
-.brand h1 { font-size: 18px; color: var(--tiktok-dark); }
-.brand-sub { color: var(--muted); font-size: 12px; margin-top: 2px; }
+.brand h1 { font-size: 16px; font-weight: 700; }
+.brand-sub { color: var(--muted); font-size: 12px; margin-top: 1px; }
 
-.topbar-right { display: flex; align-items: center; gap: 14px; }
+.topbar-right { display: flex; align-items: center; gap: 16px; }
 
 .last-update { color: var(--muted); font-size: 12px; }
 
 .conn-status { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--muted); }
 .conn-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--muted); }
-.conn-status.ok .conn-dot { background: var(--green); box-shadow: 0 0 8px var(--green); }
-.conn-status.err .conn-dot { background: var(--red); box-shadow: 0 0 8px var(--red); }
-.conn-status.wait .conn-dot { background: var(--orange); box-shadow: 0 0 8px var(--orange); animation: pulse 1s infinite; }
+.conn-status.ok .conn-dot { background: var(--green); }
+.conn-status.err .conn-dot { background: var(--red); }
+.conn-status.wait .conn-dot { background: var(--orange); animation: blink 1s infinite; }
+
+@keyframes blink { 50% { opacity: 0.3; } }
 
 /* ─── Main ─── */
-main { padding: 24px 28px 12px; max-width: 1100px; margin: 0 auto; }
+main { padding: 20px 24px 12px; max-width: 1100px; margin: 0 auto; }
 
 .err-banner {
   display: flex;
   align-items: center;
   gap: 14px;
-  background: rgba(254, 44, 85, 0.06);
-  border: 1px solid rgba(254, 44, 85, 0.25);
-  color: var(--tiktok-red);
-  padding: 12px 16px;
-  border-radius: 12px;
-  margin-bottom: 20px;
+  background: #fff0f3;
+  border: 1px solid #ffd0da;
+  color: var(--red);
+  padding: 10px 14px;
+  border-radius: 10px;
+  margin-bottom: 18px;
   font-size: 13px;
 }
 
 /* ─── Online ─── */
 .online-row {
   display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-bottom: 20px;
+  align-items: baseline;
+  gap: 10px;
+  margin-bottom: 18px;
 }
 
 .online-pill {
-  display: flex; align-items: center; gap: 10px;
-  background: linear-gradient(135deg, var(--tiktok-red), #ff5c8a);
+  display: flex; align-items: center; gap: 8px;
+  background: var(--red);
   color: #fff;
-  padding: 10px 20px;
-  border-radius: 24px;
-  font-size: 15px;
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 14px;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
-  box-shadow: 0 8px 20px rgba(254, 44, 85, 0.25);
 }
 
 .dot {
-  width: 9px; height: 9px; border-radius: 50%;
+  width: 8px; height: 8px; border-radius: 50%;
   background: #fff;
-  box-shadow: 0 0 8px rgba(255, 255, 255, 0.8);
-  animation: pulse 1.6s infinite;
+  animation: blink 1.6s infinite;
 }
-
-@keyframes pulse { 50% { opacity: 0.4; } }
 
 .online-sub { color: var(--muted); font-size: 13px; }
 
 /* ─── Stats ─── */
 .stat-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
-  gap: 14px;
-  margin-bottom: 20px;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
+  margin-bottom: 18px;
 }
 
 .stat-card {
-  background: var(--panel);
-  border: 1px solid var(--border);
-  border-radius: 18px;
-  padding: 18px 20px;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 16px 18px;
   position: relative;
   overflow: hidden;
-  box-shadow: 0 2px 12px rgba(22, 24, 35, 0.04);
-  transition: transform 0.15s, box-shadow 0.15s;
-}
-
-.stat-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 24px rgba(22, 24, 35, 0.08);
 }
 
 .stat-card::before {
   content: '';
   position: absolute;
   top: 0; left: 0; right: 0;
-  height: 4px;
-  background: var(--card-color, var(--tiktok-red));
+  height: 3px;
+  background: var(--card-color, var(--text));
 }
 
-.stat-card.accent { --card-color: var(--tiktok-red); }
+.stat-card.accent { --card-color: var(--red); }
 .stat-card.green { --card-color: var(--green); }
 .stat-card.purple { --card-color: var(--purple); }
 .stat-card.blue { --card-color: var(--blue); }
 .stat-card.orange { --card-color: var(--orange); }
 
-.stat-label { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; font-weight: 600; }
-.stat-value { font-size: 32px; font-weight: 800; margin: 6px 0 2px; font-variant-numeric: tabular-nums; color: var(--tiktok-dark); }
-.stat-sub { font-size: 12px; color: var(--muted); }
+.stat-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; font-weight: 600; }
+.stat-value { font-size: 30px; font-weight: 700; margin: 4px 0 0; font-variant-numeric: tabular-nums; }
+.stat-sub { font-size: 12px; color: var(--muted); margin-top: 2px; }
 
 /* ─── Panels ─── */
 .panel {
-  background: var(--panel);
-  border: 1px solid var(--border);
-  border-radius: 18px;
-  margin-bottom: 20px;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  margin-bottom: 18px;
   overflow: hidden;
-  box-shadow: 0 2px 12px rgba(22, 24, 35, 0.04);
 }
 
 .panel-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 16px 20px;
-  border-bottom: 1px solid var(--border);
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--line);
 }
 
-.panel-header h2 { font-size: 15px; font-weight: 700; color: var(--tiktok-dark); }
+.panel-header h2 { font-size: 14px; font-weight: 700; }
 
 .panel-tag {
   font-size: 12px;
-  color: var(--tiktok-red);
-  background: rgba(254, 44, 85, 0.06);
-  border: 1px solid rgba(254, 44, 85, 0.2);
-  padding: 3px 10px;
-  border-radius: 16px;
+  color: var(--red);
+  background: #fff0f3;
+  padding: 2px 10px;
+  border-radius: 12px;
   font-weight: 600;
 }
 
@@ -194,31 +178,31 @@ main { padding: 24px 28px 12px; max-width: 1100px; margin: 0 auto; }
 .chart {
   display: flex;
   align-items: flex-end;
-  gap: 4px;
-  height: 170px;
-  padding: 20px 20px 8px;
+  gap: 3px;
+  height: 160px;
+  padding: 18px 18px 6px;
 }
 
 .bar {
   flex: 1;
-  background: linear-gradient(180deg, var(--tiktok-red), #ff8fab);
-  border-radius: 6px 6px 0 0;
+  background: #ffd0da;
+  border-radius: 4px 4px 0 0;
   position: relative;
-  min-width: 4px;
-  transition: filter 0.15s;
+  min-width: 3px;
   cursor: pointer;
+  transition: background 0.15s;
 }
 
-.bar:hover { filter: brightness(1.1); }
+.bar:hover { background: var(--red); }
 
 .bar .tip {
   position: absolute;
   bottom: calc(100% + 6px);
   left: 50%;
   transform: translateX(-50%);
-  background: var(--tiktok-dark);
+  background: var(--text);
   color: #fff;
-  padding: 4px 8px;
+  padding: 3px 8px;
   border-radius: 6px;
   font-size: 11px;
   white-space: nowrap;
@@ -233,38 +217,38 @@ main { padding: 24px 28px 12px; max-width: 1100px; margin: 0 auto; }
 .chart-x {
   display: flex;
   justify-content: space-between;
-  padding: 0 20px 14px;
+  padding: 0 18px 12px;
   color: var(--muted);
   font-size: 11px;
 }
 
-/* ─── Platforms ─── */
-.platform-bars { padding: 18px 20px; display: flex; flex-direction: column; gap: 12px; }
+/* ─── Platforms / Countries ─── */
+.platform-bars { padding: 16px 18px; display: flex; flex-direction: column; gap: 10px; }
 
 .p-row { display: flex; align-items: center; gap: 12px; }
 .p-name { width: 90px; color: var(--muted); font-size: 13px; }
-.p-track { flex: 1; height: 8px; background: var(--bg-2); border-radius: 4px; overflow: hidden; }
-.p-fill { height: 100%; background: linear-gradient(90deg, var(--tiktok-red), #ff5c8a); border-radius: 4px; transition: width 0.6s ease; width: 0; }
-.p-count { width: 50px; text-align: right; font-weight: 700; font-size: 13px; font-variant-numeric: tabular-nums; color: var(--tiktok-dark); }
+.p-track { flex: 1; height: 7px; background: #f3f3f5; border-radius: 4px; overflow: hidden; }
+.p-fill { height: 100%; background: var(--red); border-radius: 4px; transition: width 0.6s ease; width: 0; }
+.p-count { width: 50px; text-align: right; font-weight: 600; font-size: 13px; font-variant-numeric: tabular-nums; }
 
 /* ─── Footer ─── */
 footer {
   color: var(--muted);
   font-size: 12px;
   text-align: center;
-  padding: 8px 0 24px;
+  padding: 8px 0 22px;
 }
 
 /* ─── Buttons ─── */
 .btn-ghost {
   background: none;
-  border: 1px solid var(--border);
+  border: 1px solid var(--line);
   color: var(--muted);
   border-radius: 8px;
-  padding: 6px 14px;
+  padding: 5px 12px;
   cursor: pointer;
-  font-size: 13px;
+  font-size: 12px;
   transition: all 0.15s;
 }
 
-.btn-ghost:hover { color: var(--tiktok-dark); border-color: #d4d4d8; }
+.btn-ghost:hover { color: var(--text); border-color: #d4d4d8; }
