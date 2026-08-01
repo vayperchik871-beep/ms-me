@@ -133,6 +133,7 @@ export default function ChatWindow({ chatId, onBack }) {
       senderName: user?.name,
       text,
       replyTo: replyTo?.id || null,
+      reply: replyTo ? { id: replyTo.id, senderName: replyTo.senderName, text: replyTo.text, attachment: replyTo.attachment ? { type: replyTo.attachment.type, name: replyTo.attachment.name } : null } : null,
       attachment,
       createdAt: Date.now(),
       time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),

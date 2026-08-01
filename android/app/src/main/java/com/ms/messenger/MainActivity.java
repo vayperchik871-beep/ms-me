@@ -12,6 +12,7 @@ public class MainActivity extends BridgeActivity {
     protected void onCreate(android.os.Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         createNotificationChannel();
+        getBridge().getWebView().setOnLongClickListener(v -> true);
     }
 
     @Override

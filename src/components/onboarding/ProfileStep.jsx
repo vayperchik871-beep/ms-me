@@ -30,7 +30,10 @@ export default function ProfileStep({ phone, userId, password, onComplete, onBac
     try {
       if (!canAddAccount) { setError(t('На устройстве уже 2 аккаунта. Удалите один в настройках.')); setLoading(false); return }
       await register(name.trim(), userId, password, phone)
-      if (avatarFile) { try { await api.uploadAvatar(avatarFile) } catch {} }
+      if (avatarFile) {
+        try { await api.uploadAvatar(avatarFile) }
+        catch { setError(t('Аватар не загрузился — попробуйте позже или смените в профиле')) }
+      }
       onComplete()
     } catch (err) {
       setError(err.message.includes('занят') ? t('Занято') : err.message)

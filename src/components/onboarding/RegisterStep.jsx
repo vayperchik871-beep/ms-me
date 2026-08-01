@@ -84,7 +84,10 @@ export default function RegisterStep({ onComplete, onSwitchLogin }) {
     try {
       const fullPhone = `+${phoneDigits}`
       await register(name.trim(), cleanId, password, fullPhone)
-      if (avatarFile) { try { await api.uploadAvatar(avatarFile) } catch {} }
+      if (avatarFile) {
+        try { await api.uploadAvatar(avatarFile) }
+        catch { setError(t('Аватар не загрузился — попробуйте позже или смените в профиле')) }
+      }
       onComplete()
     } catch (err) {
       setError(err.message)

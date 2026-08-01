@@ -60,7 +60,7 @@ input, textarea { font-family: inherit; border: none; outline: none; background:
 
 /* ─── App ─── */
 
-.app { display: flex; height: 100vh; background: var(--bg-primary); }
+.app { display: flex; height: 100vh; height: 100dvh; background: var(--bg-primary); }
 .mobile-app { flex-direction: column; max-width: 480px; margin: 0 auto; position: relative; }
 
 .loading-screen {
@@ -368,7 +368,7 @@ input, textarea { font-family: inherit; border: none; outline: none; background:
 
 /* ─── Chat Window ─── */
 
-.chat-window { flex: 1; display: flex; flex-direction: column; background: var(--bg-chat); height: 100vh; }
+.chat-window { flex: 1; display: flex; flex-direction: column; background: var(--bg-chat); height: 100vh; height: 100dvh; }
 .chat-window.full { max-width: 480px; margin: 0 auto; width: 100%; }
 [data-theme="light"] .chat-window.full { border-left: 1px solid var(--border); border-right: 1px solid var(--border); }
 
@@ -586,6 +586,22 @@ input, textarea { font-family: inherit; border: none; outline: none; background:
 
 .bubble p { font-size: 15px; line-height: 1.45; }
 .bubble p img.emoji { width: 1.2em; height: 1.2em; vertical-align: -0.2em; display: inline; }
+
+.reply-quote {
+  background: var(--bg-tertiary);
+  border-left: 3px solid var(--ms-green);
+  border-radius: 6px;
+  padding: 6px 10px;
+  margin-bottom: 6px;
+  cursor: pointer;
+  max-width: 280px;
+}
+.reply-quote-name { display: block; font-size: 12px; font-weight: 600; color: var(--ms-green); margin-bottom: 2px; }
+.reply-quote-text {
+  display: block; font-size: 13px; color: var(--text-secondary);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.bubble-mine .reply-quote { background: rgba(255,255,255,0.08); }
 .sender-name { display: block; font-size: 13px; font-weight: 600; color: var(--ms-green); margin-bottom: 2px; }
 .sender-name-btn {
   display: block; font-size: 13px; font-weight: 600; color: var(--ms-green);
@@ -618,7 +634,7 @@ input, textarea { font-family: inherit; border: none; outline: none; background:
 /* ─── Input Bar ─── */
 
 .ig-bar {
-  padding: 8px 10px 48px;
+  padding: 8px 10px calc(env(safe-area-inset-bottom, 0px) + 8px);
   display: flex;
   align-items: flex-end;
   gap: 8px;

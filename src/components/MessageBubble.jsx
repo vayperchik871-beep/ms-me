@@ -128,6 +128,15 @@ export default function MessageBubble({ message, isMine, showName, selected, sel
           <FileMessage url={attach.url} name={attach.name} size={attach.size} />
         )}
 
+        {message.reply && (
+          <div className="reply-quote">
+            <span className="reply-quote-name">{message.reply.senderName}</span>
+            {message.reply.attachment
+              ? <span className="reply-quote-text">📎 {message.reply.attachment.name || 'Вложение'}</span>
+              : <span className="reply-quote-text">{message.reply.text}</span>}
+          </div>
+        )}
+
         {message.text && message.text !== '📎' && (
           <p dangerouslySetInnerHTML={useMemo(() => ({ __html: parseEmoji(message.text) }), [message.text])} />
         )}

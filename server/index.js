@@ -192,6 +192,23 @@ async function formatMessage(msgId, viewerId) {
     const participants = await dbAll('SELECT user_id, last_read FROM chat_participants WHERE chat_id = ? AND user_id != ?', m.chat_id, viewerId)
     read = participants.some((p) => p.last_read && p.last_read >= m.created_at)
   }
+  let reply = null
+  if (m.reply_to) {
+    const rm = await dbGet('SELECT * FROM messages WHERE id = ? AND deleted = 0', m.reply_to)
+    if (rm) {
+      const rs = await dbGet('SELECT name FROM users WHERE id = ?', rm.sender_id)
+      let ra = null
+      if (rm.attachment) {
+        try { const a = JSON.parse(rm.attachment); ra = { type: a.type, name: a.name } } catch {}
+      }
+      reply = {
+        id: rm.id,
+        senderName: rs?.name || '…',
+        text: decrypt(rm.content_enc, rm.content_iv, rm.content_tag),
+        attachment: ra,
+      }
+    }
+  }
   return {
     id: m.id,
     chatId: m.chat_id,
@@ -200,6 +217,7 @@ async function formatMessage(msgId, viewerId) {
     senderName: sender?.name,
     text: decrypt(m.content_enc, m.content_iv, m.content_tag),
     replyTo: m.reply_to,
+    reply,
     pinned: !!m.pinned,
     edited: !!m.edited_at,
     time: formatTime(m.created_at),
@@ -689,6 +707,43 @@ app.get('/api/dashboard', async (req, res) => {
   const platformStats = {}
   for (const row of usersByPlatform) platformStats[row.platform || 'web'] = row.c
 
+  const onlineIds = Array.from(clients.values()).filter((c) => c.readyState === 1).map((c) => c.userId)
+  const onlineByPlatform = {}
+  if (onlineIds.length) {
+    const onlineRows = await dbAll(`SELECT platform, COUNT(*) as c FROM users WHERE id IN (${onlineIds.map(() => '?').join(',')}) GROUP BY platform`, onlineIds)
+    for (const row of onlineRows) onlineByPlatform[row.platform || 'web'] = row.c
+  }
+
+  const [messagesToday, messagesWeek, avgMsg, groupsCount] = await Promise.all([
+    dbGet('SELECT COUNT(*) as c FROM messages WHERE deleted = 0 AND created_at >= ?', now - DAY),
+    dbGet('SELECT COUNT(*) as c FROM messages WHERE deleted = 0 AND created_at >= ?', now - 7 * DAY),
+    dbGet('SELECT ROUND(COUNT(*) * 1.0 / MAX(1, (SELECT COUNT(*) FROM users WHERE is_system = 0))) as c FROM messages WHERE deleted = 0'),
+    dbGet("SELECT COUNT(*) as c FROM chats WHERE type IN ('group', 'channel')"),
+  ])
+
+  const dayMsgs = await dbAll('SELECT created_at FROM messages WHERE deleted = 0 AND created_at >= ?', now - DAY)
+  const hourBuckets = []
+  const hourStart = new Date(now - DAY)
+  hourStart.setMinutes(0, 0, 0)
+  const base = hourStart.getTime()
+  const hourCounts = new Array(25).fill(0)
+  for (const m of dayMsgs) {
+    const idx = Math.min(24, Math.floor((m.created_at - base) / 3600000))
+    hourCounts[idx]++
+  }
+  for (let i = 0; i <= 24; i++) {
+    const d = new Date(base + i * 3600000)
+    hourBuckets.push({ hour: `${d.getHours().toString().padStart(2, '0')}`, count: hourCounts[i] })
+  }
+
+  const topChats = await dbAll(`
+    SELECT c.id, c.name, c.type, COUNT(m.id) as cnt
+    FROM messages m JOIN chats c ON c.id = m.chat_id
+    WHERE m.deleted = 0
+    GROUP BY m.chat_id
+    ORDER BY cnt DESC LIMIT 5
+  `)
+
   const byCountry = await dbAll("SELECT country, COUNT(*) as c FROM users WHERE is_system = 0 AND country IS NOT NULL GROUP BY country ORDER BY c DESC LIMIT 12")
   const countryStats = byCountry.map((row) => {
     const [name, code] = String(row.country).split('|')
@@ -705,7 +760,14 @@ app.get('/api/dashboard', async (req, res) => {
     newMonth: month,
     registrationsPerDay: perDay,
     platformStats,
+    onlineByPlatform,
     countryStats,
+    messagesToday: messagesToday.c,
+    messagesWeek: messagesWeek.c,
+    avgMsgPerUser: Math.round(avgMsg.c),
+    groupsCount: groupsCount.c,
+    activityByHour: hourBuckets,
+    topChats,
     serverTime: now,
     uptime: process.uptime(),
   })
@@ -1453,6 +1515,32 @@ app.get('/api/chats/:chatId/messages', authMiddleware, async (req, res) => {
     reactionsMap.get(r.message_id).push({ emoji: r.emoji, user_id: r.user_id })
   }
 
+  const replyIds = [...new Set(rows.map((m) => m.reply_to).filter(Boolean))]
+  const replyMap = new Map()
+  if (replyIds.length > 0) {
+    const replyRows = await dbAll(`
+      SELECT * FROM messages WHERE id IN (${replyIds.map(() => '?').join(',')}) AND deleted = 0
+    `, ...replyIds)
+    const rsIds = [...new Set(replyRows.map((r) => r.sender_id))]
+    const rsMap = new Map()
+    if (rsIds.length > 0) {
+      const rsRows = await dbAll(`SELECT id, name FROM users WHERE id IN (${rsIds.map(() => '?').join(',')})`, ...rsIds)
+      for (const r of rsRows) rsMap.set(r.id, r)
+    }
+    for (const rm of replyRows) {
+      let ra = null
+      if (rm.attachment) {
+        try { const a = JSON.parse(rm.attachment); ra = { type: a.type, name: a.name } } catch {}
+      }
+      replyMap.set(rm.id, {
+        id: rm.id,
+        senderName: rsMap.get(rm.sender_id)?.name || '…',
+        text: decrypt(rm.content_enc, rm.content_iv, rm.content_tag),
+        attachment: ra,
+      })
+    }
+  }
+
   const readMap = new Map()
   const participants = await dbAll('SELECT user_id, last_read FROM chat_participants WHERE chat_id = ? AND user_id != ?', req.params.chatId, req.user.id)
 
@@ -1474,6 +1562,7 @@ app.get('/api/chats/:chatId/messages', authMiddleware, async (req, res) => {
       senderName: sender?.name,
       text: decrypt(m.content_enc, m.content_iv, m.content_tag),
       replyTo: m.reply_to,
+      reply: m.reply_to ? replyMap.get(m.reply_to) || null : null,
       pinned: !!m.pinned,
       edited: !!m.edited_at,
       time: formatTime(m.created_at),
@@ -2054,6 +2143,21 @@ async function callAiApi(question, userId) {
       }
     } catch (e) { console.error('Gemini error:', e.message) }
   }
+
+  // 2.5) Pollinations AI (бесплатно, без ключа)
+  const pollinationsPrompt = `Ты — MS Assistant, официальный AI-помощник мессенджера MS Messenger. Отвечай коротко и по делу на русском языке. Вопрос: ${question}`
+  try {
+    const ctrl = new AbortController()
+    const tm = setTimeout(() => ctrl.abort(), 40000)
+    const res = await fetch(`https://text.pollinations.ai/${encodeURIComponent(pollinationsPrompt)}`, {
+      signal: ctrl.signal,
+    })
+    clearTimeout(tm)
+    if (res.ok) {
+      const text = (await res.text()).trim()
+      if (text && text.length < 4000) return text
+    }
+  } catch (e) { console.error('Pollinations error:', e.message) }
 
   // 3) Hugging Face Inference API
   try {
