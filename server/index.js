@@ -150,8 +150,8 @@ async function getOrCreateDirectChat(userA, userB) {
   return chatId
 }
 
-async function sendBotMessage(userId, text) {
-  const chatId = await getOrCreateDirectChat(userId, SYSTEM_BOT.id)
+async function sendBotMessage(userId, text, chatId) {
+  if (!chatId) chatId = await getOrCreateDirectChat(userId, SYSTEM_BOT.id)
   const msgId = uuidv4()
   const enc = encrypt(text)
   const now = Date.now()
@@ -271,7 +271,7 @@ app.post('/api/auth/register', async (req, res) => {
   const countRow = await dbGet('SELECT COUNT(*) as c FROM users WHERE is_system = 0')
   const isFirst = countRow.c === 0
   const id = uuidv4()
-  const hash = await bcrypt.hash(password, 12)
+  const hash = await bcrypt.hash(password, 10)
   const now = Date.now()
 
   let avatarUrl = null
@@ -295,11 +295,20 @@ app.post('/api/auth/register', async (req, res) => {
     uuidv4(), id, devId, now, now
   )
 
+  // Create chats in parallel (no extra SELECTs - fresh user, chats don't exist yet)
   const token = await createToken(id, devId)
-  await getOrCreateDirectChat(id, SYSTEM_BOT.id)
-  const aiChatId = await getOrCreateDirectChat(id, AI_ASSISTANT.id)
-  await sendBotMessage(id, `Добро пожаловать в MS Messenger, ${name.trim()}!\n\nВаш ID: @${cleanId}\nНомер: ${phone || 'не указан'}\n\nДругие пользователи могут найти вас по ID или номеру.`)
-  await sendBotMessage(id, `Политика конфиденциальности обновилась. Ознакомиться с ней можно в настройках приложения.`)
+  const sysChatId = uuidv4()
+  const aiChatId = uuidv4()
+  await Promise.all([
+    dbRun('INSERT INTO chats (id, type, created_at) VALUES (?, ?, ?)', sysChatId, 'direct', now),
+    dbRun('INSERT INTO chats (id, type, created_at) VALUES (?, ?, ?)', aiChatId, 'direct', now),
+    dbRun('INSERT INTO chat_participants (chat_id, user_id) VALUES (?, ?)', sysChatId, id),
+    dbRun('INSERT INTO chat_participants (chat_id, user_id) VALUES (?, ?)', sysChatId, SYSTEM_BOT.id),
+    dbRun('INSERT INTO chat_participants (chat_id, user_id) VALUES (?, ?)', aiChatId, id),
+    dbRun('INSERT INTO chat_participants (chat_id, user_id) VALUES (?, ?)', aiChatId, AI_ASSISTANT.id),
+  ])
+  await sendBotMessage(id, `Добро пожаловать в MS Messenger, ${name.trim()}!\n\nВаш ID: @${cleanId}\nНомер: ${phone || 'не указан'}\n\nДругие пользователи могут найти вас по ID или номеру.`, sysChatId)
+  await sendBotMessage(id, `Политика конфиденциальности обновилась. Ознакомиться с ней можно в настройках приложения.`, sysChatId)
   await sendAiMessage(aiChatId, AI_ASSISTANT.id, id, `Привет! Я MSM Assistant — твой AI-помощник. Спрашивай что угодно о мессенджере, функциях или настройках.\n\nДоступные модели: Lite (всегда) и Pro (Premium). Выбрать можно в шапке чата.`)
 
   res.json({
@@ -1258,37 +1267,52 @@ app.get('/api/chats', authMiddleware, async (req, res) => {
       (SELECT content_enc FROM messages m WHERE m.chat_id = c.id AND m.deleted = 0 ORDER BY m.created_at DESC LIMIT 1) as last_enc,
       (SELECT content_iv FROM messages m WHERE m.chat_id = c.id AND m.deleted = 0 ORDER BY m.created_at DESC LIMIT 1) as last_iv,
       (SELECT content_tag FROM messages m WHERE m.chat_id = c.id AND m.deleted = 0 ORDER BY m.created_at DESC LIMIT 1) as last_tag,
-      (SELECT created_at FROM messages m WHERE m.chat_id = c.id AND m.deleted = 0 ORDER BY m.created_at DESC LIMIT 1) as last_time
+      (SELECT created_at FROM messages m WHERE m.chat_id = c.id AND m.deleted = 0 ORDER BY m.created_at DESC LIMIT 1) as last_time,
+      (SELECT COUNT(*) FROM messages m WHERE m.chat_id = c.id AND m.sender_id != ? AND m.created_at > COALESCE(
+        (SELECT last_read FROM chat_participants WHERE chat_id = c.id AND user_id = ?), 0
+      )) as unread
     FROM chats c
     JOIN chat_participants cp ON cp.chat_id = c.id
     WHERE cp.user_id = ?
     ORDER BY last_time DESC NULLS LAST
-  `, req.user.id)
+  `, req.user.id, req.user.id, req.user.id)
 
-  const result = await Promise.all(chats.map(async (chat) => {
-const others = await dbAll(`
-      SELECT u.id, u.user_id, u.name, u.is_system, u.avatar, u.profile_color FROM users u
-      JOIN chat_participants cp ON cp.user_id = u.id
-      WHERE cp.chat_id = ? AND u.id != ?
-      `, chat.id, req.user.id)
+  const chatIds = chats.map((c) => c.id)
+  const peers = chatIds.length > 0 ? await dbAll(`
+    SELECT cp.chat_id, u.id, u.user_id, u.name, u.is_system, u.avatar, u.profile_color
+    FROM chat_participants cp
+    JOIN users u ON u.id = cp.user_id
+    WHERE cp.chat_id IN (${chatIds.map(() => '?').join(',')}) AND u.id != ?
+  `, ...chatIds, req.user.id) : []
 
+  const peerIds = [...new Set(peers.map((p) => p.id))]
+  const lastSeenMap = new Map()
+  if (peerIds.length > 0) {
+    const devices = await dbAll(`
+      SELECT user_id, MAX(last_seen) as last_seen FROM devices
+      WHERE user_id IN (${peerIds.map(() => '?').join(',')})
+      GROUP BY user_id
+    `, ...peerIds)
+    for (const d of devices) lastSeenMap.set(d.user_id, d.last_seen)
+  }
+
+  const peersByChat = new Map()
+  for (const p of peers) {
+    if (!peersByChat.has(p.chat_id)) peersByChat.set(p.chat_id, [])
+    peersByChat.get(p.chat_id).push(p)
+  }
+
+  const result = chats.map((chat) => {
+    const others = peersByChat.get(chat.id) || []
     const peer = others[0]
     let lastMessage = ''
     if (chat.last_enc) {
       try { lastMessage = decrypt(chat.last_enc, chat.last_iv, chat.last_tag) } catch { lastMessage = '🔒' }
     }
 
-    const unread = await dbGet(`
-      SELECT COUNT(*) as c FROM messages
-      WHERE chat_id = ? AND sender_id != ? AND created_at > COALESCE(
-        (SELECT last_read FROM chat_participants WHERE chat_id = ? AND user_id = ?), 0
-      )
-    `, chat.id, req.user.id, chat.id, req.user.id)
-
     let lastSeen = null
     if (peer && !isUserOnline(peer.id)) {
-      const device = await dbGet('SELECT last_seen FROM devices WHERE user_id = ? ORDER BY last_seen DESC LIMIT 1', peer.id)
-      lastSeen = device?.last_seen || null
+      lastSeen = lastSeenMap.get(peer.id) || null
     }
 
     return {
@@ -1298,9 +1322,9 @@ const others = await dbAll(`
       peer: peer ? { id: peer.id, userId: peer.user_id, name: peer.name, isSystem: !!peer.is_system, avatar: peer.avatar, profileColor: peer.profile_color, online: isUserOnline(peer.id), lastSeen } : null,
       lastMessage,
       lastTime: chat.last_time ? formatTime(chat.last_time) : '',
-      unread: unread?.c || 0,
+      unread: chat.unread || 0,
     }
-  }))
+  })
 
   res.json({ chats: result })
 })
@@ -1315,14 +1339,55 @@ app.get('/api/chats/:chatId/messages', authMiddleware, async (req, res) => {
   if (!participant) return res.status(403).json({ error: 'Нет доступа' })
 
   const rows = await dbAll(`
-    SELECT id FROM messages WHERE chat_id = ? AND deleted = 0 ORDER BY created_at ASC
+    SELECT * FROM messages WHERE chat_id = ? AND deleted = 0 ORDER BY created_at ASC
   `, req.params.chatId)
 
-  const messages = []
-  for (const r of rows) {
-    const msg = await formatMessage(r.id, req.user.id)
-    if (msg) messages.push(msg)
+  const senderIds = [...new Set(rows.map((m) => m.sender_id))]
+  const senders = senderIds.length > 0 ? await dbAll(`
+    SELECT id, user_id, name, is_system, avatar FROM users WHERE id IN (${senderIds.map(() => '?').join(',')})
+  `, ...senderIds) : []
+  const senderMap = new Map(senders.map((s) => [s.id, s]))
+
+  const msgIds = rows.map((m) => m.id)
+  const reactions = msgIds.length > 0 ? await dbAll(`
+    SELECT message_id, emoji, user_id FROM message_reactions WHERE message_id IN (${msgIds.map(() => '?').join(',')})
+  `, ...msgIds) : []
+  const reactionsMap = new Map()
+  for (const r of reactions) {
+    if (!reactionsMap.has(r.message_id)) reactionsMap.set(r.message_id, [])
+    reactionsMap.get(r.message_id).push({ emoji: r.emoji, user_id: r.user_id })
   }
+
+  const readMap = new Map()
+  const participants = await dbAll('SELECT user_id, last_read FROM chat_participants WHERE chat_id = ? AND user_id != ?', req.params.chatId, req.user.id)
+
+  const messages = rows.map((m) => {
+    const sender = senderMap.get(m.sender_id)
+    let attachment = null
+    if (m.attachment) {
+      try { attachment = JSON.parse(m.attachment) } catch {}
+    }
+    let read = false
+    if (participants.length > 0) {
+      read = participants.some((p) => p.last_read && p.last_read >= m.created_at)
+    }
+    return {
+      id: m.id,
+      chatId: m.chat_id,
+      senderId: m.sender_id,
+      senderUserId: sender?.user_id,
+      senderName: sender?.name,
+      text: decrypt(m.content_enc, m.content_iv, m.content_tag),
+      replyTo: m.reply_to,
+      pinned: !!m.pinned,
+      edited: !!m.edited_at,
+      time: formatTime(m.created_at),
+      createdAt: m.created_at,
+      reactions: reactionsMap.get(m.id) || [],
+      attachment,
+      read,
+    }
+  })
   res.json({ messages })
 })
 
