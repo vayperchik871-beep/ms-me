@@ -70,9 +70,10 @@ export function canAddAccount() {
 }
 
 async function requestWithRetry(url, options, retries = 2, delay = 1500) {
+  const timeout = window.Capacitor?.isNativePlatform?.() ? 45000 : 20000
   for (let i = 0; i <= retries; i++) {
     const controller = new AbortController()
-    const timer = setTimeout(() => controller.abort(), 20000)
+    const timer = setTimeout(() => controller.abort(), timeout)
     try {
       const res = await fetch(url, { ...options, signal: controller.signal })
       clearTimeout(timer)
