@@ -64,6 +64,21 @@
         <div class="stat-value" id="stat-msgs">—</div>
         <div class="stat-sub" id="stat-msgs-sub">всего отправлено</div>
       </div>
+      <div class="stat-card accent">
+        <div class="stat-label">Сообщений за 24ч</div>
+        <div class="stat-value" id="stat-msgs-today">—</div>
+        <div class="stat-sub">за сутки</div>
+      </div>
+      <div class="stat-card green">
+        <div class="stat-label">Чатов</div>
+        <div class="stat-value" id="stat-chats">—</div>
+        <div class="stat-sub" id="stat-chats-sub">групп: …</div>
+      </div>
+      <div class="stat-card purple">
+        <div class="stat-label">Среднее</div>
+        <div class="stat-value" id="stat-avg">—</div>
+        <div class="stat-sub">сообщений на пользователя</div>
+      </div>
     </section>
 
     <section class="panel">
@@ -77,9 +92,29 @@
 
     <section class="panel">
       <div class="panel-header">
+        <h2>Сообщения — последние 24 часа</h2>
+        <span id="chart-hour-total" class="panel-tag"></span>
+      </div>
+      <div class="chart" id="chart-hour"></div>
+      <div class="chart-x"><span id="hour-start">24 часа назад</span><span id="hour-end">сейчас</span></div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-header">
         <h2>Платформы</h2>
       </div>
       <div class="platform-bars" id="platforms"></div>
+      <div class="panel-header" style="border-top:1px solid var(--line);border-bottom:none">
+        <h2>Онлайн сейчас</h2>
+      </div>
+      <div class="platform-bars" id="online-platforms"></div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-header">
+        <h2>Топ чатов</h2>
+      </div>
+      <div class="platform-bars" id="top-chats"></div>
     </section>
 
     <section class="panel">

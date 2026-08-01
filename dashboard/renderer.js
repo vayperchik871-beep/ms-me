@@ -27,9 +27,16 @@ async function load() {
     $('#stat-week').textContent = fmt(d.newWeek)
     $('#stat-month').textContent = fmt(d.newMonth)
     $('#stat-msgs').textContent = fmt(d.totalMessages)
+    $('#stat-msgs-today').textContent = fmt(d.messagesToday)
+    $('#stat-chats').textContent = fmt(d.totalChats)
+    $('#stat-chats-sub').textContent = 'групп и каналов: ' + fmt(d.groupsCount)
+    $('#stat-avg').textContent = fmt(d.avgMsgPerUser)
 
-    renderChart(d.registrationsPerDay || [])
+    renderChart($('#chart'), $('#chart-total'), d.registrationsPerDay || [], (x) => x.date)
+    renderChart($('#chart-hour'), $('#chart-hour-total'), d.activityByHour || [], (x) => `${x.hour}:00`, true)
     renderPlatforms(d.platformStats || {})
+    renderPlatforms(d.onlineByPlatform || {}, $('#online-platforms'))
+    renderTopChats(d.topChats || [])
     renderCountries(d.countryStats || [])
 
     $('#last-update').textContent = 'обновлено ' + new Date().toLocaleTimeString('ru-RU')
