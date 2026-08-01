@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; connect-src https: http:; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:">
+  <title>MS Messenger — Админ-дашборд</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+  <div id="login-screen">
+    <div class="login-card">
+      <div class="login-logo">
+        <img src="../../public/logo.png" alt="MS" onerror="this.style.display='none'">
+        <span>MS</span>
+      </div>
+      <h1>Админ-дашборд</h1>
+      <p class="login-sub">MS Messenger · управление сервером</p>
+      <div class="login-form">
+        <label>
+          <span>Сервер</span>
+          <input id="login-server" value="https://ms-messenger-server.onrender.com" spellcheck="false">
+        </label>
+        <label>
+          <span>ID пользователя</span>
+          <input id="login-user" placeholder="admin" spellcheck="false" autocomplete="username">
+        </label>
+        <label>
+          <span>Пароль</span>
+          <input id="login-pass" type="password" placeholder="••••••••" autocomplete="current-password">
+        </label>
+        <div id="login-error" class="login-error"></div>
+        <button id="login-btn" class="btn-primary">Войти</button>
+      </div>
+      <p class="login-hint">Нужен аккаунт с правами админа (is_admin = 1)</p>
+    </div>
+  </div>
+
+  <div id="app-screen" class="hidden">
+    <aside class="sidebar">
+      <div class="sidebar-brand">
+        <span class="brand-dot"></span>
+        MS Admin
+      </div>
+      <nav class="sidebar-nav">
+        <button class="nav-item active" data-view="overview">
+          <span class="nav-ico">◈</span> Обзор
+        </button>
+        <button class="nav-item" data-view="users">
+          <span class="nav-ico">👥</span> Пользователи
+          <span id="nav-users-count" class="nav-badge hidden"></span>
+        </button>
+        <button class="nav-item" data-view="terminal">
+          <span class="nav-ico">⌨</span> Терминал
+        </button>
+      </nav>
+      <div class="sidebar-footer">
+        <div id="conn-status" class="conn-status">
+          <span class="conn-dot"></span>
+          <span id="conn-text">Проверка…</span>
+        </div>
+        <button id="logout-btn" class="btn-ghost">Выйти</button>
+      </div>
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <div>
+          <h1 id="view-title">Обзор</h1>
+          <p id="view-sub" class="topbar-sub"></p>
+        </div>
+        <div class="topbar-actions">
+          <span id="last-update" class="last-update"></span>
+          <button id="refresh-btn" class="btn-ghost btn-small" title="Обновить">⟳ Обновить</button>
+        </div>
+      </header>
+
+      <section id="view-overview" class="view">
+        <div class="stat-grid">
+          <div class="stat-card accent"><div class="stat-label">Пользователи</div><div class="stat-value" id="stat-users">—</div><div class="stat-sub" id="stat-reg-today"></div></div>
+          <div class="stat-card green"><div class="stat-label">Онлайн</div><div class="stat-value" id="stat-online">—</div><div class="stat-sub">сейчас в сети</div></div>
+          <div class="stat-card purple"><div class="stat-label">Сообщений сегодня</div><div class="stat-value" id="stat-msg-today">—</div><div class="stat-sub" id="stat-msg-total"></div></div>
+          <div class="stat-card blue"><div class="stat-label">Чаты</div><div class="stat-value" id="stat-chats">—</div><div class="stat-sub" id="stat-groups"></div></div>
+          <div class="stat-card orange"><div class="stat-label">Забанено</div><div class="stat-value" id="stat-banned">—</div><div class="stat-sub" id="stat-scam"></div></div>
+          <div class="stat-card cyan"><div class="stat-label">Боты</div><div class="stat-value" id="stat-bots">—</div><div class="stat-sub" id="stat-platforms"></div></div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-header">
+            <h2>Платформы</h2>
+          </div>
+          <div id="platform-bars" class="platform-bars"></div>
+        </div>
+      </section>
+
+      <section id="view-users" class="view hidden">
+        <div class="panel">
+          <div class="panel-header">
+            <h2>Пользователи</h2>
+            <div class="user-tools">
+              <input id="user-search" class="input-search" placeholder="Поиск по ID или имени…">
+              <select id="user-filter" class="input-search">
+                <option value="all">Все</option>
+                <option value="online">Онлайн</option>
+                <option value="banned">Забанены</option>
+                <option value="scam">Скам</option>
+                <option value="premium">Премиум</option>
+              </select>
+            </div>
+          </div>
+          <div class="table-wrap">
+            <table class="users-table">
+              <thead>
+                <tr>
+                  <th>Пользователь</th>
+                  <th>ID</th>
+                  <th>Статус</th>
+                  <th>Платформа</th>
+                  <th>Роли</th>
+                  <th>Зарегистрирован</th>
+                  <th class="th-actions">Действия</th>
+                </tr>
+              </thead>
+              <tbody id="users-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <section id="view-terminal" class="view hidden">
+        <div class="panel terminal-panel">
+          <div class="panel-header">
+            <h2>Команды сервера</h2>
+          </div>
+          <div id="term-output" class="term-output"></div>
+          <div class="term-input-row">
+            <span class="term-prompt">admin&gt;</span>
+            <input id="term-input" class="term-input" placeholder="введите команду (help — список)" spellcheck="false" autocomplete="off">
+          </div>
+          <div class="term-hints">
+            <code>stats</code> <code>bc текст</code> <code>say id текст</code> <code>purge --force</code>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <div id="toast" class="toast hidden"></div>
+
+  <script src="renderer.js"></script>
+</body>
+</html>

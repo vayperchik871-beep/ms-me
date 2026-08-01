@@ -1,0 +1,31 @@
+{
+  "name": "ms-messenger-dashboard",
+  "private": true,
+  "version": "1.0.0",
+  "main": "main.cjs",
+  "scripts": {
+    "start": "electron .",
+    "dist": "electron-builder"
+  },
+  "devDependencies": {
+    "electron": "^43.2.0",
+    "electron-builder": "^26.15.3"
+  },
+  "build": {
+    "appId": "com.ms.messenger.dashboard",
+    "productName": "MS Messenger Admin",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "main.cjs",
+      "preload.cjs",
+      "renderer.js",
+      "styles.css",
+      "index.html"
+    ],
+    "win": {
+      "target": "portable"
+    }
+  }
+}

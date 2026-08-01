@@ -672,7 +672,7 @@ app.get('/api/admin/stats', authMiddleware, adminMiddleware, async (req, res) =>
 
 app.get('/api/admin/users', authMiddleware, adminMiddleware, async (req, res) => {
   const users = await dbAll(`
-    SELECT id, user_id, name, is_admin, banned, scam, created_at FROM users WHERE is_system = 0 ORDER BY created_at DESC LIMIT 100
+    SELECT id, user_id, name, is_admin, banned, scam, platform, subscription_plan, subscription_until, created_at FROM users WHERE is_system = 0 ORDER BY created_at DESC LIMIT 100
   `)
   res.json({ users: users.map((u) => ({
     id: u.id,
@@ -681,6 +681,9 @@ app.get('/api/admin/users', authMiddleware, adminMiddleware, async (req, res) =>
     isAdmin: !!u.is_admin,
     banned: !!u.banned,
     scam: !!u.scam,
+    platform: u.platform || 'web',
+    premium: u.subscription_plan && u.subscription_until > Date.now() ? (u.subscription_plan === 'premium' ? 'pro' : u.subscription_plan) : null,
+    online: isUserOnline(u.id),
     createdAt: u.created_at,
   })) })
 })
