@@ -16,7 +16,7 @@ export function emojiToImg(emoji) {
   }
   if (codePoints.length === 0) return emoji
   const hex = codePoints.map(codePointToHex).join('-')
-  return `<img class="twemoji" draggable="false" alt="${emoji}" src="${TWEMOJI_BASE}/${hex}.svg" width="16" height="16" />`
+  return `<img class="emoji twemoji" draggable="false" alt="${emoji}" src="${TWEMOJI_BASE}/${hex}.svg" onerror="this.remove()" />`
 }
 
 export function parseEmoji(text) {
