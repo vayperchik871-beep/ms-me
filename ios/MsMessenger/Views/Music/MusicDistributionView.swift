@@ -63,7 +63,7 @@ struct MusicDistributionView: View {
         .cornerRadius(14)
         .padding(.horizontal, 16)
         .padding(.top, 4)
-        .onChange(of: searchText) { _, q in
+        .onChange(of: searchText) { q in
             okSearch(q)
         }
     }
@@ -352,6 +352,7 @@ struct MusicDistributionView: View {
 
 struct CreateArtistCardSheet: View {
     @Environment(\.dismiss) private var dismiss
+    @ObservedObject private var theme = ThemeManager.shared
     @State private var name = ""
     @State private var photo: Data?
     @State private var banner: Data?
@@ -401,10 +402,10 @@ struct CreateArtistCardSheet: View {
                         .foregroundColor(Color(hex: "#6C63FF"))
                 }
             }
-            .onChange(of: photoItem) { _, item in
+            .onChange(of: photoItem) { item in
                 Task { if let data = try? await item?.loadTransferable(type: Data.self) { photo = data } }
             }
-            .onChange(of: bannerItem) { _, item in
+            .onChange(of: bannerItem) { item in
                 Task { if let data = try? await item?.loadTransferable(type: Data.self) { banner = data } }
             }
         }
@@ -566,7 +567,7 @@ struct UploadTrackModal: View {
                     audio = AudioItem(title: url.lastPathComponent, url: url)
                 }
             }
-            .onChange(of: coverItem) { _, item in
+            .onChange(of: coverItem) { item in
                 Task { if let data = try? await item?.loadTransferable(type: Data.self) { cover = data } }
             }
         }
