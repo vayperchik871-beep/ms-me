@@ -28,7 +28,7 @@ struct MusicDistributionView: View {
             } else if let artist {
                 artistProfile(artist)
             } else {
-                noArtistCard
+noArtistCard()
             }
         }
         .background(theme.bgColor.ignoresSafeArea())
@@ -52,7 +52,7 @@ struct MusicDistributionView: View {
         HStack(spacing: 8) {
             Image(systemName: "magnifyingglass")
                 .foregroundColor(theme.textSecondary)
-            TextField("Поиск артистов и треков…", text: $trackingText)
+            TextField("Поиск артистов и треков…", text: trackingText)
                 .font(.system(size: 15))
                 .foregroundColor(theme.inputText)
                 .autocorrectionDisabled()
