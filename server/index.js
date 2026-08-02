@@ -2122,17 +2122,20 @@ async function callAiApi(question, userId) {
     } catch {}
   }
 
-  // 2) Google Gemini API (free tier, 60 req/min)
-  const geminiModel = model === 'pro' ? 'gemini-2.0-flash' : 'gemini-2.0-flash-lite'
+  // 2) Google Gemini API (free tier) — пробуем несколько актуальных моделей
+  const geminiCandidates = model === 'pro'
+    ? ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-2.5-pro', 'gemini-1.5-flash']
+    : ['gemini-2.5-flash-lite', 'gemini-2.0-flash-lite', 'gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-1.5-flash-lite', 'gemini-1.5-flash']
   if (GEMINI_API_KEY) {
-    try {
-      const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${geminiModel}:generateContent?key=${GEMINI_API_KEY}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents: [{
-            parts: [{ text: `Ты — MS Assistant, официальный AI-помощник мессенджера MS Messenger. Отвечай коротко и по делу на русском языке.\n\nВопрос: ${question}` }],
-          }],
+    for (const geminiModel of geminiCandidates) {
+      try {
+        const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${geminiModel}:generateContent?key=${GEMINI_API_KEY}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contents: [{
+              parts: [{ text: `Ты — MS Assistant, официальный AI-помощник мессенджера MS Messenger. Отвечай коротко и по делу на русском языке.\n\nВопрос: ${question}` }],
+            }],
           generationConfig: { maxOutputTokens: 256, temperature: 0.7 },
         }),
       })
@@ -2140,8 +2143,13 @@ async function callAiApi(question, userId) {
         const d = await res.json()
         const text = d?.candidates?.[0]?.content?.parts?.[0]?.text
         if (text) return text.trim()
+      } else {
+        const errd = await res.json().catch(() => null)
+        const errMsg = errd?.error?.message || ''
+        if (!/not found|does not exist|model/i.test(errMsg)) break
       }
     } catch (e) { console.error('Gemini error:', e.message) }
+    }
   }
 
   // 2.5) Pollinations AI (бесплатно, без ключа)
