@@ -129,6 +129,10 @@ final class APIClient {
         try await request("/user/profile", method: "PATCH", body: try JSONEncoder().encode(body))
     }
 
+    func getUser(userId: String) async throws -> UserResponse {
+        try await request("/users/\(userId)")
+    }
+
     func adminCommand(_ command: String) async throws -> AdminCommandResponse {
         try await request("/admin/command", method: "POST", body: try JSONEncoder().encode(["command": command]))
     }
@@ -179,5 +183,23 @@ final class APIClient {
 
     func browseMusic() async throws -> TrackListResponse {
         try await request("/music/browse")
+    }
+
+    // ─── Gifts ───
+
+    struct SendGiftResponse: Codable {
+        let gift: SendGiftInner?
+        let mcoins: Int?
+    }
+    struct SendGiftInner: Codable {
+        let id: String?
+        let message: String?
+        let createdAt: Int?
+    }
+
+    func sendGift(userId: String, giftId: String, message: String?) async throws -> SendGiftResponse {
+        var body: [String: Any] = ["userId": userId, "giftId": giftId]
+        if let message { body["message"] = message }
+        return try await request("/gifts/send", method: "POST", body: try JSONSerialization.data(withJSONObject: body))
     }
 }

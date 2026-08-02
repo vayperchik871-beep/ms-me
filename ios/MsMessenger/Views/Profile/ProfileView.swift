@@ -407,3 +407,43 @@ struct ProfileView: View {
         .padding(.top, 8)
     }
 }
+
+struct ProfileByIdView: View {
+    let userId: String
+    @State private var user: User?
+    @State private var loading = true
+    @State private var errorText: String?
+    @ObservedObject private var theme = ThemeManager.shared
+    @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        Group {
+            if let user {
+                ProfileView(user: user)
+            } else if loading {
+                VStack {
+                    Spacer()
+                    ProgressView().tint(Color(hex: "#6C63FF"))
+                    Text("Загрузка…").font(.system(size: 14)).foregroundColor(theme.textSecondary).padding(.top, 8)
+                    Spacer()
+                }
+            } else if let errorText {
+                VStack {
+                    Spacer()
+                    Text(errorText).font(.system(size: 14)).foregroundColor(theme.textSecondary)
+                    Button("Закрыть") { dismiss() }.padding(.top, 12)
+                    Spacer()
+                }
+            }
+        }
+        .background(theme.bgColor.ignoresSafeArea())
+        .task {
+            do {
+                let resp = try await APIClient.shared.getUser(userId: userId)
+                await MainActor.run { user = resp.user; loading = false }
+            } catch {
+                await MainActor.run { errorText = "Не удалось загрузить профиль"; loading = false }
+            }
+        }
+    }
+}

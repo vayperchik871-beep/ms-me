@@ -20,6 +20,16 @@ struct User: Codable, Identifiable, Hashable {
     var music: String?
     var profileBanner: String?
     var isOnline: Bool?
+
+    enum CodingKeys: String, CodingKey {
+        case id, userId, name, phone, bio, avatar, music
+        case isSystem, isAdmin
+        case isVerified = "verified"
+        case verifyType
+        case mcoins, birthday, gender, profileColor, banned, scam
+        case profileBanner = "banner"
+        case isOnline
+    }
 }
 
 struct UserResponse: Codable { let user: User }

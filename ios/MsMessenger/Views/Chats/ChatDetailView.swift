@@ -13,6 +13,9 @@ struct ChatDetailView: View {
     @State private var giftStep = 0 // 0=picker, 1=confirm, 2=animation
     @State private var selectedGift: Gift?
     @State private var sentGift: Gift?
+    @State private var showProfile = false
+    @State private var sendingGift = false
+    @State private var giftError: String?
 
     private let ownUUID = UserDefaults.standard.string(forKey: "user_uuid") ?? ""
 
@@ -49,8 +52,24 @@ struct ChatDetailView: View {
                 }
             } else if giftStep == 1, let gift = selectedGift {
                 GiftConfirmView(gift: gift, recipientName: chat.peer?.name ?? "Пользователь", onSend: { msg, anon in
-                    sentGift = gift
-                    giftStep = 2
+                    sendingGift = true
+                    giftError = nil
+                    Task {
+                        do {
+                            let recipientId = chat.peer?.userId ?? chat.peer?.id ?? ""
+                            _ = try await APIClient.shared.sendGift(userId: recipientId, giftId: gift.id, message: msg.isEmpty ? nil : msg)
+                            await MainActor.run {
+                                sentGift = gift
+                                giftStep = 2
+                                sendingGift = false
+                            }
+                        } catch {
+                            await MainActor.run {
+                                sendingGift = false
+                                giftError = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
+                            }
+                        }
+                    }
                 }, onCancel: {
                     giftStep = 0
                     selectedGift = nil
@@ -62,6 +81,11 @@ struct ChatDetailView: View {
                     selectedGift = nil
                     sentGift = nil
                 }
+            }
+        }
+        .sheet(isPresented: $showProfile) {
+            if let peer = chat.peer {
+                ProfileByIdView(userId: peer.userId)
             }
         }
         .task { await load() }
@@ -126,7 +150,7 @@ struct ChatDetailView: View {
             }
 
             // Name + status capsule
-            Button(action: {}) {
+            Button(action: { showProfile = true }) {
                 VStack(alignment: .leading, spacing: 3) {
                     Text(chat.name ?? "Чат")
                         .font(.system(size: 16, weight: .semibold))
@@ -155,7 +179,7 @@ struct ChatDetailView: View {
             Spacer()
 
             // Avatar
-            Button(action: {}) {
+            Button(action: { showProfile = true }) {
                 ZStack {
                     Circle()
                         .fill(peer?.profileColor.map { Color(hex: $0) } ?? theme.cardColor)
