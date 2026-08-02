@@ -8,7 +8,7 @@ on:
 
 jobs:
   build:
-    runs-on: macos-15
+    runs-on: macos-latest
     timeout-minutes: 60
     defaults:
       run:
@@ -16,9 +16,6 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
-
-      - name: Select Xcode
-        run: sudo xcode-select -s /Applications/Xcode_16.0.app
 
       - name: Install XcodeGen & generate .xcodeproj
         run: |
@@ -31,29 +28,29 @@ jobs:
           xcodebuild build \
             -project MsMessenger.xcodeproj \
             -scheme MsMessenger \
-            -destination 'platform=iOS Simulator,name=iPhone 16,OS=latest' \
+            -sdk iphonesimulator \
             -configuration Debug \
             -derivedDataPath build \
-            CODE_SIGNING_ALLOWED=NO \
-            ONLY_ACTIVE_ARCH=NO
+            CODE_SIGNING_ALLOWED=NO
           echo "=== Build products ==="
-          find build/Build/Products -name "*.app" -type d
-          test -d build/Build/Products/Debug-iphonesimulator/MsMessenger.app
+          find build/Build/Products -name "*.app" -type d | head -5
 
-      - name: Package Simulator app
+      - name: Package Simulator
+        if: success()
         run: |
           set -e
           cd build/Build/Products/Debug-iphonesimulator
-          zip -r /tmp/MsMessenger-Simulator.zip MsMessenger.app
-          ls -lh /tmp/MsMessenger-Simulator.zip
+          zip -r "$GITHUB_WORKSPACE/MsMessenger-Simulator.zip" MsMessenger.app
 
       - uses: actions/upload-artifact@v4
+        if: success()
         with:
           name: MsMessenger-Simulator
-          path: /tmp/MsMessenger-Simulator.zip
+          path: MsMessenger-Simulator.zip
           retention-days: 14
 
       - name: Build for Device
+        if: success()
         run: |
           rm -rf build
           xcodebuild build \
@@ -64,22 +61,22 @@ jobs:
             -derivedDataPath build \
             CODE_SIGN_IDENTITY="" \
             CODE_SIGNING_REQUIRED=NO \
-            CODE_SIGNING_ALLOWED=NO \
-            ENABLE_BITCODE=NO
+            CODE_SIGNING_ALLOWED=NO
           echo "=== Device build products ==="
-          find build/Build/Products -name "*.app" -type d
+          find build/Build/Products -name "*.app" -type d | head -5
 
-      - name: Package as IPA
+      - name: Package IPA
+        if: success()
         run: |
           set -e
           mkdir -p Payload
           cp -R build/Build/Products/Release-iphoneos/MsMessenger.app Payload/
-          zip -r /tmp/MsMessenger.ipa Payload
+          zip -r "$GITHUB_WORKSPACE/MsMessenger.ipa" Payload
           rm -rf Payload
-          ls -lh /tmp/MsMessenger.ipa
 
       - uses: actions/upload-artifact@v4
+        if: success()
         with:
           name: MsMessenger-IPA
-          path: /tmp/MsMessenger.ipa
+          path: MsMessenger.ipa
           retention-days: 14
