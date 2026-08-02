@@ -2,7 +2,7 @@ import SwiftUI
 
 struct ServerCheckView: View {
     @State private var status = "Подключение к серверу..."
-    @State private var elapsed = 0
+    @State private var attempts = 0
     @State private var timer: Timer?
     var onReady: () -> Void
 
@@ -28,8 +28,8 @@ struct ServerCheckView: View {
                         .font(.system(size: 15))
                         .foregroundColor(.white.opacity(0.7))
 
-                    if elapsed > 5 {
-                        Text("Сервер запускается, это может занять до 30 секунд...")
+                    if attempts > 3 {
+                        Text("Если ничего не меняется — проверьте интернет.\nПочти готово...")
                             .font(.system(size: 13))
                             .foregroundColor(.white.opacity(0.5))
                             .multilineTextAlignment(.center)
@@ -42,32 +42,41 @@ struct ServerCheckView: View {
     }
 
     private func startCheck() {
-        elapsed = 0
+        attempts = 0
         timer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { _ in
-            elapsed += 1
+            attempts += 1
         }
         Task { await pingServer() }
     }
 
+    // Всегда проходим дальше максимум через ~10 секунд.
+    // Если сервер холодный (20-30с) — экраны приложения сами покажут
+    // «Сервер запускается» при реальном запросе, а не зависнут здесь.
     private func pingServer() async {
         let url = URL(string: "https://ms-messenger-server.onrender.com/health")!
         var request = URLRequest(url: url)
-        request.timeoutInterval = 60
+        request.timeoutInterval = 8
 
-        while true {
+        for _ in 0..<2 {
+            if attempts >= 5 { break }
             do {
                 let (_, response) = try await URLSession.shared.data(for: request)
                 if let http = response as? HTTPURLResponse, http.statusCode == 200 {
                     timer?.invalidate()
                     status = "Готово!"
-                    try? await Task.sleep(nanoseconds: 300_000_000)
+                    try? await Task.sleep(nanoseconds: 200_000_000)
                     onReady()
                     return
                 }
             } catch {
-                status = "Сервер не отвечает, повтор..."
+                // network error — пробуем ещё раз
             }
-            try? await Task.sleep(nanoseconds: 2_000_000_000)
+            try? await Task.sleep(nanoseconds: 1_000_000_000)
         }
+
+        // Даже если сервер не ответил — пускаем в приложение.
+        // Приложение покажет списки сообщений и само попробует снова.
+        timer?.invalidate()
+        onReady()
     }
 }
