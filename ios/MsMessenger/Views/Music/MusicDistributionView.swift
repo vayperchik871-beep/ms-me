@@ -159,7 +159,7 @@ struct MusicDistributionView: View {
         .cornerRadius(14)
     }
 
-    private func noArtistCard -> some View {
+    private func noArtistCard() -> some View {
         VStack(spacing: 14) {
             Spacer()
             Image(systemName: "person.crop.circle.badge.plus")
