@@ -24,7 +24,8 @@ final class APIClient {
 
     private init() {
         let config = URLSessionConfiguration.default
-        config.timeoutIntervalForRequest = 30
+        config.timeoutIntervalForRequest = 60
+        config.timeoutIntervalForResource = 120
         session = URLSession(configuration: config)
     }
 
@@ -46,7 +47,16 @@ final class APIClient {
         let response: URLResponse
         do {
             (data, response) = try await session.data(for: urlRequest)
-        } catch { throw APIError.networkError(error) }
+        } catch {
+            if let _ = error as? URLError {
+                try? await Task.sleep(nanoseconds: 2_000_000_000)
+                do {
+                    (data, response) = try await session.data(for: urlRequest)
+                } catch { throw APIError.networkError(error) }
+            } else {
+                throw APIError.networkError(error)
+            }
+        }
 
         guard let http = response as? HTTPURLResponse else { throw APIError.serverError("Invalid response") }
         if http.statusCode == 401 { throw APIError.unauthorized }
