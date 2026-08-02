@@ -460,7 +460,7 @@ app.post('/api/auth/verify-device', async (req, res) => {
 })
 
 app.get('/api/auth/me', authMiddleware, async (req, res) => {
-  const u = await dbGet('SELECT id, user_id, name, phone, bio, is_system, avatar, birthday, gender, profile_color, mcoins, subscription_plan, subscription_until, ai_model FROM users WHERE id = ?', req.user.id)
+  const u = await dbGet('SELECT id, user_id, name, phone, bio, is_system, avatar, birthday, gender, profile_color, mcoins, subscription_plan, subscription_until, ai_model, music FROM users WHERE id = ?', req.user.id)
   const extra = await dbGet('SELECT is_admin, banned FROM users WHERE id = ?', req.user.id)
   const isPremium = u?.subscription_plan && u.subscription_until > Date.now()
   res.json({ user: {
@@ -481,6 +481,7 @@ app.get('/api/auth/me', authMiddleware, async (req, res) => {
     subscriptionPlan: u?.subscription_plan || null,
     subscriptionUntil: u?.subscription_until || null,
     aiModel: u?.ai_model || 'lite',
+    music: u.music || null,
   } })
 })
 
@@ -1209,7 +1210,7 @@ app.get('/api/users/search', authMiddleware, async (req, res) => {
 
 app.get('/api/users/:userId', authMiddleware, async (req, res) => {
   const cleanId = sanitizeUserId(req.params.userId)
-  const user = await dbGet('SELECT id, user_id, name, is_system, avatar, birthday, gender, profile_color, profile_banner, subscription_plan, subscription_until, is_verified, verify_type FROM users WHERE user_id = ?', cleanId)
+  const user = await dbGet('SELECT id, user_id, name, is_system, avatar, birthday, gender, profile_color, profile_banner, subscription_plan, subscription_until, is_verified, verify_type, music FROM users WHERE user_id = ?', cleanId)
   if (!user) return res.status(404).json({ error: 'Не найден' })
   const mutual = await dbAll(`
     SELECT cp.chat_id FROM chat_participants cp
@@ -1225,18 +1226,20 @@ app.get('/api/users/:userId', authMiddleware, async (req, res) => {
       profileColor: user.profile_color, banner: user.profile_banner,
       verified: !!user.is_verified, verifyType: user.verify_type,
       plus: hasPlus,
+      music: user.music || null,
     },
     mutualChats: mutual.map(r => r.chat_id),
   })
 })
 
 app.patch('/api/user/profile', authMiddleware, async (req, res) => {
-  const { birthday, gender, profileColor, name, userId, avatar, bio } = req.body
+  const { birthday, gender, profileColor, name, userId, avatar, bio, music } = req.body
   if (birthday !== undefined) await dbRun('UPDATE users SET birthday = ? WHERE id = ?', birthday || null, req.user.id)
   if (gender !== undefined) await dbRun('UPDATE users SET gender = ? WHERE id = ?', gender || null, req.user.id)
   if (profileColor !== undefined) await dbRun('UPDATE users SET profile_color = ? WHERE id = ?', profileColor || null, req.user.id)
   if (name !== undefined) await dbRun('UPDATE users SET name = ? WHERE id = ?', name.trim(), req.user.id)
   if (avatar !== undefined) await dbRun('UPDATE users SET avatar = ? WHERE id = ?', avatar || null, req.user.id)
+  if (music !== undefined) await dbRun('UPDATE users SET music = ? WHERE id = ?', music || null, req.user.id)
   if (bio !== undefined) {
     const sub = await dbGet('SELECT subscription_plan, subscription_until FROM users WHERE id = ?', req.user.id)
     const limits = getLimits(null, sub)

@@ -17,6 +17,9 @@ struct User: Codable, Identifiable, Hashable {
     var profileColor: String?
     var banned: Bool?
     var scam: Bool?
+    var music: String?
+    var profileBanner: String?
+    var isOnline: Bool?
 }
 
 struct UserResponse: Codable { let user: User }

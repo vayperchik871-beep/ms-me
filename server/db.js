@@ -217,6 +217,7 @@ try { await dbExec("ALTER TABLE users ADD COLUMN platform TEXT DEFAULT 'web'") }
 try { await dbExec('ALTER TABLE users ADD COLUMN subscription_until INTEGER DEFAULT NULL') } catch {}
 try { await dbExec('ALTER TABLE users ADD COLUMN profile_banner TEXT DEFAULT NULL') } catch {}
 try { await dbExec('ALTER TABLE chats ADD COLUMN disappearing_interval INTEGER DEFAULT NULL') } catch {}
+try { await dbExec('ALTER TABLE users ADD COLUMN music TEXT DEFAULT NULL') } catch {}
 try { await dbExec('CREATE TABLE IF NOT EXISTS subscription_codes (code TEXT PRIMARY KEY, plan TEXT NOT NULL, duration_days INTEGER NOT NULL, used_by TEXT DEFAULT NULL REFERENCES users(id), used_at INTEGER DEFAULT NULL, created_by TEXT NOT NULL, created_at INTEGER NOT NULL)') } catch {}
 try { await dbExec("CREATE TABLE IF NOT EXISTS subscription_purchases (id TEXT PRIMARY KEY, user_id TEXT NOT NULL REFERENCES users(id), plan TEXT NOT NULL, provider TEXT NOT NULL, provider_token TEXT, amount INTEGER, currency TEXT DEFAULT 'USD', status TEXT DEFAULT 'completed', created_at INTEGER NOT NULL)") } catch {}
 try { await dbExec('CREATE TABLE IF NOT EXISTS user_gifts (id TEXT PRIMARY KEY, user_id TEXT NOT NULL REFERENCES users(id), gift_id TEXT NOT NULL REFERENCES gifts(id), sender_id TEXT REFERENCES users(id), message TEXT, created_at INTEGER NOT NULL)') } catch {}

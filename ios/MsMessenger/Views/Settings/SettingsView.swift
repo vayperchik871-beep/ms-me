@@ -93,7 +93,7 @@ struct SettingsView: View {
             }
             settingsSection(title: "Аккаунт") {
                 if let user {
-                    NavigationLink { ProfileView(user: user) } label: {
+                    NavigationLink { ProfileView(user: user, isOwnProfile: true) } label: {
                         settingsRow(icon: "person.circle", label: "Профиль")
                     }
                 }

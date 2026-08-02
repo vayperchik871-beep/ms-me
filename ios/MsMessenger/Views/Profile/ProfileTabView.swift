@@ -8,7 +8,7 @@ struct ProfileTabView: View {
         NavigationStack {
             Group {
                 if let user {
-                    ProfileView(user: user)
+                    ProfileView(user: user, isOwnProfile: true)
                 } else {
                     VStack {
                         ProgressView()
