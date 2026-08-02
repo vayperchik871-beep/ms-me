@@ -33,7 +33,8 @@ struct ProfileView: View {
                 }
             }
         }
-        .navigationBarHidden(true)
+        .toolbar(.hidden, for: .navigationBar)
+        .toolbarBackground(.hidden, for: .navigationBar)
         .overlay(alignment: .top) { topBar }
         .fullScreenCover(isPresented: $showGiftDetail) {
             if let gift = selectedGift {
@@ -115,6 +116,7 @@ struct ProfileView: View {
             .padding(.bottom, 16)
         }
         .frame(height: 400)
+        .ignoresSafeArea(edges: .top)
     }
 
     // MARK: - Info (bio / birthday)
