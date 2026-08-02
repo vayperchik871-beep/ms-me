@@ -1451,7 +1451,7 @@ app.get('/api/music/me', authMiddleware, async (req, res) => {
   const artist = await dbGet('SELECT id, user_id, name, photo, banner, created_at FROM artists WHERE user_id = ?', req.user.id)
   const tracks = artist ? await dbAll('SELECT * FROM music_tracks WHERE artist_id = ? ORDER BY created_at DESC', artist.id) : []
   res.json({
-    artist: artist ? { ...artist, tracks: tracks.map(serializeTrack) } : null,
+    artist: artist ? serializeArtist(artist, tracks) : null,
   })
 })
 
@@ -1465,7 +1465,7 @@ app.post('/api/music/artist', authMiddleware, upload.fields([{ name: 'photo', ma
   const id = uuidv4()
   await dbRun('INSERT INTO artists (id, user_id, name, photo, banner, created_at) VALUES (?, ?, ?, ?, ?, ?)',
     id, req.user.id, name.trim(), photo, banner, Date.now())
-  res.json({ artist: { id, userId: req.user.id, name: name.trim(), photo, banner } })
+  res.json({ artist: { id, userId: req.user.id, name: name.trim(), photo, banner, tracks: [] } })
 })
 
 // Upload a track (audio file + cover). Metadata in fields.
@@ -1534,7 +1534,7 @@ app.get('/api/music/search', authMiddleware, async (req, res) => {
   const tracks = await dbAll(`SELECT mt.* FROM music_tracks mt
     WHERE mt.status = 'published' AND (mt.title LIKE ? OR mt.artist_name LIKE ?)
     ORDER BY mt.created_at DESC LIMIT 20`, like, like)
-  res.json({ artists, tracks: tracks.map(serializeTrack) })
+  res.json({ artists: artists.map(a => serializeArtist(a)), tracks: tracks.map(serializeTrack) })
 })
 
 // Public: browse — published tracks only (excluding own if not published)
@@ -1542,6 +1542,18 @@ app.get('/api/music/browse', authMiddleware, async (req, res) => {
   const rows = await dbAll(`SELECT * FROM music_tracks WHERE status = 'published' ORDER BY created_at DESC LIMIT 50`)
   res.json({ tracks: rows.map(serializeTrack) })
 })
+
+function serializeArtist(a, tracks = []) {
+  return {
+    id: a.id,
+    userId: a.user_id,
+    name: a.name,
+    photo: a.photo || null,
+    banner: a.banner || null,
+    createdAt: a.created_at,
+    tracks: tracks.map(serializeTrack),
+  }
+}
 
 function serializeTrack(t) {
   return {
