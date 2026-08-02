@@ -17,12 +17,16 @@ struct MusicView: View {
     @State private var showPicker = false
     @State private var audioPlayer: AVAudioPlayer?
     @State private var playing: String?
+    @State private var distributionRefresh = false
 
     var body: some View {
         NavigationStack {
             VStack(spacing: 0) {
                 tabBar
-                if tab == "favorites" {
+                if tab == "distribution" {
+                    MusicDistributionView(onLoaded: { distributionRefresh.toggle() })
+                        .id(distributionRefresh)
+                } else if tab == "favorites" {
                     listView(filterFavorites)
                 } else {
                     listView(filterAll)
@@ -56,7 +60,7 @@ struct MusicView: View {
 
     private var tabBar: some View {
         HStack(spacing: 4) {
-            ForEach([("main", "Главная"), ("favorites", "Избранное"), ("downloads", "Загрузки")], id: \.0) { id, title in
+            ForEach([("main", "Главная"), ("distribution", "Дистрибуция"), ("favorites", "Избранное"), ("downloads", "Загрузки")], id: \.0) { id, title in
                 Button(action: { withAnimation(.easeInOut(duration: 0.2)) { tab = id } }) {
                     Text(title)
                         .font(.system(size: 14, weight: tab == id ? .semibold : .regular))

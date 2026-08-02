@@ -890,6 +890,9 @@ app.post('/api/admin/command', authMiddleware, adminMiddleware, async (req, res)
           '  verifys        — список заявок на верификацию',
           '  verify <id>    — одобрить заявку',
           '  reject <id>    — отклонить заявку',
+          '  music          — треки на модерации',
+          '  approving <id> — одобрить трек',
+          '  rejecttrack <id> — отклонить трек',
           '  sub <id> <plan> [days] — выдать подписку (plus/premium)',
           '  unsub <id>     — отменить подписку',
           '  subcodes <n> <plan> <days> — сгенерировать N кодов активации',
@@ -1098,6 +1101,28 @@ app.post('/api/admin/command', authMiddleware, adminMiddleware, async (req, res)
         if (!row) return res.json(say('Заявка не найдена'))
         await dbRun('UPDATE verification_requests SET status = ?, reviewed_at = ?, reviewed_by = ? WHERE id = ?', 'rejected', Date.now(), req.user.id, id)
         return res.json(say(`Заявка #${id} отклонена`))
+      }
+      case 'music': {
+        const rows = await dbAll(`SELECT mt.*, u.user_id as submitter FROM music_tracks mt LEFT JOIN users u ON u.id = mt.user_id WHERE mt.status = 'moderation' ORDER BY mt.created_at DESC`)
+        if (rows.length === 0) return res.json(say('Нет треков на модерации'))
+        const lines = rows.map((t) => `${t.id} | "${t.title}" — ${t.artist_name} | от @${t.submitter || '?'} | ${t.format} | ${new Date(t.created_at).toLocaleString('ru-RU')}`)
+        return res.json(say(lines.join('\n')))
+      }
+      case 'approving': {
+        const id = args[0]
+        if (!id) return res.json(say('Укажите ID трека: approving <id>'))
+        const t = await dbGet('SELECT * FROM music_tracks WHERE id = ?', [id])
+        if (!t) return res.json(say('Трек не найден'))
+        await dbRun("UPDATE music_tracks SET status = 'published', reviewed_at = ?, reviewed_by = ? WHERE id = ?", Date.now(), req.user.id, id)
+        return res.json(say(`Трек "${t.title}" опубликован`))
+      }
+      case 'rejecttrack': {
+        const id = args[0]
+        if (!id) return res.json(say('Укажите ID трека: rejecttrack <id>'))
+        const t = await dbGet('SELECT * FROM music_tracks WHERE id = ?', [id])
+        if (!t) return res.json(say('Трек не найден'))
+        await dbRun("UPDATE music_tracks SET status = 'rejected', reviewed_at = ?, reviewed_by = ? WHERE id = ?", Date.now(), req.user.id, id)
+        return res.json(say(`Трек "${t.title}" отклонён`))
       }
       case 'sub': {
         if (!args[0] || !args[1]) return res.json(say('Укажите: sub <userId> <plan> [days]'))
@@ -1418,6 +1443,126 @@ app.patch('/api/users/avatar', authMiddleware, async (req, res) => {
   await dbRun('UPDATE users SET avatar = ? WHERE id = ?', avatar || null, req.user.id)
   res.json({ avatar })
 })
+
+// ─── Music Distribution ───
+
+// Get my artist card (or null) + my tracks with statuses
+app.get('/api/music/me', authMiddleware, async (req, res) => {
+  const artist = await dbGet('SELECT id, user_id, name, photo, banner, created_at FROM artists WHERE user_id = ?', req.user.id)
+  const tracks = artist ? await dbAll('SELECT * FROM music_tracks WHERE artist_id = ? ORDER BY created_at DESC', artist.id) : []
+  res.json({
+    artist: artist ? { ...artist, tracks: tracks.map(serializeTrack) } : null,
+  })
+})
+
+app.post('/api/music/artist', authMiddleware, upload.fields([{ name: 'photo', maxCount: 1 }, { name: 'banner', maxCount: 1 }]), async (req, res) => {
+  const { name } = req.body
+  if (!name?.trim()) return res.status(400).json({ error: 'Введите никнейм артиста' })
+  const existing = await dbGet('SELECT id FROM artists WHERE user_id = ?', req.user.id)
+  if (existing) return res.status(409).json({ error: 'Карточка уже создана' })
+  const photo = req.files?.photo?.[0] ? fullUrl(req, `/uploads/${req.files.photo[0].filename}`) : null
+  const banner = req.files?.banner?.[0] ? fullUrl(req, `/uploads/${req.files.banner[0].filename}`) : null
+  const id = uuidv4()
+  await dbRun('INSERT INTO artists (id, user_id, name, photo, banner, created_at) VALUES (?, ?, ?, ?, ?, ?)',
+    id, req.user.id, name.trim(), photo, banner, Date.now())
+  res.json({ artist: { id, userId: req.user.id, name: name.trim(), photo, banner } })
+})
+
+// Upload a track (audio file + cover). Metadata in fields.
+app.post('/api/music/track', authMiddleware, upload.fields([{ name: 'file', maxCount: 1 }, { name: 'cover', maxCount: 1 }]), async (req, res) => {
+  const artist = await dbGet('SELECT * FROM artists WHERE user_id = ?', req.user.id)
+  if (!artist) return res.status(403).json({ error: 'Сначала создайте карточку артиста' })
+  const audio = req.files?.file?.[0]
+  if (!audio) return res.status(400).json({ error: 'Аудиофайл не загружен' })
+  const ext = path.extname(audio.originalname).toLowerCase()
+  if (!['.mp3', '.wav'].includes(ext)) return res.status(400).json({ error: 'Только MP3 или WAV' })
+
+  const { title, isPublic, releaseNow, scheduledAt } = req.body
+  if (!title?.trim()) return res.status(400).json({ error: 'Укажите название трека' })
+  const cover = req.files?.cover?.[0] ? fullUrl(req, `/uploads/${req.files.cover[0].filename}`) : null
+  const fileUrl = fullUrl(req, `/uploads/${audio.filename}`)
+  const id = uuidv4()
+  const status = 'moderation'
+  await dbRun(`INSERT INTO music_tracks
+    (id, artist_id, user_id, title, artist_name, format, file_url, cover_url, is_public, release_now, scheduled_at, status, created_at)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    id, artist.id, req.user.id, title.trim(), artist.name, ext.slice(1), fileUrl, cover,
+    isPublic === 'true' || isPublic === true ? 1 : 0,
+    releaseNow === 'false' || releaseNow === false ? 0 : 1,
+    scheduledAt ? parseInt(scheduledAt, 10) : null,
+    status, Date.now())
+  res.json({ track: serializeTrack(req.body), id })
+})
+
+// Admin: list pending moderation
+app.get('/api/admin/music/moderation', authMiddleware, adminMiddleware, async (req, res) => {
+  const rows = await dbAll(`
+    SELECT mt.*, u.user_id as submitter_handle
+    FROM music_tracks mt
+    LEFT JOIN users u ON u.id = mt.user_id
+    WHERE mt.status = 'moderation'
+    ORDER BY mt.created_at DESC
+  `)
+  res.json({ tracks: rows.map(serializeTrack) })
+})
+
+// Admin: list all tracks (with status filter)
+app.get('/api/admin/music/tracks', authMiddleware, adminMiddleware, async (req, res) => {
+  const { status } = req.query
+  const where = status ? 'WHERE status = ?' : ''
+  const rows = await dbAll(`SELECT * FROM music_tracks ${where} ORDER BY created_at DESC${status ? '' : ' LIMIT 100'}`, ...(status ? [status] : []))
+  res.json({ tracks: rows.map(serializeTrack) })
+})
+
+// Admin: approve / reject track
+app.post('/api/admin/music/review', authMiddleware, adminMiddleware, async (req, res) => {
+  const { trackId, action } = req.body
+  if (!trackId || !['approve', 'reject'].includes(action)) return res.status(400).json({ error: 'Bad request' })
+  const track = await dbGet('SELECT * FROM music_tracks WHERE id = ?', trackId)
+  if (!track) return res.status(404).json({ error: 'Трек не найден' })
+  const newStatus = action === 'approve' ? 'published' : 'rejected'
+  await dbRun("UPDATE music_tracks SET status = ?, reviewed_at = ?, reviewed_by = ? WHERE id = ?", newStatus, Date.now(), req.user.id, trackId)
+  res.json({ ok: true, status: newStatus })
+})
+
+// Public: search artists & published tracks
+app.get('/api/music/search', authMiddleware, async (req, res) => {
+  const q = (req.query.q || '').trim()
+  if (!q) return res.json({ artists: [], tracks: [] })
+  const like = `%${q}%`
+  const artists = await dbAll('SELECT * FROM artists WHERE name LIKE ? ORDER BY created_at DESC LIMIT 20', like)
+  const tracks = await dbAll(`SELECT mt.* FROM music_tracks mt
+    WHERE mt.status = 'published' AND (mt.title LIKE ? OR mt.artist_name LIKE ?)
+    ORDER BY mt.created_at DESC LIMIT 20`, like, like)
+  res.json({ artists, tracks: tracks.map(serializeTrack) })
+})
+
+// Public: browse — published tracks only (excluding own if not published)
+app.get('/api/music/browse', authMiddleware, async (req, res) => {
+  const rows = await dbAll(`SELECT * FROM music_tracks WHERE status = 'published' ORDER BY created_at DESC LIMIT 50`)
+  res.json({ tracks: rows.map(serializeTrack) })
+})
+
+function serializeTrack(t) {
+  return {
+    id: t.id,
+    artistId: t.artist_id,
+    userId: t.user_id,
+    title: t.title,
+    artist: t.artist_name || t.artist,
+    format: t.format || 'mp3',
+    fileUrl: t.file_url,
+    cover: t.cover_url,
+    isPublic: !!(t.is_public),
+    releaseNow: !(t.release_now === 0),
+    scheduledAt: t.scheduled_at || null,
+    status: t.status || 'moderation',
+    createdAt: t.created_at,
+    reviewedAt: t.reviewed_at || null,
+    reviewedBy: t.reviewed_by || null,
+    submitterHandle: t.submitter_handle || null,
+  }
+}
 
 // ─── Chats ───
 

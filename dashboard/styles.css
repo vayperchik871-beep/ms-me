@@ -231,6 +231,35 @@ main { padding: 20px 24px 12px; max-width: 1100px; margin: 0 auto; }
 .p-fill { height: 100%; background: var(--red); border-radius: 4px; transition: width 0.6s ease; width: 0; }
 .p-count { width: 50px; text-align: right; font-weight: 600; font-size: 13px; font-variant-numeric: tabular-nums; }
 
+/* ─── Music moderation ─── */
+.admin-token-input {
+  flex: 1; min-width: 140px; max-width: 260px;
+  padding: 7px 10px; border: 1px solid #e3e3e8; border-radius: 8px;
+  font-size: 13px; background: #f9f9fb; color: #1c1c1e; outline: none;
+}
+.admin-token-input:focus { border-color: var(--red); }
+
+.moderation-list { padding: 8px 0 12px; display: flex; flex-direction: column; gap: 8px; }
+.mod-track {
+  display: flex; align-items: center; gap: 12px;
+  padding: 10px 12px; border-radius: 10px; background: #f3f3f5;
+}
+.mod-track-info { flex: 1; min-width: 0; }
+.mod-track-title {
+  font-size: 14px; font-weight: 600; color: #1c1c1e;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.mod-track-sub { font-size: 12px; color: var(--muted); margin-top: 2px; }
+.mod-actions { display: flex; gap: 6px; flex-shrink: 0; }
+.btn-approve, .btn-reject {
+  border: none; border-radius: 8px; padding: 7px 12px;
+  font-size: 12px; font-weight: 600; cursor: pointer; color: #fff;
+}
+.btn-approve { background: #34c759; }
+.btn-reject { background: #ff3b30; }
+.btn-approve:hover { background: #2db24e; }
+.btn-reject:hover { background: #e02e24; }
+
 /* ─── Footer ─── */
 footer {
   color: var(--muted);

@@ -108,3 +108,73 @@ load()
 setInterval(load, 15000)
 window.addEventListener('online', load)
 window.addEventListener('focus', load)
+
+// ─── Music moderation ───
+
+const API_ROOT = 'https://ms-messenger-server.onrender.com'
+
+function getAdminToken() {
+  return ($('#admin-token').value || '').trim()
+}
+
+$('#music-refresh').addEventListener('click', loadMusicModeration)
+$('#admin-token').addEventListener('keydown', (e) => { if (e.key === 'Enter') loadMusicModeration() })
+
+async function loadMusicModeration() {
+  const token = getAdminToken()
+  const el = $('#music-moderation')
+  if (!token) {
+    el.innerHTML = '<div style="color:#8a8aa0;font-size:13px;padding:8px">Введите admin token</div>'
+    return
+  }
+  el.innerHTML = '<div style="color:#8a8aa0;font-size:13px;padding:8px">Загрузка…</div>'
+  try {
+    const res = await fetch(API_ROOT + '/api/admin/music/moderation', {
+      headers: { Authorization: 'Bearer ' + token },
+      signal: AbortSignal.timeout(30000),
+    })
+    if (res.status === 401 || res.status === 403) {
+      el.innerHTML = '<div style="color:#ff453a;font-size:13px;padding:8px">Нет доступа — проверьте token</div>'
+      return
+    }
+    const d = await res.json()
+    renderModeration(d.tracks || [], token)
+  } catch {
+    el.innerHTML = '<div style="color:#ff453a;font-size:13px;padding:8px">Ошибка соединения</div>'
+  }
+}
+
+function renderModeration(tracks, token) {
+  const el = $('#music-moderation')
+  if (!tracks.length) {
+    el.innerHTML = '<div style="color:#8a8aa0;font-size:13px;padding:8px">Нет треков на модерации</div>'
+    return
+  }
+  el.innerHTML = tracks.map((t) => `
+    <div class="mod-track">
+      <div class="mod-track-info">
+        <div class="mod-track-title">${esc(t.title)}</div>
+        <div class="mod-track-sub">${esc(t.artist)} · ${esc(t.format || 'mp3').toUpperCase()} · от ${esc(t.submitterHandle || '')}</div>
+        <div class="mod-track-sub">${new Date(t.createdAt || Date.now()).toLocaleString('ru-RU')}</div>
+      </div>
+      <div class="mod-actions">
+        <button class="btn-approve" onclick="reviewTrack('${t.id}','approve','${token}')">Принять</button>
+        <button class="btn-reject" onclick="reviewTrack('${t.id}','reject','${token}')">Отклонить</button>
+      </div>
+    </div>
+  `).join('')
+}
+
+async function reviewTrack(id, action, token) {
+  const res = await fetch(API_ROOT + '/api/admin/music/review', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
+    body: JSON.stringify({ trackId: id, action }),
+  })
+  if (res.ok) loadMusicModeration()
+}
+
+function esc(s) {
+  return String(s == null ? '' : s)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
+}

@@ -222,6 +222,36 @@ try { await dbExec('CREATE TABLE IF NOT EXISTS subscription_codes (code TEXT PRI
 try { await dbExec("CREATE TABLE IF NOT EXISTS subscription_purchases (id TEXT PRIMARY KEY, user_id TEXT NOT NULL REFERENCES users(id), plan TEXT NOT NULL, provider TEXT NOT NULL, provider_token TEXT, amount INTEGER, currency TEXT DEFAULT 'USD', status TEXT DEFAULT 'completed', created_at INTEGER NOT NULL)") } catch {}
 try { await dbExec('CREATE TABLE IF NOT EXISTS user_gifts (id TEXT PRIMARY KEY, user_id TEXT NOT NULL REFERENCES users(id), gift_id TEXT NOT NULL REFERENCES gifts(id), sender_id TEXT REFERENCES users(id), message TEXT, created_at INTEGER NOT NULL)') } catch {}
 
+// Music distribution (artist cards + tracks)
+try { await dbExec(`CREATE TABLE IF NOT EXISTS artists (
+  id TEXT PRIMARY KEY,
+  user_id TEXT NOT NULL REFERENCES users(id),
+  name TEXT NOT NULL,
+  photo TEXT,
+  banner TEXT,
+  created_at INTEGER NOT NULL,
+  UNIQUE(user_id)
+)`) } catch {}
+try { await dbExec(`CREATE TABLE IF NOT EXISTS music_tracks (
+  id TEXT PRIMARY KEY,
+  artist_id TEXT NOT NULL REFERENCES artists(id),
+  user_id TEXT NOT NULL REFERENCES users(id),
+  title TEXT NOT NULL,
+  artist_name TEXT NOT NULL,
+  format TEXT DEFAULT 'mp3',
+  file_url TEXT NOT NULL,
+  cover_url TEXT,
+  is_public INTEGER DEFAULT 0,
+  release_now INTEGER DEFAULT 1,
+  scheduled_at INTEGER,
+  status TEXT DEFAULT 'moderation',
+  created_at INTEGER NOT NULL,
+  reviewed_by TEXT,
+  reviewed_at INTEGER
+)`) } catch {}
+try { await dbExec('CREATE INDEX IF NOT EXISTS idx_music_tracks_status ON music_tracks(status, created_at)') } catch {}
+try { await dbExec('CREATE INDEX IF NOT EXISTS idx_music_tracks_artist ON music_tracks(artist_id, created_at)') } catch {}
+
 // Plus features: call log
 try { await dbExec(`CREATE TABLE IF NOT EXISTS call_log (
   id TEXT PRIMARY KEY,

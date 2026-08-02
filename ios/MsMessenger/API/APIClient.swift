@@ -132,4 +132,52 @@ final class APIClient {
     func adminCommand(_ command: String) async throws -> AdminCommandResponse {
         try await request("/admin/command", method: "POST", body: try JSONEncoder().encode(["command": command]))
     }
+
+    // ─── Music Distribution ───
+
+    func getArtistProfile() async throws -> ArtistResponse {
+        try await request("/music/me")
+    }
+
+    func createArtistCard(name: String, photo: Data?, banner: Data?) async throws -> ArtistResponse {
+        var form = MultiPartForm()
+        form.addField(name: "name", value: name)
+        if let photo { form.addFile(name: "photo", fileName: "photo.jpg", data: photo, contentType: "image/jpeg") }
+        if let banner { form.addFile(name: "banner", fileName: "banner.jpg", data: banner, contentType: "image/jpeg") }
+        var urlRequest = URLRequest(url: baseURL.appendingPathComponent("/music/artist"))
+        urlRequest.httpMethod = "POST"
+        urlRequest.setValue("multipart/form-data; boundary=\(form.boundary)", forHTTPHeaderField: "Content-Type")
+        if let token { urlRequest.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization") }
+        urlRequest.httpBody = form.end
+        let (data, response) = try await session.data(for: urlRequest)
+        guard let http = response as? HTTPURLResponse else { throw APIError.serverError("Invalid response") }
+        if http.statusCode >= 400 {
+            if let err = try? decoder.decode(ErrorResponse.self, from: data) { throw APIError.serverError(err.error) }
+            throw APIError.serverError("Ошибка \(http.statusCode)")
+        }
+        return try decoder.decode(ArtistResponse.self, from: data)
+    }
+
+    func uploadMusicTrack(form: MultiPartForm) async throws -> TrackUploadResponse {
+        var urlRequest = URLRequest(url: baseURL.appendingPathComponent("/music/track"))
+        urlRequest.httpMethod = "POST"
+        urlRequest.setValue("multipart/form-data; boundary=\(form.boundary)", forHTTPHeaderField: "Content-Type")
+        if let token { urlRequest.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization") }
+        urlRequest.httpBody = form.end
+        let (data, response) = try await session.data(for: urlRequest)
+        guard let http = response as? HTTPURLResponse else { throw APIError.serverError("Invalid response") }
+        if http.statusCode >= 400 {
+            if let err = try? decoder.decode(ErrorResponse.self, from: data) { throw APIError.serverError(err.error) }
+            throw APIError.serverError("Ошибка \(http.statusCode)")
+        }
+        return try decoder.decode(TrackUploadResponse.self, from: data)
+    }
+
+    func searchMusic(_ q: String) async throws -> MusicSearchResponse {
+        try await request("/music/search", query: ["q": q.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? q])
+    }
+
+    func browseMusic() async throws -> TrackListResponse {
+        try await request("/music/browse")
+    }
 }
