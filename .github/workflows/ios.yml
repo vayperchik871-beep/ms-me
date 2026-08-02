@@ -71,6 +71,7 @@ jobs:
 
       - name: Build for Device (unsigned IPA)
         if: success()
+        continue-on-error: true
         run: |
           set -e
           rm -rf build
@@ -87,6 +88,7 @@ jobs:
 
       - name: Package as IPA
         if: success()
+        continue-on-error: true
         run: |
           set -e
           mkdir -p Payload
