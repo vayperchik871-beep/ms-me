@@ -364,52 +364,53 @@ struct CreateArtistCardSheet: View {
 
     var body: some View {
         NavigationStack {
-            ScrollView {
-                VStack(spacing: 16) {
-                    artistPreview
-
-                    inputField("Никнейм артиста", text: $name)
-
-                    PhotosPicker(selection: $photoItem, matching: .images) {
-                        fieldRow("Фото", "Выбрать файл")
-                    }
-                    PhotosPicker(selection: $bannerItem, matching: .images) {
-                        fieldRow("Баннер", "Выбрать файл")
-                    }
-
-                    if let errorText {
-                        Text(errorText).font(.system(size: 13)).foregroundColor(Color(hex: "#FF453A"))
-                    }
-                    Spacer(minLength: 24)
+            createForm
+                .background(theme.bgColor.ignoresSafeArea())
+                .navigationTitle("Карточка артиста")
+                .navigationBarTitleDisplayMode(.inline)
+                .toolbar { toolbarButtons }
+                .onChange(of: photoItem) { item in
+                    Task { if let data = try? await item?.loadTransferable(type: Data.self) { photo = data } }
                 }
-                .padding(20)
-            }
-            .background(theme.bgColor.ignoresSafeArea())
-            .navigationTitle("Карточка артиста")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .confirmationAction) {
-                    Button {
-                        submit()
-                    } label: {
-                        if saving { ProgressView().tint(.white) }
-                        else { Text("Готово").fontWeight(.semibold) }
-                    }
-                    .disabled(saving || name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                .onChange(of: bannerItem) { item in
+                    Task { if let data = try? await item?.loadTransferable(type: Data.self) { banner = data } }
                 }
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("Отмена") { dismiss() }
-                        .foregroundColor(Color(hex: "#6C63FF"))
-                }
-            }
-            .onChange(of: photoItem) { item in
-                Task { if let data = try? await item?.loadTransferable(type: Data.self) { photo = data } }
-            }
-            .onChange(of: bannerItem) { item in
-                Task { if let data = try? await item?.loadTransferable(type: Data.self) { banner = data } }
-            }
         }
         .tint(Color(hex: "#6C63FF"))
+    }
+
+    private var createForm: some View {
+        ScrollView {
+            VStack(spacing: 16) {
+                artistPreview
+                inputField("Никнейм артиста", value: $name)
+                PhotosPicker(selection: $photoItem, matching: .images) {
+                    fieldRow("Фото", "Выбрать файл")
+                }
+                PhotosPicker(selection: $bannerItem, matching: .images) {
+                    fieldRow("Баннер", "Выбрать файл")
+                }
+                if let errorText {
+                    Text(errorText).font(.system(size: 13)).foregroundColor(Color(hex: "#FF453A"))
+                }
+                Spacer(minLength: 24)
+            }
+            .padding(20)
+        }
+    }
+
+    private var toolbarButtons: some ToolbarContent {
+        ToolbarItemGroup(placement: .navigationBarTrailing) {
+            Button {
+                submit()
+            } label: {
+                if saving { ProgressView().tint(.white) }
+                else { Text("Готово").fontWeight(.semibold) }
+            }
+            .disabled(saving || name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+            Button("Отмена") { dismiss() }
+                .foregroundColor(Color(hex: "#6C63FF"))
+        }
     }
 
     private var artistPreview: some View {
