@@ -24,19 +24,27 @@ jobs:
 
       - name: Build for Simulator
         run: |
-          set -e
           xcodebuild build \
             -project MsMessenger.xcodeproj \
             -scheme MsMessenger \
             -sdk iphonesimulator \
             -configuration Debug \
             -derivedDataPath build \
-            CODE_SIGNING_ALLOWED=NO
+            CODE_SIGNING_ALLOWED=NO \
+            2>&1 | tee /tmp/build-log.txt; test ${PIPESTATUS[0]} -eq 0
           echo "=== Build products ==="
           find build/Build/Products -name "*.app" -type d
-          test -d build/Build/Products/Debug-iphonesimulator/MsMessenger.app
+
+      - name: Upload build log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-log
+          path: /tmp/build-log.txt
+          retention-days: 7
 
       - name: Package for Appetize
+        if: success()
         run: |
           set -e
           cd build/Build/Products/Debug-iphonesimulator
@@ -45,12 +53,14 @@ jobs:
           cp MsMessenger.zip ../../../../MsMessenger.zip
 
       - uses: actions/upload-artifact@v4
+        if: success()
         with:
           name: MsMessenger-iOS-Simulator
           path: ios/MsMessenger.zip
           retention-days: 14
 
       - name: Build for Device (unsigned IPA)
+        if: success()
         run: |
           set -e
           rm -rf build
@@ -66,6 +76,7 @@ jobs:
           test -d build/Build/Products/Debug-iphoneos/MsMessenger.app
 
       - name: Package as IPA
+        if: success()
         run: |
           set -e
           mkdir -p Payload
@@ -77,6 +88,7 @@ jobs:
           cp MsMessenger.ipa ../MsMessenger.ipa
 
       - uses: actions/upload-artifact@v4
+        if: success()
         with:
           name: MsMessenger-iOS-IPA
           path: ios/MsMessenger.ipa
