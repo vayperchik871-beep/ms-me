@@ -34,7 +34,7 @@ struct MusicDistributionView: View {
         .background(theme.bgColor.ignoresSafeArea())
         .task { load() }
         .sheet(isPresented: $showArtistModal) {
-            CreateArtistCardView { newArtist in
+            CreateArtistCardSheet { newArtist in
                 artist = newArtist
                 showArtistModal = false
                 load()
@@ -332,7 +332,7 @@ struct MusicDistributionView: View {
         Task {
             do {
                 let resp = try await APIClient.shared.getArtistProfile()
-                await MainActor.run { artist = resp.artist; loading = false }
+                await MainActor.run { artist = resp.artist; loading = false; onLoaded?() }
             } catch {
                 await MainActor.run { loading = false }
             }
@@ -394,7 +394,7 @@ struct CreateArtistCardSheet: View {
                         if saving { ProgressView().tint(.white) }
                         else { Text("Готово").fontWeight(.semibold) }
                     }
-                    .disabled(saving || name.trim().isEmpty)
+                    .disabled(saving || name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
                 }
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Отмена") { dismiss() }
@@ -414,7 +414,7 @@ struct CreateArtistCardSheet: View {
     private var artistPreview: some View {
         ZStack(alignment: .bottom) {
             if let banner {
-                Image(uiImage: banner.toImage())
+                Image(uiImage: banner.toUIImage())
                     .resizable().scaledToFill().frame(height: 160).clipped()
             } else {
                 Color.white.opacity(0.06).frame(height: 160)

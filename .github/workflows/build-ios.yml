@@ -1,0 +1,119 @@
+name: Build iOS
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'ios/**'
+      - 'server/index.js'
+      - 'server/db.js'
+      - 'src/**'
+  workflow_dispatch:
+    inputs:
+      build_device:
+        description: 'Build for device (requires certs)'
+        required: false
+        default: 'false'
+        type: boolean
+
+concurrency:
+  group: ios-build
+  cancel-in-progress: true
+
+jobs:
+  compile-check:
+    name: Compile check (Simulator)
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Select Xcode
+        run: sudo xcode-select -s /Applications/Xcode_16.app
+
+      - name: Install XcodeGen
+        run: brew install xcodegen
+
+      - name: Generate Xcode project
+        working-directory: ios
+        run: xcodegen generate
+
+      - name: Build for Simulator
+        working-directory: ios
+        run: |
+          xcodebuild build \
+            -project MsMessenger.xcodeproj \
+            -scheme MsMessenger \
+            -destination 'platform=iOS Simulator,name=iPhone 16,OS=latest' \
+            CODE_SIGNING_ALLOWED=NO \
+            ONLY_ACTIVE_ARCH=NO \
+            | xcpretty && exit ${PIPESTATUS[0]}
+
+  build-device:
+    name: Build IPA (Device)
+    runs-on: macos-15
+    if: github.event.inputs.build_device == 'true'
+    needs: compile-check
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Select Xcode
+        run: sudo xcode-select -s /Applications/Xcode_16.app
+
+      - name: Install XcodeGen
+        run: brew install xcodegen
+
+      - name: Generate Xcode project
+        working-directory: ios
+        run: xcodegen generate
+
+      - name: Decode certificate
+        env:
+          APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
+          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+        run: |
+          echo "$APPLE_CERTIFICATE" | base64 --decode > certificate.p12
+          KEYCHAIN_PATH=$RUNNER_TEMP/app-signing.keychain-db
+          security create-keychain -p "" "$KEYCHAIN_PATH"
+          security set-keychain-settings -lut 21600 "$KEYCHAIN_PATH"
+          security unlock-keychain -p "" "$KEYCHAIN_PATH"
+          security import certificate.p12 \
+            -k "$KEYCHAIN_PATH" \
+            -P "$APPLE_CERTIFICATE_PASSWORD" \
+            -T /usr/bin/codesign
+          security list-keychain -d user -s "$KEYCHAIN_PATH"
+
+      - name: Build IPA
+        env:
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+        working-directory: ios
+        run: |
+          xcodebuild build \
+            -project MsMessenger.xcodeproj \
+            -scheme MsMessenger \
+            -destination 'generic/platform=iOS' \
+            -configuration Release \
+            -archivePath $RUNNER_TEMP/MsMessenger.xcarchive \
+            DEVELOPMENT_TEAM="$APPLE_TEAM_ID" \
+            | xcpretty && exit ${PIPESTATUS[0]}
+
+          xcodebuild -exportArchive \
+            -archivePath $RUNNER_TEMP/MsMessenger.xcarchive \
+            -exportOptionsPlist /dev/stdin <<EOF
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+            <key>method</key>
+            <string>development</string>
+            <key>teamID</key>
+            <string>$APPLE_TEAM_ID</string>
+          </dict>
+          </plist>
+          EOF
+
+      - name: Upload IPA
+        uses: actions/upload-artifact@v4
+        with:
+          name: MsMessenger-${{ github.sha }}
+          path: ios/build/MsMessenger.ipa
+          retention-days: 7
