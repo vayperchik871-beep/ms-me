@@ -11,7 +11,7 @@ struct ChatsListView: View {
         NavigationStack {
             Group {
                 if loading {
-                    ProgressView().tint(Color(hex: "#6C63FF"))
+                    ProgressView().tint(theme.accent)
                 }
                 else if chats.isEmpty {
                     VStack(spacing: 12) {
@@ -52,7 +52,7 @@ struct ChatsListView: View {
                     Button(action: { showCreateGroup = true }) {
                         Image(systemName: "plus")
                             .font(.system(size: 17, weight: .medium))
-                            .foregroundColor(Color(hex: "#6C63FF"))
+                            .foregroundColor(theme.accent)
                     }
                 }
             }
@@ -62,7 +62,7 @@ struct ChatsListView: View {
             .task { await load() }
             .sheet(isPresented: $showCreateGroup) { CreateGroupChannelView() }
         }
-        .tint(Color(hex: "#6C63FF"))
+        .tint(theme.accent)
     }
 
     private var filteredChats: [Chat] {
@@ -99,7 +99,7 @@ struct ChatRowView: View {
                 } else {
                     Text(chat.name?.prefix(1).uppercased() ?? "?")
                         .font(.system(size: 20, weight: .semibold))
-                        .foregroundColor(Color(hex: "#6C63FF"))
+                        .foregroundColor(theme.accent)
                 }
             }
 
@@ -127,7 +127,7 @@ struct ChatRowView: View {
                         .foregroundColor(.white)
                         .padding(.horizontal, 7)
                         .padding(.vertical, 3)
-                        .background(Color(hex: "#6C63FF"))
+                        .background(theme.accent)
                         .clipShape(Capsule())
                 }
             }

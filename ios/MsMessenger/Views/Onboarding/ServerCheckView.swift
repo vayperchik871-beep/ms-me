@@ -13,7 +13,7 @@ struct ServerCheckView: View {
             VStack(spacing: 24) {
                 Image(systemName: "bubble.left.and.bubble.right.fill")
                     .font(.system(size: 56))
-                    .foregroundColor(Color(hex: "#6C63FF"))
+                    .foregroundColor(ThemeManager.shared.accent)
 
                 Text("MS Messenger")
                     .font(.system(size: 28, weight: .bold))
@@ -21,7 +21,7 @@ struct ServerCheckView: View {
 
                 VStack(spacing: 12) {
                     ProgressView()
-                        .tint(Color(hex: "#6C63FF"))
+                        .tint(ThemeManager.shared.accent)
                         .scaleEffect(1.2)
 
                     Text(status)

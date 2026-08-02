@@ -142,7 +142,7 @@ struct ChatDetailView: View {
                             .foregroundColor(.white)
                             .padding(.horizontal, 6)
                             .padding(.vertical, 2)
-                            .background(Color(hex: "#6C63FF"))
+                            .background(theme.accent)
                             .clipShape(Capsule())
                             .offset(x: 4, y: -2)
                     }

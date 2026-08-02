@@ -12,7 +12,7 @@ struct ProfileTabView: View {
                 } else {
                     VStack {
                         ProgressView()
-                            .tint(Color(hex: "#6C63FF"))
+                            .tint(theme.accent)
                         Text("Загрузка...")
                             .font(.system(size: 15))
                             .foregroundColor(theme.textSecondary)
@@ -23,7 +23,7 @@ struct ProfileTabView: View {
             }
             .background(theme.bgColor.ignoresSafeArea())
         }
-        .tint(Color(hex: "#6C63FF"))
+        .tint(theme.accent)
         .task { await loadUser() }
     }
 

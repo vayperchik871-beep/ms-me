@@ -21,7 +21,7 @@ struct GiftPickerView: View {
                                     .font(.system(size: 14, weight: activeCategory == cat ? .semibold : .regular))
                                     .padding(.horizontal, 16)
                                     .padding(.vertical, 8)
-                                    .background(activeCategory == cat ? Color(hex: "#6C63FF") : Color.white.opacity(0.1))
+                                    .background(activeCategory == cat ? theme.accent : Color.white.opacity(0.1))
                                     .foregroundColor(activeCategory == cat ? .white : theme.textPrimary)
                                     .cornerRadius(20)
                             }
@@ -46,13 +46,13 @@ struct GiftPickerView: View {
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
                     Button("Отмена") { dismiss() }
-                        .foregroundColor(Color(hex: "#6C63FF"))
+                        .foregroundColor(theme.accent)
                 }
             }
             .toolbarBackground(Color.clear, for: .navigationBar)
             .toolbarBackground(.visible, for: .navigationBar)
         }
-        .tint(Color(hex: "#6C63FF"))
+        .tint(theme.accent)
     }
 }
 

@@ -113,7 +113,7 @@ struct PrivacyPolicyView: View {
         VStack(alignment: .leading, spacing: 8) {
             Text(title)
                 .font(.system(size: 17, weight: .semibold))
-                .foregroundColor(Color(hex: "#6C63FF"))
+                .foregroundColor(theme.accent)
             Text(text)
                 .font(.system(size: 15))
                 .foregroundColor(theme.textSecondary)

@@ -15,7 +15,7 @@ struct ContactsListView: View {
         NavigationStack {
             Group {
                 if loading {
-                    ProgressView().tint(Color(hex: "#6C63FF"))
+                    ProgressView().tint(theme.accent)
                 } else {
                     ScrollView {
                         LazyVStack(spacing: 2) {
@@ -70,7 +70,7 @@ struct ContactsListView: View {
                 }
             }
         }
-        .tint(Color(hex: "#6C63FF"))
+        .tint(theme.accent)
     }
 
     private func load() async {
@@ -102,7 +102,7 @@ struct ContactRowView: View {
                     .frame(width: 48, height: 48)
                 Text(user.name.prefix(1).uppercased())
                     .font(.system(size: 18, weight: .semibold))
-                    .foregroundColor(Color(hex: "#6C63FF"))
+                    .foregroundColor(theme.accent)
             }
 
             VStack(alignment: .leading, spacing: 3) {

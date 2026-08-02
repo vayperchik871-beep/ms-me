@@ -72,7 +72,7 @@ struct GiftConfirmView: View {
                                     Spacer()
                                     Image(systemName: anonymous ? "checkmark.circle.fill" : "circle")
                                         .font(.system(size: 20))
-                                        .foregroundColor(anonymous ? Color(hex: "#6C63FF") : theme.textSecondary)
+                                        .foregroundColor(anonymous ? theme.accent : theme.textSecondary)
                                 }
                                 .padding(14)
                                 .background(theme.inputBg)
@@ -103,12 +103,12 @@ struct GiftConfirmView: View {
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
                     Button("Отмена", action: onCancel)
-                        .foregroundColor(Color(hex: "#6C63FF"))
+                        .foregroundColor(theme.accent)
                 }
             }
             .toolbarBackground(Color.clear, for: .navigationBar)
             .toolbarBackground(.visible, for: .navigationBar)
         }
-        .tint(Color(hex: "#6C63FF"))
+        .tint(theme.accent)
     }
 }

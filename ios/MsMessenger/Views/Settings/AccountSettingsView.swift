@@ -18,7 +18,7 @@ struct AccountSettingsView: View {
                                     .frame(width: 48, height: 48)
                                 Text(account.name.prefix(1).uppercased())
                                     .font(.system(size: 18, weight: .semibold))
-                                    .foregroundColor(Color(hex: "#6C63FF"))
+                                    .foregroundColor(theme.accent)
                             }
 
                             VStack(alignment: .leading, spacing: 3) {
@@ -35,7 +35,7 @@ struct AccountSettingsView: View {
                             if account.userId == currentUserId {
                                 Image(systemName: "checkmark.circle.fill")
                                     .font(.system(size: 20))
-                                    .foregroundColor(Color(hex: "#6C63FF"))
+                                    .foregroundColor(theme.accent)
                             } else {
                                 Image(systemName: "arrow.right")
                                     .font(.system(size: 14))
@@ -56,7 +56,7 @@ struct AccountSettingsView: View {
                             Text("Создать аккаунт")
                                 .font(.system(size: 16, weight: .medium))
                         }
-                        .foregroundColor(Color(hex: "#6C63FF"))
+                        .foregroundColor(theme.accent)
                         .frame(maxWidth: .infinity)
                         .padding(14)
                         .background(Color.white.opacity(0.06))
@@ -157,7 +157,7 @@ struct CreateAccountView: View {
                     HStack(spacing: 12) {
                         Image(systemName: "at")
                             .font(.system(size: 16))
-                            .foregroundColor(Color(hex: "#6C63FF"))
+                            .foregroundColor(theme.accent)
                             .frame(width: 24)
                         TextField("ID", text: $userId)
                             .font(.system(size: 16))
@@ -173,7 +173,7 @@ struct CreateAccountView: View {
                     HStack(spacing: 12) {
                         Image(systemName: "lock")
                             .font(.system(size: 16))
-                            .foregroundColor(Color(hex: "#6C63FF"))
+                            .foregroundColor(theme.accent)
                             .frame(width: 24)
                         SecureField("Пароль", text: $password)
                             .font(.system(size: 16))
@@ -198,7 +198,7 @@ struct CreateAccountView: View {
                 }
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 16)
-                .background((!userId.isEmpty && !password.isEmpty) ? Color(hex: "#6C63FF") : Color.white.opacity(0.15))
+                .background((!userId.isEmpty && !password.isEmpty) ? theme.accent : Color.white.opacity(0.15))
                 .foregroundColor((!userId.isEmpty && !password.isEmpty) ? .white : .white.opacity(0.3))
                 .cornerRadius(14)
                 .disabled(userId.isEmpty || password.isEmpty || loading)
@@ -211,7 +211,7 @@ struct CreateAccountView: View {
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Отмена") { dismiss() }
-                        .foregroundColor(Color(hex: "#6C63FF"))
+                        .foregroundColor(theme.accent)
                 }
             }
         }

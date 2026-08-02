@@ -31,7 +31,7 @@ struct SettingsView: View {
             .sheet(isPresented: $showAdmin) { AdminTerminalView() }
             .task { await loadUser() }
         }
-        .tint(Color(hex: "#6C63FF"))
+        .tint(theme.accent)
     }
 
     // MARK: - Profile Header
@@ -48,14 +48,14 @@ struct SettingsView: View {
                     } placeholder: {
                     Text(user?.name.prefix(1).uppercased() ?? "?")
                              .font(.system(size: 24, weight: .semibold))
-                             .foregroundColor(Color(hex: "#6C63FF"))
+                             .foregroundColor(theme.accent)
                     }
                     .frame(width: 60, height: 60)
                     .clipShape(Circle())
                 } else {
                     Text(user?.name.prefix(1).uppercased() ?? "?")
                         .font(.system(size: 24, weight: .semibold))
-                        .foregroundColor(Color(hex: "#6C63FF"))
+                        .foregroundColor(theme.accent)
                 }
             }
 
@@ -131,7 +131,7 @@ struct SettingsView: View {
         HStack(spacing: 12) {
             Image(systemName: icon)
                 .font(.system(size: 16))
-                .foregroundColor(tint ?? Color(hex: "#6C63FF"))
+                .foregroundColor(tint ?? theme.accent)
                 .frame(width: 24)
             Text(label)
                 .font(.system(size: 16))

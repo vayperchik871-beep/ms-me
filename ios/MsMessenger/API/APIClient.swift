@@ -129,6 +129,25 @@ final class APIClient {
         try await request("/user/profile", method: "PATCH", body: try JSONEncoder().encode(body))
     }
 
+    func uploadAvatar(_ imageData: Data) async throws -> String {
+        var form = MultiPartForm()
+        form.addFile(name: "avatar", fileName: "avatar.jpg", data: imageData, contentType: "image/jpeg")
+        var urlRequest = URLRequest(url: baseURL.appendingPathComponent("/upload/avatar"))
+        urlRequest.httpMethod = "POST"
+        urlRequest.setValue("multipart/form-data; boundary=\(form.boundary)", forHTTPHeaderField: "Content-Type")
+        if let token { urlRequest.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization") }
+        urlRequest.httpBody = form.end
+        let (data, response) = try await session.data(for: urlRequest)
+        guard let http = response as? HTTPURLResponse else { throw APIError.serverError("Invalid response") }
+        if http.statusCode >= 400 {
+            if let err = try? decoder.decode(ErrorResponse.self, from: data) { throw APIError.serverError(err.error) }
+            throw APIError.serverError("Ошибка \(http.statusCode)")
+        }
+        struct AvatarResponse: Codable { let avatar: String }
+        let resp = try decoder.decode(AvatarResponse.self, from: data)
+        return resp.avatar
+    }
+
     func getUser(userId: String) async throws -> UserResponse {
         try await request("/users/\(userId)")
     }

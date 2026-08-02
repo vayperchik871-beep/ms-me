@@ -43,7 +43,7 @@ struct TabBarView: View {
                     Text("Настройки")
                 }
         }
-        .tint(Color(hex: "#6C63FF"))
+        .tint(theme.accent)
         .background(theme.bgColor.ignoresSafeArea())
     }
 }

@@ -21,7 +21,7 @@ struct MusicDistributionView: View {
                 searchResultsView
             } else if loading {
                 Spacer()
-                ProgressView().tint(Color(hex: "#6C63FF"))
+                ProgressView().tint(theme.accent)
                 Text("Загрузка…")
                     .font(.system(size: 14)).foregroundColor(theme.textSecondary).padding(.top, 8)
                 Spacer()
@@ -119,7 +119,7 @@ noArtistCard()
             } placeholder: {
                 ZStack {
                     Circle().fill(Color.white.opacity(0.1))
-                    Text(a.name.prefix(1).uppercased()).foregroundColor(Color(hex: "#6C63FF"))
+                    Text(a.name.prefix(1).uppercased()).foregroundColor(theme.accent)
                 }
             }
             .frame(width: 48, height: 48)
@@ -175,7 +175,7 @@ noArtistCard()
                     .font(.system(size: 16, weight: .semibold))
                     .frame(width: 180)
                     .padding(.vertical, 14)
-                    .background(Color(hex: "#6C63FF"))
+                    .background(theme.accent)
                     .foregroundColor(.white)
                     .cornerRadius(14)
             }
@@ -211,7 +211,7 @@ noArtistCard()
                     img.resizable().scaledToFill()
                 } placeholder: {
                     ZStack {
-                        Circle().fill(Color(hex: "#6C63FF"))
+                        Circle().fill(theme.accent)
                         Text(artist.name.prefix(1).uppercased()).font(.system(size: 28, weight: .bold)).foregroundColor(.white)
                     }
                 }
@@ -376,7 +376,7 @@ struct CreateArtistCardSheet: View {
                     Task { if let data = try? await item?.loadTransferable(type: Data.self) { banner = data } }
                 }
         }
-        .tint(Color(hex: "#6C63FF"))
+        .tint(theme.accent)
     }
 
     private var createForm: some View {
@@ -409,7 +409,7 @@ struct CreateArtistCardSheet: View {
             }
             .disabled(saving || name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
             Button("Отмена") { dismiss() }
-                .foregroundColor(Color(hex: "#6C63FF"))
+                .foregroundColor(theme.accent)
         }
     }
 
@@ -423,7 +423,7 @@ struct CreateArtistCardSheet: View {
             }
             VStack(spacing: 6) {
                 ZStack {
-                    Circle().fill(Color(hex: "#6C63FF")).frame(width: 72, height: 72)
+                    Circle().fill(theme.accent).frame(width: 72, height: 72)
                     if let photo {
                         Image(uiImage: photo.toUIImage()).resizable().scaledToFill()
                     } else {
@@ -514,7 +514,7 @@ struct UploadTrackModal: View {
                                 Text(audio?.title ?? "Выбрать файл").font(.system(size: 12)).foregroundColor(.white.opacity(0.6))
                             }
                             Spacer()
-                            Image(systemName: "music.note").foregroundColor(Color(hex: "#6C63FF"))
+                            Image(systemName: "music.note").foregroundColor(ThemeManager.shared.accent)
                         }
                         .padding(.horizontal, 14).padding(.vertical, 12)
                         .background(Color.white.opacity(0.06)).cornerRadius(12)
@@ -558,7 +558,7 @@ struct UploadTrackModal: View {
                     .disabled(saving || title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || audio == nil)
                 }
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("Отмена") { dismiss() }.foregroundColor(Color(hex: "#6C63FF"))
+                    Button("Отмена") { dismiss() }.foregroundColor(ThemeManager.shared.accent)
                 }
             }
             .fileImporter(isPresented: $showFiles, allowedContentTypes: [.mp3, .wav, .audio]) { result in
@@ -572,7 +572,7 @@ struct UploadTrackModal: View {
                 Task { if let data = try? await item?.loadTransferable(type: Data.self) { cover = data } }
             }
         }
-        .tint(Color(hex: "#6C63FF"))
+        .tint(ThemeManager.shared.accent)
     }
 
     private func inputField(_ placeholder: String, value: Binding<String>) -> some View {
@@ -586,7 +586,7 @@ struct UploadTrackModal: View {
         Toggle(isOn: isOn) {
             Text(label).font(.system(size: 14, weight: .medium)).foregroundColor(.white)
         }
-        .tint(Color(hex: "#6C63FF"))
+        .tint(ThemeManager.shared.accent)
     }
 
     private func submit() {

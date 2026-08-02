@@ -39,7 +39,7 @@ struct GiftAnimationView: View {
                         .foregroundColor(.white)
                         .padding(.horizontal, 40)
                         .padding(.vertical, 14)
-                        .background(Color(hex: "#6C63FF"))
+                        .background(ThemeManager.shared.accent)
                         .cornerRadius(14)
                 }
                 .padding(.top, 20)

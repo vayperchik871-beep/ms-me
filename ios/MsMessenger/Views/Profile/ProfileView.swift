@@ -1,4 +1,5 @@
 import SwiftUI
+import PhotosUI
 
 struct ProfileView: View {
     let user: User
@@ -9,9 +10,12 @@ struct ProfileView: View {
     @State private var showGiftDetail = false
     @ObservedObject private var theme = ThemeManager.shared
     @State private var activeTab = 0
+    @State private var refreshedUser: User?
+
+    private var displayUser: User { refreshedUser ?? user }
 
     private var receivedGifts: [Gift] {
-        let ids = UserDefaults.standard.array(forKey: "received_gift_ids_\(user.userId)") as? [String] ?? []
+        let ids = UserDefaults.standard.array(forKey: "received_gift_ids_\(displayUser.userId)") as? [String] ?? []
         return allGifts.filter { ids.contains($0.id) }
     }
 
@@ -37,9 +41,22 @@ struct ProfileView: View {
         .fullScreenCover(isPresented: $showGiftDetail) {
             if let gift = selectedGift {
                 NavigationStack {
-                    GiftDetailView(gift: gift, ownerName: user.name, receivedDate: Date())
+                    GiftDetailView(gift: gift, ownerName: displayUser.name, receivedDate: Date())
                 }
-                .tint(Color(hex: "#6C63FF"))
+                .tint(theme.accent)
+            }
+        }
+        .sheet(isPresented: $showEdit) {
+            EditProfileSheet(user: displayUser) { updated in
+                refreshedUser = updated
+            }
+        }
+        .task {
+            if isOwnProfile {
+                do {
+                    let resp = try await APIClient.shared.me()
+                    await MainActor.run { refreshedUser = resp.user }
+                } catch {}
             }
         }
     }
@@ -48,23 +65,23 @@ struct ProfileView: View {
 
     private var bannerSection: some View {
         ZStack(alignment: .bottom) {
-            if let banner = user.profileBanner, let url = URL(string: banner) {
+            if let banner = displayUser.profileBanner, let url = URL(string: banner) {
                 AsyncImage(url: url) { img in
                     img.resizable().scaledToFill()
                 } placeholder: {
                     LinearGradient(
-                        colors: [Color(hex: user.profileColor ?? "#6C63FF"), Color(hex: user.profileColor ?? "#6C63FF").opacity(0.6)],
+                        colors: [Color(hex: displayUser.profileColor ?? theme.accentHex.isEmpty ? "#ffffff" : theme.accentHex), Color(hex: displayUser.profileColor ?? theme.accentHex.isEmpty ? "#ffffff" : theme.accentHex).opacity(0.6)],
                         startPoint: .topLeading, endPoint: .bottomTrailing
                     )
                 }
                 .frame(height: 400)
                 .clipped()
-            } else if let avatar = user.avatar, let url = URL(string: avatar) {
+            } else if let avatar = displayUser.avatar, let url = URL(string: avatar) {
                 AsyncImage(url: url) { img in
                     img.resizable().scaledToFill()
                 } placeholder: {
                     LinearGradient(
-                        colors: [Color(hex: user.profileColor ?? "#6C63FF"), Color(hex: user.profileColor ?? "#6C63FF").opacity(0.6)],
+                        colors: [Color(hex: displayUser.profileColor ?? theme.accentHex.isEmpty ? "#ffffff" : theme.accentHex), Color(hex: displayUser.profileColor ?? theme.accentHex.isEmpty ? "#ffffff" : theme.accentHex).opacity(0.6)],
                         startPoint: .topLeading, endPoint: .bottomTrailing
                     )
                 }
@@ -72,12 +89,12 @@ struct ProfileView: View {
                 .clipped()
             } else {
                 LinearGradient(
-                    colors: [Color(hex: user.profileColor ?? "#6C63FF"), Color(hex: user.profileColor ?? "#6C63FF").opacity(0.6)],
+                    colors: [Color(hex: displayUser.profileColor ?? theme.accentHex.isEmpty ? "#ffffff" : theme.accentHex), Color(hex: displayUser.profileColor ?? theme.accentHex.isEmpty ? "#ffffff" : theme.accentHex).opacity(0.6)],
                     startPoint: .topLeading, endPoint: .bottomTrailing
                 )
                 .frame(height: 400)
                 .overlay {
-                    Text(user.name.prefix(1).uppercased())
+                    Text(displayUser.name.prefix(1).uppercased())
                         .font(.system(size: 80, weight: .bold))
                         .foregroundColor(.white.opacity(0.6))
                 }
@@ -93,10 +110,10 @@ struct ProfileView: View {
                 HStack {
                     Spacer()
                     HStack(spacing: 4) {
-                        Text(user.name)
+                        Text(displayUser.name)
                             .font(.system(size: 28, weight: .bold))
                             .foregroundColor(.white)
-                        if user.isVerified == true {
+                        if displayUser.isVerified == true {
                             Image(systemName: "checkmark.seal.fill")
                                 .foregroundColor(.white)
                                 .font(.system(size: 18))
@@ -106,9 +123,9 @@ struct ProfileView: View {
                 }
                 HStack(spacing: 6) {
                     Circle()
-                        .fill(user.isOnline == true ? Color.green : Color.gray.opacity(0.6))
+                        .fill(displayUser.isOnline == true ? Color.green : Color.gray.opacity(0.6))
                         .frame(width: 8, height: 8)
-                    Text(user.isOnline == true ? "online" : "@\(user.userId)")
+                    Text(displayUser.isOnline == true ? "online" : "@\(displayUser.userId)")
                         .font(.system(size: 14))
                         .foregroundColor(.white.opacity(0.8))
                 }
@@ -150,7 +167,7 @@ struct ProfileView: View {
 
     private var musicCapsule: some View {
         Group {
-            if let music = user.music, !music.isEmpty {
+            if let music = displayUser.music, !music.isEmpty {
                 HStack(spacing: 10) {
                     Image(systemName: "music.note")
                         .font(.system(size: 14))
@@ -180,7 +197,7 @@ struct ProfileView: View {
 
     private var infoCard: some View {
         VStack(spacing: 0) {
-            if let phone = user.phone, !phone.isEmpty {
+            if let phone = displayUser.phone, !phone.isEmpty {
                 VStack(alignment: .leading, spacing: 2) {
                     Text("phone")
                         .font(.system(size: 12))
@@ -202,7 +219,7 @@ struct ProfileView: View {
                 Text("username")
                     .font(.system(size: 12))
                     .foregroundColor(theme.textSecondary)
-                Text("@\(user.userId)")
+                Text("@\(displayUser.userId)")
                     .font(.system(size: 16, weight: .medium))
                     .foregroundColor(theme.textPrimary)
             }
@@ -244,9 +261,9 @@ struct ProfileView: View {
             VStack(spacing: 8) {
                 Text(title)
                     .font(.system(size: 14, weight: activeTab == index ? .semibold : .regular))
-                    .foregroundColor(activeTab == index ? Color(hex: user.profileColor ?? "#6C63FF") : theme.textSecondary)
+                    .foregroundColor(activeTab == index ? Color(hex: displayUser.profileColor ?? theme.accentHex.isEmpty ? "#ffffff" : theme.accentHex) : theme.textSecondary)
                 Rectangle()
-                    .fill(activeTab == index ? Color(hex: user.profileColor ?? "#6C63FF") : Color.clear)
+                    .fill(activeTab == index ? Color(hex: displayUser.profileColor ?? theme.accentHex.isEmpty ? "#ffffff" : theme.accentHex) : Color.clear)
                     .frame(height: 2)
             }
         }
@@ -364,7 +381,7 @@ struct ProfileByIdView: View {
             } else if loading {
                 VStack {
                     Spacer()
-                    ProgressView().tint(Color(hex: "#6C63FF"))
+                    ProgressView().tint(theme.accent)
                     Text("Загрузка…").font(.system(size: 14)).foregroundColor(theme.textSecondary).padding(.top, 8)
                     Spacer()
                 }
@@ -384,6 +401,137 @@ struct ProfileByIdView: View {
                 await MainActor.run { user = resp.user; loading = false }
             } catch {
                 await MainActor.run { errorText = "Не удалось загрузить профиль"; loading = false }
+            }
+        }
+    }
+}
+
+struct EditProfileSheet: View {
+    let user: User
+    var onSaved: (User) -> Void
+    @Environment(\.dismiss) private var dismiss
+    @ObservedObject private var theme = ThemeManager.shared
+    @State private var name: String
+    @State private var bio: String
+    @State private var avatarData: Data?
+    @State private var avatarItem: PhotosPickerItem?
+    @State private var saving = false
+    @State private var errorText: String?
+
+    init(user: User, onSaved: @escaping (User) -> Void) {
+        self.user = user
+        self.onSaved = onSaved
+        _name = State(initialValue: user.name)
+        _bio = State(initialValue: user.bio ?? "")
+    }
+
+    var body: some View {
+        NavigationStack {
+            ScrollView {
+                VStack(spacing: 16) {
+                    avatarPicker
+                    inputField("Имя", text: $name)
+                    inputField("О себе", text: $bio)
+                    if let errorText {
+                        Text(errorText).font(.system(size: 13)).foregroundColor(.red)
+                    }
+                }
+                .padding(20)
+            }
+            .background(theme.bgColor.ignoresSafeArea())
+            .navigationTitle("Редактировать")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Button("Отмена") { dismiss() }.foregroundColor(theme.accent)
+                }
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button(action: save) {
+                        if saving { ProgressView().tint(.white) }
+                        else { Text("Готово").fontWeight(.semibold) }
+                    }
+                    .disabled(saving || name.trimmingCharacters(in: .whitespaces).isEmpty)
+                }
+            }
+        }
+        .tint(theme.accent)
+        .onChange(of: avatarItem) { item in
+            Task { if let data = try? await item?.loadTransferable(type: Data.self) { avatarData = data } }
+        }
+    }
+
+    private var avatarPicker: some View {
+        PhotosPicker(selection: $avatarItem, matching: .images) {
+            ZStack {
+                if let avatarData, let ui = UIImage(data: avatarData) {
+                    Image(uiImage: ui).resizable().scaledToFill()
+                } else if let avatar = user.avatar, let url = URL(string: avatar) {
+                    AsyncImage(url: url) { img in
+                        img.resizable().scaledToFill()
+                    } placeholder: {
+                        Text(user.name.prefix(1).uppercased())
+                            .font(.system(size: 28, weight: .bold))
+                            .foregroundColor(.white)
+                    }
+                } else {
+                    Text(user.name.prefix(1).uppercased())
+                        .font(.system(size: 28, weight: .bold))
+                        .foregroundColor(.white)
+                }
+            }
+            .frame(width: 80, height: 80)
+            .clipShape(Circle())
+            .overlay(Circle().strokeBorder(theme.accent, lineWidth: 2))
+            .overlay(alignment: .bottomTrailing) {
+                Image(systemName: "camera.fill")
+                    .font(.system(size: 12))
+                    .foregroundColor(.white)
+                    .padding(4)
+                    .background(Circle().fill(theme.accent))
+                    .offset(x: 2, y: 2)
+            }
+        }
+        .buttonStyle(.plain)
+        .padding(.top, 12)
+    }
+
+    private func inputField(_ label: String, text: Binding<String>) -> some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text(label).font(.system(size: 12)).foregroundColor(theme.textSecondary)
+            TextField("", text: text)
+                .font(.system(size: 16))
+                .foregroundColor(theme.inputText)
+                .padding(12)
+                .background(Color.white.opacity(0.06))
+                .cornerRadius(10)
+        }
+    }
+
+    private func save() {
+        let trimmed = name.trimmingCharacters(in: .whitespaces)
+        guard !trimmed.isEmpty else { return }
+        saving = true
+        Task {
+            do {
+                var body: [String: String] = ["name": trimmed]
+                if !bio.trimmingCharacters(in: .whitespaces).isEmpty {
+                    body["bio"] = bio.trimmingCharacters(in: .whitespaces)
+                }
+                var resp = try await APIClient.shared.updateProfile(body)
+                if let avatarData {
+                    let avatarUrl = try await APIClient.shared.uploadAvatar(avatarData)
+                    _ = try await APIClient.shared.updateProfile(["avatar": avatarUrl])
+                    resp = try await APIClient.shared.me()
+                }
+                await MainActor.run {
+                    onSaved(resp.user)
+                    dismiss()
+                }
+            } catch {
+                await MainActor.run {
+                    saving = false
+                    errorText = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
+                }
             }
         }
     }

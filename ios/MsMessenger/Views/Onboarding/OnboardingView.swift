@@ -49,7 +49,7 @@ struct OnboardingView: View {
                         Text("Назад")
                             .font(.system(size: 17))
                     }
-                    .foregroundColor(Color(hex: "#6C63FF"))
+                    .foregroundColor(theme.accent)
                 }
             }
             Spacer()
@@ -86,7 +86,7 @@ struct OnboardingView: View {
                     .font(.system(size: 17, weight: .semibold))
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 16)
-                    .background(Color(hex: "#6C63FF"))
+                    .background(theme.accent)
                     .foregroundColor(.white)
                     .cornerRadius(14)
             }
@@ -95,7 +95,7 @@ struct OnboardingView: View {
             Button(action: { showLogin = true }) {
                 Text("Уже есть аккаунт? Войти")
                     .font(.system(size: 15))
-                    .foregroundColor(Color(hex: "#6C63FF"))
+                    .foregroundColor(theme.accent)
             }
             .padding(.bottom, 60)
         }
@@ -128,7 +128,7 @@ struct OnboardingView: View {
                     .font(.system(size: 17, weight: .semibold))
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 16)
-                    .background(phoneValid ? Color(hex: "#6C63FF") : Color.white.opacity(0.15))
+                    .background(phoneValid ? theme.accent : Color.white.opacity(0.15))
                     .foregroundColor(phoneValid ? .white : .white.opacity(0.3))
                     .cornerRadius(14)
             }
@@ -141,7 +141,7 @@ struct OnboardingView: View {
         HStack(spacing: 6) {
             Text("+777")
                 .font(.system(size: 22, weight: .semibold, design: .monospaced))
-                .foregroundColor(Color(hex: "#6C63FF"))
+                .foregroundColor(theme.accent)
                 .padding(.horizontal, 14)
                 .padding(.vertical, 14)
                 .background(theme.inputBg)
@@ -152,7 +152,7 @@ struct OnboardingView: View {
                 .keyboardType(.numberPad)
                 .multilineTextAlignment(.center)
                 .foregroundColor(theme.inputText)
-                .tint(Color(hex: "#6C63FF"))
+                .tint(theme.accent)
                 .padding(.vertical, 14)
                 .frame(width: 80)
                 .background(theme.inputBg)
@@ -171,7 +171,7 @@ struct OnboardingView: View {
                 .keyboardType(.numberPad)
                 .multilineTextAlignment(.center)
                 .foregroundColor(theme.inputText)
-                .tint(Color(hex: "#6C63FF"))
+                .tint(theme.accent)
                 .padding(.vertical, 14)
                 .frame(width: 80)
                 .background(theme.inputBg)
@@ -217,7 +217,7 @@ struct OnboardingView: View {
                     .font(.system(size: 17, weight: .semibold))
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 16)
-                    .background((!userId.isEmpty && password.count >= 6) ? Color(hex: "#6C63FF") : Color.white.opacity(0.15))
+                    .background((!userId.isEmpty && password.count >= 6) ? theme.accent : Color.white.opacity(0.15))
                     .foregroundColor((!userId.isEmpty && password.count >= 6) ? .white : .white.opacity(0.3))
                     .cornerRadius(14)
             }
@@ -253,7 +253,7 @@ struct OnboardingView: View {
                             .frame(width: 96, height: 96)
                         Image(systemName: "camera.fill")
                             .font(.system(size: 28))
-                            .foregroundColor(Color(hex: "#6C63FF"))
+                            .foregroundColor(theme.accent)
                     }
                 }
             }
@@ -282,7 +282,7 @@ struct OnboardingView: View {
             }
             .frame(maxWidth: .infinity)
             .padding(.vertical, 16)
-            .background(name.isEmpty ? Color.white.opacity(0.15) : Color(hex: "#6C63FF"))
+            .background(name.isEmpty ? Color.white.opacity(0.15) : theme.accent)
             .foregroundColor(name.isEmpty ? .white.opacity(0.3) : .white)
             .cornerRadius(14)
             .disabled(name.isEmpty || loading)

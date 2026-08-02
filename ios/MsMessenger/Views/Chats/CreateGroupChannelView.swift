@@ -47,7 +47,7 @@ struct CreateGroupChannelView: View {
                     HStack(spacing: 12) {
                         Image(systemName: "textformat")
                             .font(.system(size: 16))
-                            .foregroundColor(Color(hex: "#6C63FF"))
+                            .foregroundColor(theme.accent)
                             .frame(width: 24)
                         TextField("Название", text: $name)
                             .font(.system(size: 16))
@@ -61,7 +61,7 @@ struct CreateGroupChannelView: View {
                     HStack(spacing: 12) {
                         Image(systemName: "text.word.spacing")
                             .font(.system(size: 16))
-                            .foregroundColor(Color(hex: "#6C63FF"))
+                            .foregroundColor(theme.accent)
                             .frame(width: 24)
                         TextField("Описание (необязательно)", text: $about)
                             .font(.system(size: 16))
@@ -89,7 +89,7 @@ struct CreateGroupChannelView: View {
                 }
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 16)
-                .background(name.isEmpty ? Color.white.opacity(0.15) : Color(hex: "#6C63FF"))
+                .background(name.isEmpty ? Color.white.opacity(0.15) : theme.accent)
                 .foregroundColor(name.isEmpty ? .white.opacity(0.3) : .white)
                 .cornerRadius(14)
                 .disabled(name.isEmpty || loading)
@@ -102,7 +102,7 @@ struct CreateGroupChannelView: View {
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Отмена") { dismiss() }
-                        .foregroundColor(Color(hex: "#6C63FF"))
+                        .foregroundColor(theme.accent)
                 }
             }
         }

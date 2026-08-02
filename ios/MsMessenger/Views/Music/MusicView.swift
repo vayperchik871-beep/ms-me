@@ -44,7 +44,7 @@ struct MusicView: View {
                     Button(action: { showPicker = true }) {
                         Image(systemName: "plus")
                             .font(.system(size: 17, weight: .medium))
-                            .foregroundColor(Color(hex: "#6C63FF"))
+                            .foregroundColor(theme.accent)
                     }
                 }
             }
@@ -55,7 +55,7 @@ struct MusicView: View {
             }
             .onAppear { loadTracks() }
         }
-        .tint(Color(hex: "#6C63FF"))
+        .tint(theme.accent)
     }
 
     private var tabBar: some View {
@@ -112,7 +112,7 @@ struct MusicView: View {
                                         if playing == track.id {
                                             Image(systemName: "speaker.wave.2.fill")
                                                 .font(.system(size: 16))
-                                                .foregroundColor(Color(hex: "#6C63FF"))
+                                                .foregroundColor(theme.accent)
                                         } else {
                                             Image(systemName: "music.note")
                                                 .font(.system(size: 16))

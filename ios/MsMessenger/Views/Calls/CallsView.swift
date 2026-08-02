@@ -31,7 +31,7 @@ struct CallsView: View {
             .toolbarBackground(.visible, for: .navigationBar)
             .onChange(of: number) { _ in search() }
         }
-        .tint(Color(hex: "#6C63FF"))
+        .tint(theme.accent)
     }
 
     // MARK: - Number Display
