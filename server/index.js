@@ -2126,6 +2126,7 @@ async function callAiApi(question, userId) {
   const geminiCandidates = model === 'pro'
     ? ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-2.5-pro', 'gemini-1.5-flash']
     : ['gemini-2.5-flash-lite', 'gemini-2.0-flash-lite', 'gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-1.5-flash-lite', 'gemini-1.5-flash']
+  const aiLog = [`GEMINI_KEY=${GEMINI_API_KEY ? 'set' : 'MISSING'}`]
   if (GEMINI_API_KEY) {
     for (const geminiModel of geminiCandidates) {
       try {
@@ -2139,6 +2140,7 @@ async function callAiApi(question, userId) {
           generationConfig: { maxOutputTokens: 256, temperature: 0.7 },
         }),
       })
+      aiLog.push(`${geminiModel}=HTTP ${res.status}`)
       if (res.ok) {
         const d = await res.json()
         const text = d?.candidates?.[0]?.content?.parts?.[0]?.text
@@ -2148,7 +2150,7 @@ async function callAiApi(question, userId) {
         const errMsg = errd?.error?.message || ''
         if (!/not found|does not exist|model/i.test(errMsg)) break
       }
-    } catch (e) { console.error('Gemini error:', e.message) }
+    } catch (e) { aiLog.push(`gemini ERR ${e.message}`) }
     }
   }
 
@@ -2161,11 +2163,12 @@ async function callAiApi(question, userId) {
       signal: ctrl.signal,
     })
     clearTimeout(tm)
+    aiLog.push(`pollinations=HTTP ${res.status}`)
     if (res.ok) {
       const text = (await res.text()).trim()
       if (text && text.length < 4000) return text
     }
-  } catch (e) { console.error('Pollinations error:', e.message) }
+  } catch (e) { aiLog.push(`pollinations ERR ${e.message}`) }
 
   // 3) Hugging Face Inference API
   try {
@@ -2181,13 +2184,15 @@ async function callAiApi(question, userId) {
       signal: controller.signal,
     })
     clearTimeout(timeout)
+    aiLog.push(`hf=HTTP ${res.status}`)
     if (res.ok) {
       const d = await res.json()
       const gen = Array.isArray(d) ? d[0]?.generated_text : d?.generated_text
       if (gen) { const a = gen.replace(prompt, '').trim(); if (a) return a }
     }
-  } catch (e) { console.error('HF error:', e.message) }
+  } catch (e) { aiLog.push(`hf ERR ${e.message}`) }
 
+  console.warn('[AI fallback]', aiLog.join(' | '))
   return mockAiResponse()
 }
 
