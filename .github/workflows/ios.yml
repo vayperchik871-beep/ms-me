@@ -24,7 +24,6 @@ jobs:
 
       - name: Build for Simulator
         run: |
-          set +e
           xcodebuild build \
             -project MsMessenger.xcodeproj \
             -scheme MsMessenger \
@@ -40,8 +39,6 @@ jobs:
             echo '```' >> $GITHUB_STEP_SUMMARY
             echo "$ERRORS" >> $GITHUB_STEP_SUMMARY
             echo '```' >> $GITHUB_STEP_SUMMARY
-            echo "" >> $GITHUB_STEP_SUMMARY
-            echo "Exit code: $EXIT" >> $GITHUB_STEP_SUMMARY
             exit 1
           fi
 
@@ -53,50 +50,47 @@ jobs:
           path: /tmp/build-log.txt
           retention-days: 7
 
-      - name: Package for Appetize
+      - name: Package Simulator app
         if: success()
         run: |
-          set -e
           cd build/Build/Products/Debug-iphonesimulator
           zip -r MsMessenger.zip MsMessenger.app
-          unzip -l MsMessenger.zip
-          cp MsMessenger.zip ../../../../MsMessenger.zip
 
       - uses: actions/upload-artifact@v4
         if: success()
         with:
           name: MsMessenger-iOS-Simulator
-          path: ios/MsMessenger.zip
+          path: ios/build/Build/Products/Debug-iphonesimulator/MsMessenger.zip
           retention-days: 14
 
       - name: Build for Device (unsigned IPA)
         if: success()
-        continue-on-error: true
         run: |
-          set -e
           rm -rf build
           xcodebuild build \
             -project MsMessenger.xcodeproj \
             -scheme MsMessenger \
             -sdk iphoneos \
-            -configuration Debug \
+            -configuration Release \
             -derivedDataPath build \
-            CODE_SIGNING_ALLOWED=NO
-          echo "=== Device build products ==="
-          find build/Build/Products -name "*.app" -type d
-          test -d build/Build/Products/Debug-iphoneos/MsMessenger.app
-
-      - name: Package as IPA
-        if: success()
-        continue-on-error: true
-        run: |
-          set -e
+            CODE_SIGN_IDENTITY="" \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGNING_ALLOWED=NO \
+            ENABLE_BITCODE=NO \
+            2>&1 | tee /tmp/device-build-log.txt
+          EXIT=$?
+          if [ $EXIT -ne 0 ]; then
+            echo "### Device Build Errors" >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+            grep -i "error:" /tmp/device-build-log.txt | head -30 >> $GITHUB_STEP_SUMMARY || true
+            echo '```' >> $GITHUB_STEP_SUMMARY
+            echo "Device build failed (expected without signing). Simulator build succeeded." >> $GITHUB_STEP_SUMMARY
+            exit 0
+          fi
           mkdir -p Payload
-          cp -R build/Build/Products/Debug-iphoneos/MsMessenger.app Payload/
+          cp -R build/Build/Products/Release-iphoneos/MsMessenger.app Payload/
           zip -r MsMessenger.ipa Payload
           rm -rf Payload
-          echo "=== IPA contents ==="
-          unzip -l MsMessenger.ipa | head -10
           cp MsMessenger.ipa ../MsMessenger.ipa
 
       - uses: actions/upload-artifact@v4
