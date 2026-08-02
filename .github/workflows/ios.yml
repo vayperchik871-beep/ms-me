@@ -8,14 +8,17 @@ on:
 
 jobs:
   build:
-    runs-on: macos-latest
-    timeout-minutes: 45
+    runs-on: macos-15
+    timeout-minutes: 60
     defaults:
       run:
         working-directory: ios
 
     steps:
       - uses: actions/checkout@v4
+
+      - name: Select Xcode
+        run: sudo xcode-select -s /Applications/Xcode_16.0.app
 
       - name: Install XcodeGen & generate .xcodeproj
         run: |
@@ -24,47 +27,33 @@ jobs:
 
       - name: Build for Simulator
         run: |
+          set -e
           xcodebuild build \
             -project MsMessenger.xcodeproj \
             -scheme MsMessenger \
-            -sdk iphonesimulator \
+            -destination 'platform=iOS Simulator,name=iPhone 16,OS=latest' \
             -configuration Debug \
             -derivedDataPath build \
             CODE_SIGNING_ALLOWED=NO \
-            2>&1 | tee /tmp/build-log.txt
-          EXIT=$?
-          if [ $EXIT -ne 0 ]; then
-            ERRORS=$(grep -i "error:" /tmp/build-log.txt | head -30 || true)
-            echo "### Build Errors" >> $GITHUB_STEP_SUMMARY
-            echo '```' >> $GITHUB_STEP_SUMMARY
-            echo "$ERRORS" >> $GITHUB_STEP_SUMMARY
-            echo '```' >> $GITHUB_STEP_SUMMARY
-            exit 1
-          fi
-
-      - name: Upload build log
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: build-log
-          path: /tmp/build-log.txt
-          retention-days: 7
+            ONLY_ACTIVE_ARCH=NO
+          echo "=== Build products ==="
+          find build/Build/Products -name "*.app" -type d
+          test -d build/Build/Products/Debug-iphonesimulator/MsMessenger.app
 
       - name: Package Simulator app
-        if: success()
         run: |
+          set -e
           cd build/Build/Products/Debug-iphonesimulator
-          zip -r MsMessenger.zip MsMessenger.app
+          zip -r /tmp/MsMessenger-Simulator.zip MsMessenger.app
+          ls -lh /tmp/MsMessenger-Simulator.zip
 
       - uses: actions/upload-artifact@v4
-        if: success()
         with:
-          name: MsMessenger-iOS-Simulator
-          path: ios/build/Build/Products/Debug-iphonesimulator/MsMessenger.zip
+          name: MsMessenger-Simulator
+          path: /tmp/MsMessenger-Simulator.zip
           retention-days: 14
 
-      - name: Build for Device (unsigned IPA)
-        if: success()
+      - name: Build for Device
         run: |
           rm -rf build
           xcodebuild build \
@@ -76,26 +65,21 @@ jobs:
             CODE_SIGN_IDENTITY="" \
             CODE_SIGNING_REQUIRED=NO \
             CODE_SIGNING_ALLOWED=NO \
-            ENABLE_BITCODE=NO \
-            2>&1 | tee /tmp/device-build-log.txt
-          EXIT=$?
-          if [ $EXIT -ne 0 ]; then
-            echo "### Device Build Errors" >> $GITHUB_STEP_SUMMARY
-            echo '```' >> $GITHUB_STEP_SUMMARY
-            grep -i "error:" /tmp/device-build-log.txt | head -30 >> $GITHUB_STEP_SUMMARY || true
-            echo '```' >> $GITHUB_STEP_SUMMARY
-            echo "Device build failed (expected without signing). Simulator build succeeded." >> $GITHUB_STEP_SUMMARY
-            exit 0
-          fi
+            ENABLE_BITCODE=NO
+          echo "=== Device build products ==="
+          find build/Build/Products -name "*.app" -type d
+
+      - name: Package as IPA
+        run: |
+          set -e
           mkdir -p Payload
           cp -R build/Build/Products/Release-iphoneos/MsMessenger.app Payload/
-          zip -r MsMessenger.ipa Payload
+          zip -r /tmp/MsMessenger.ipa Payload
           rm -rf Payload
-          cp MsMessenger.ipa ../MsMessenger.ipa
+          ls -lh /tmp/MsMessenger.ipa
 
       - uses: actions/upload-artifact@v4
-        if: success()
         with:
-          name: MsMessenger-iOS-IPA
-          path: ios/MsMessenger.ipa
+          name: MsMessenger-IPA
+          path: /tmp/MsMessenger.ipa
           retention-days: 14
