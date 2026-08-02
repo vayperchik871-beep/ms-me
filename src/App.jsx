@@ -75,7 +75,7 @@ function startKeepalive() {
     ]).catch(() => {})
   }
   ping()
-  keepaliveTimer = setInterval(ping, 3 * 60 * 1000)
+  keepaliveTimer = setInterval(ping, 60 * 1000)
 }
 
 export default function App() {

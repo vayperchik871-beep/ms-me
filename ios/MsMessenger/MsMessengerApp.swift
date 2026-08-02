@@ -3,6 +3,7 @@ import SwiftUI
 @main
 struct MsMessengerApp: App {
     @StateObject private var theme = ThemeManager.shared
+    @State private var serverReady = false
     @State private var isAuthenticated = APIClient.shared.token != nil
 
     var body: some Scene {
@@ -11,7 +12,9 @@ struct MsMessengerApp: App {
                 theme.bgColor
                     .ignoresSafeArea()
 
-                if isAuthenticated {
+                if !serverReady {
+                    ServerCheckView { serverReady = true }
+                } else if isAuthenticated {
                     ContentView()
                         .onAppear { WebSocketService.shared.connect(token: APIClient.shared.token ?? "") }
                 } else {

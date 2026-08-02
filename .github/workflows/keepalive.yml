@@ -2,7 +2,7 @@ name: Keepalive
 
 on:
   schedule:
-    - cron: '*/3 * * * *'
+    - cron: '*/1 * * * *'
   workflow_dispatch:
 
 jobs:
@@ -12,3 +12,4 @@ jobs:
       - name: Ping Render server
         run: |
           curl -s --max-time 30 https://ms-messenger-server.onrender.com/health
+          echo "Keepalive ping sent at $(date)"

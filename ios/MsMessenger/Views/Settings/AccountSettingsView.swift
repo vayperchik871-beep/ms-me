@@ -234,7 +234,14 @@ struct CreateAccountView: View {
                 }
                 onCreated()
                 dismiss()
-            } catch { self.error = error.localizedDescription }
+            } catch {
+                let msg = error.localizedDescription
+                if msg.contains("timed out") || msg.contains("timed") || msg.contains("underlying") {
+                    self.error = "Сервер запускается. Подождите 20-30 секунд и попробуйте снова"
+                } else {
+                    self.error = msg
+                }
+            }
             loading = false
         }
     }

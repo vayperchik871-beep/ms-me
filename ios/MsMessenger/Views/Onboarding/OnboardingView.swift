@@ -14,6 +14,7 @@ struct OnboardingView: View {
     @State private var error: String?
     @State private var loading = false
     @State private var avatarItem: PhotosPickerItem?
+    @State private var showLogin = false
     @ObservedObject private var theme = ThemeManager.shared
 
     var body: some View {
@@ -31,6 +32,9 @@ struct OnboardingView: View {
             }
         }
         .preferredColorScheme(theme.isDark ? .dark : .light)
+        .sheet(isPresented: $showLogin) {
+            AccountSettingsView(onCreated: { onComplete() })
+        }
     }
 
     // MARK: - Header
@@ -87,6 +91,12 @@ struct OnboardingView: View {
                     .cornerRadius(14)
             }
             .padding(.horizontal, 40)
+
+            Button(action: { showLogin = true }) {
+                Text("Уже есть аккаунт? Войти")
+                    .font(.system(size: 15))
+                    .foregroundColor(Color(hex: "#6C63FF"))
+            }
             .padding(.bottom, 60)
         }
     }
@@ -317,7 +327,14 @@ struct OnboardingView: View {
                     UserDefaults.standard.set(user.id, forKey: "user_uuid")
                 }
                 onComplete()
-            } catch { self.error = error.localizedDescription }
+            } catch {
+                let msg = error.localizedDescription
+                if msg.contains("timed out") || msg.contains("timed") || msg.contains("underlying") {
+                    self.error = "Сервер запускается. Подождите 20-30 секунд и попробуйте снова"
+                } else {
+                    self.error = msg
+                }
+            }
             loading = false
         }
     }
