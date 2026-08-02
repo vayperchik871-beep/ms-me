@@ -29,14 +29,18 @@ jobs:
 
       - name: Build for Simulator
         run: |
-          set -e
           xcodebuild build \
             -project MsMessenger.xcodeproj \
             -scheme MsMessenger \
             -destination 'generic/platform=iOS Simulator' \
             -configuration Debug \
             -derivedDataPath build \
-            CODE_SIGNING_ALLOWED=NO
+            CODE_SIGNING_ALLOWED=NO 2>&1 | tee build.log
+          if [ ${PIPESTATUS[0]} -ne 0 ]; then
+            echo "=== ERRORS ==="
+            grep -E "error:|warning:|BUILD FAILED" build.log | head -50
+            exit 1
+          fi
           echo "=== Build products ==="
           find build/Build/Products -name "*.app" -type d | head -5
 
