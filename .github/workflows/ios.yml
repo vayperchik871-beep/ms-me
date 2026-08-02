@@ -39,10 +39,19 @@ jobs:
           if [ ${PIPESTATUS[0]} -ne 0 ]; then
             echo "=== ERRORS ==="
             grep -E "error:|warning:|BUILD FAILED" build.log | head -50
+            echo "BUILD_RESULT=failed" >> "$GITHUB_ENV"
             exit 1
           fi
+          echo "BUILD_RESULT=ok" >> "$GITHUB_ENV"
           echo "=== Build products ==="
           find build/Build/Products -name "*.app" -type d | head -5
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: build-log
+          path: ios/build.log
+          retention-days: 7
 
       - name: Package Simulator
         if: success()
