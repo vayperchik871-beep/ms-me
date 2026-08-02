@@ -33,7 +33,7 @@ struct OnboardingView: View {
         }
         .preferredColorScheme(theme.isDark ? .dark : .light)
         .sheet(isPresented: $showLogin) {
-            AccountSettingsView(onCreated: { onComplete() })
+            CreateAccountView(onCreated: { onComplete() })
         }
     }
 
