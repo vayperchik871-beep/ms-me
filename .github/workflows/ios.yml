@@ -24,6 +24,7 @@ jobs:
 
       - name: Build for Simulator
         run: |
+          set +e
           xcodebuild build \
             -project MsMessenger.xcodeproj \
             -scheme MsMessenger \
@@ -32,12 +33,16 @@ jobs:
             -derivedDataPath build \
             CODE_SIGNING_ALLOWED=NO \
             2>&1 | tee /tmp/build-log.txt
-          EXIT=${PIPESTATUS[0]}
+          EXIT=$?
           if [ $EXIT -ne 0 ]; then
-            echo "::group::Error output"
-            grep -i "error:" /tmp/build-log.txt | head -50
-            echo "::endgroup::"
-            exit $EXIT
+            ERRORS=$(grep -i "error:" /tmp/build-log.txt | head -30 || true)
+            echo "### Build Errors" >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+            echo "$ERRORS" >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "Exit code: $EXIT" >> $GITHUB_STEP_SUMMARY
+            exit 1
           fi
 
       - name: Upload build log
