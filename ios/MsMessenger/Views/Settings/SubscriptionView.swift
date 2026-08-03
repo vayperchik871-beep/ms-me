@@ -182,7 +182,7 @@ struct SubscriptionView: View {
         .padding(18)
         .background(
             RoundedRectangle(cornerRadius: 20)
-                .fill(theme.cardColor ?? Color.white.opacity(0.06))
+                .fill(theme.cardColor)
         )
     }
 
@@ -400,7 +400,7 @@ struct SubscriptionView: View {
             .padding(14)
             .background(
                 RoundedRectangle(cornerRadius: 14)
-                    .fill(theme.cardColor ?? Color.white.opacity(0.06))
+                    .fill(theme.cardColor)
             )
         }
     }
