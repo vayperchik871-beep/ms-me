@@ -70,7 +70,7 @@ export default function MusicTab() {
         <DistributionView
           artist={artist}
           loading={loading}
-          onOpenArtist={() => setShowArtistModal(true)}
+          onCreateArtist={() => setShowArtistModal(true)}
           onOpenUpload={() => setShowUploadModal(true)}
           onUpdated={load}
         />
@@ -175,7 +175,7 @@ function SearchResults({ results }) {
   )
 }
 
-function BrowseBody({ artist }) {
+function BrowseView({ artist }) {
   return <div className="music-empty">{t('Нет треков')}</div>
 }
 
