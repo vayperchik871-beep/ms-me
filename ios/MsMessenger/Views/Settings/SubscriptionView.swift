@@ -307,6 +307,7 @@ struct SubscriptionView: View {
         .background(theme.bgColor.ignoresSafeArea())
     }
 
+    @ViewBuilder
     private func sbpQRCode(order: APIClient.PurchaseOrder) -> some View {
         let phone = order.phone ?? ""
         let payload = "СТ111118\(phone.hashValue % 100000);\(order.amountRub ?? 0).00"
@@ -316,7 +317,7 @@ struct SubscriptionView: View {
         filter.setValue("M", forKey: "inputCorrectionLevel")
         if let output = filter.outputImage {
             let transformed = output.transformed(by: CGAffineTransform(scaleX: 12, y: 12))
-            return Image(uiImage: UIImage(ciImage: transformed))
+            Image(uiImage: UIImage(ciImage: transformed))
                 .interpolation(.none)
                 .resizable()
                 .scaledToFit()
@@ -325,10 +326,11 @@ struct SubscriptionView: View {
                 .background(Color.white)
                 .cornerRadius(12)
                 .id(identity)
+        } else {
+            Image(systemName: "qrcode")
+                .font(.system(size: 100))
+                .foregroundColor(theme.textSecondary)
         }
-        return Image(systemName: "qrcode")
-            .font(.system(size: 100))
-            .foregroundColor(theme.textSecondary)
     }
 
     private var identity: Int { currentOrder?.purchaseId?.hashValue ?? 0 }
