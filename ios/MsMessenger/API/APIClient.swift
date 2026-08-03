@@ -18,7 +18,7 @@ enum APIError: LocalizedError {
 
 final class APIClient {
     static let shared = APIClient()
-    private let baseURL = URL(string: "https://ms-messenger-server.onrender.com/api")!
+    private let baseURL = URL(string: "https://5uuk9t0100hk-production-z7gr0677.us-central1.suga.run/api")!
     private let session: URLSession
     private let decoder = JSONDecoder()
 

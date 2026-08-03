@@ -53,7 +53,7 @@ struct ServerCheckView: View {
     // Если сервер холодный (20-30с) — экраны приложения сами покажут
     // «Сервер запускается» при реальном запросе, а не зависнут здесь.
     private func pingServer() async {
-        let url = URL(string: "https://ms-messenger-server.onrender.com/health")!
+        let url = URL(string: "https://5uuk9t0100hk-production-z7gr0677.us-central1.suga.run/health")!
         var request = URLRequest(url: url)
         request.timeoutInterval = 8
 

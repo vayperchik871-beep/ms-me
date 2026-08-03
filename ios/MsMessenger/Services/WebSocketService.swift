@@ -11,7 +11,7 @@ class WebSocketService: ObservableObject {
     private let maxReconnectDelay = 30.0
 
     func connect(token: String) {
-        guard let url = URL(string: "wss://ms-messenger-server.onrender.com/ws?token=\(token)") else { return }
+        guard let url = URL(string: "wss://5uuk9t0100hk-production-z7gr0677.us-central1.suga.run/ws?token=\(token)") else { return }
         currentToken = token
         reconnectAttempts = 0
         open(url: url)
@@ -45,7 +45,7 @@ class WebSocketService: ObservableObject {
             self.reconnectAttempts += 1
             self.reconnectTimer = Timer.scheduledTimer(withTimeInterval: delay, repeats: false) { [weak self] _ in
                 guard let self, !self.currentToken.isEmpty else { return }
-                self.open(url: URL(string: "wss://ms-messenger-server.onrender.com/ws?token=\(self.currentToken)")!)
+                self.open(url: URL(string: "wss://5uuk9t0100hk-production-z7gr0677.us-central1.suga.run/ws?token=\(self.currentToken)")!)
             }
         }
     }
