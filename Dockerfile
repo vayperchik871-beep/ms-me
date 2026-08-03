@@ -1,14 +1,14 @@
 FROM node:22-alpine AS web
 WORKDIR /app
 COPY package.json package-lock.json ./
-RUN npm ci --ignore-scripts
+RUN npm install --omit=dev --ignore-scripts
 COPY . .
 RUN npm run build
 
 FROM node:22-alpine AS server
 WORKDIR /app
 COPY server/package.json server/package-lock.json ./
-RUN npm ci --omit=dev
+RUN npm install --omit=dev
 COPY server/ ./
 COPY --from=web /app/dist ./dist
 ENV NODE_ENV=production PORT=3001 HOST=0.0.0.0
