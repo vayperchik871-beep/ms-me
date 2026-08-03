@@ -14,6 +14,11 @@ struct ProfileView: View {
 
     private var displayUser: User { refreshedUser ?? user }
 
+    private var bannerHex: String {
+        if let pc = displayUser.profileColor, !pc.isEmpty { return pc }
+        return theme.accentHex.isEmpty ? "#ffffff" : theme.accentHex
+    }
+
     private var receivedGifts: [Gift] {
         let ids = UserDefaults.standard.array(forKey: "received_gift_ids_\(displayUser.userId)") as? [String] ?? []
         return allGifts.filter { ids.contains($0.id) }
@@ -70,7 +75,7 @@ struct ProfileView: View {
                     img.resizable().scaledToFill()
                 } placeholder: {
                     LinearGradient(
-                        colors: [Color(hex: displayUser.profileColor ?? theme.accentHex.isEmpty ? "#ffffff" : theme.accentHex), Color(hex: displayUser.profileColor ?? theme.accentHex.isEmpty ? "#ffffff" : theme.accentHex).opacity(0.6)],
+                        colors: [Color(hex: bannerHex), Color(hex: bannerHex).opacity(0.6)],
                         startPoint: .topLeading, endPoint: .bottomTrailing
                     )
                 }
@@ -81,7 +86,7 @@ struct ProfileView: View {
                     img.resizable().scaledToFill()
                 } placeholder: {
                     LinearGradient(
-                        colors: [Color(hex: displayUser.profileColor ?? theme.accentHex.isEmpty ? "#ffffff" : theme.accentHex), Color(hex: displayUser.profileColor ?? theme.accentHex.isEmpty ? "#ffffff" : theme.accentHex).opacity(0.6)],
+                        colors: [Color(hex: bannerHex), Color(hex: bannerHex).opacity(0.6)],
                         startPoint: .topLeading, endPoint: .bottomTrailing
                     )
                 }
@@ -89,7 +94,7 @@ struct ProfileView: View {
                 .clipped()
             } else {
                 LinearGradient(
-                    colors: [Color(hex: displayUser.profileColor ?? theme.accentHex.isEmpty ? "#ffffff" : theme.accentHex), Color(hex: displayUser.profileColor ?? theme.accentHex.isEmpty ? "#ffffff" : theme.accentHex).opacity(0.6)],
+                    colors: [Color(hex: bannerHex), Color(hex: bannerHex).opacity(0.6)],
                     startPoint: .topLeading, endPoint: .bottomTrailing
                 )
                 .frame(height: 400)
@@ -261,9 +266,9 @@ struct ProfileView: View {
             VStack(spacing: 8) {
                 Text(title)
                     .font(.system(size: 14, weight: activeTab == index ? .semibold : .regular))
-                    .foregroundColor(activeTab == index ? Color(hex: displayUser.profileColor ?? theme.accentHex.isEmpty ? "#ffffff" : theme.accentHex) : theme.textSecondary)
+                    .foregroundColor(activeTab == index ? Color(hex: bannerHex) : theme.textSecondary)
                 Rectangle()
-                    .fill(activeTab == index ? Color(hex: displayUser.profileColor ?? theme.accentHex.isEmpty ? "#ffffff" : theme.accentHex) : Color.clear)
+                    .fill(activeTab == index ? Color(hex: bannerHex) : Color.clear)
                     .frame(height: 2)
             }
         }
