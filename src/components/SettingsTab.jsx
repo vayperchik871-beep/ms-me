@@ -4,6 +4,7 @@ import { t } from '../i18n'
 import PrivacyPolicy from './PrivacyPolicy'
 import AccountScreen from './AccountScreen'
 import PremiumPage from './PremiumPage'
+import AdminPanel from './AdminPanel'
 
 export default function SettingsTab({ onLogout, onAddAccount }) {
   const { user } = useAuth()
@@ -12,6 +13,7 @@ export default function SettingsTab({ onLogout, onAddAccount }) {
   if (screen === 'privacy') return <PrivacyPolicy onBack={() => setScreen(null)} />
   if (screen === 'account') return <AccountScreen onBack={() => setScreen(null)} onLogout={onLogout} onAddAccount={onAddAccount} />
   if (screen === 'premium') return <PremiumPage onBack={() => setScreen(null)} />
+  if (screen === 'admin') return <AdminPanel onBack={() => setScreen(null)} />
 
   return (
     <div className="tab-content">
@@ -56,6 +58,23 @@ export default function SettingsTab({ onLogout, onAddAccount }) {
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.2)" strokeWidth="2" strokeLinecap="round"><path d="M9 18l6-6-6-6"/></svg>
         </button>
       </div>
+
+      {user?.isAdmin && (
+        <>
+          <p className="settings-section-label">Админ</p>
+          <div className="settings-card">
+            <button className="settings-card-row clickable" onClick={() => setScreen('admin')}>
+              <div className="settings-card-left">
+                <span className="settings-card-icon">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><rect x="3" y="3" width="18" height="18" rx="4"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg>
+                </span>
+                <span className="settings-card-label">Админ-панель</span>
+              </div>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.2)" strokeWidth="2" strokeLinecap="round"><path d="M9 18l6-6-6-6"/></svg>
+            </button>
+          </div>
+        </>
+      )}
 
       <p className="settings-section-label">{t('Аккаунт')}</p>
       <div className="settings-card">

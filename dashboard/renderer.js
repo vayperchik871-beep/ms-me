@@ -1,7 +1,7 @@
 const $ = (id) => document.getElementById(id.startsWith('#') ? id.slice(1) : id)
 const $$ = (sel) => document.querySelectorAll(sel)
 
-const API = 'https://ms-messenger-server.onrender.com/api/dashboard'
+const API = 'https://5uuk9t0100hk-production-z7gr0677.us-central1.suga.run/api/dashboard'
 
 function fmt(n) { return Number(n || 0).toLocaleString('ru-RU') }
 
@@ -111,7 +111,7 @@ window.addEventListener('focus', load)
 
 // ─── Music moderation ───
 
-const API_ROOT = 'https://ms-messenger-server.onrender.com'
+const API_ROOT = 'https://5uuk9t0100hk-production-z7gr0677.us-central1.suga.run'
 
 function getAdminToken() {
   return ($('#admin-token').value || '').trim()
