@@ -184,6 +184,13 @@ struct OnboardingView: View {
                 .onChange(of: phoneLast) { new in
                     let filtered = new.filter(\.isNumber)
                     phoneLast = String(filtered.prefix(4))
+                    if filtered.count == 4 && phonePrefix.count == 4 {
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
+                            if phoneLast.count == 4 && phonePrefix.count == 4 {
+                                step = 2
+                            }
+                        }
+                    }
                 }
         }
         .padding(.horizontal, 16)
