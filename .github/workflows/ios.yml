@@ -32,7 +32,7 @@ jobs:
           xcodebuild build \
             -project MsMessenger.xcodeproj \
             -scheme MsMessenger \
-            -destination 'generic/platform=iOS Simulator' \
+            -destination 'platform=iOS Simulator,name=iPhone 16 Pro,OS=26.0' \
             -configuration Debug \
             -derivedDataPath build \
             CODE_SIGNING_ALLOWED=NO 2>&1 | tee build.log
@@ -74,7 +74,7 @@ jobs:
           APP=$(find build/Build/Products -name "MsMessenger.app" -type d -maxdepth 2 | head -1)
           echo "App: $APP"
           DEVICE=$(xcrun simctl list devices available -j | python3 -c \
-            "import json,sys; d=json.load(sys.stdin)['devices']; devs=[x for k in d for x in d[k] if x['isAvailable'] and 'iPhone' in x['name']]; print(devs[0]['udid'])")
+            "import json,sys; d=json.load(sys.stdin)['devices']; devs=[x for k in d for x in d[k] if x['isAvailable'] and 'iPhone 16' in x['name']]; print(devs[0]['udid'])")
           echo "Device: $DEVICE"
           xcrun simctl boot "$DEVICE" 2>/dev/null || true
           xcrun simctl bootstatus "$DEVICE" -b
@@ -99,14 +99,18 @@ jobs:
         run: |
           set -e
           DEVICE=$(xcrun simctl list devices available -j | python3 -c \
-            "import json,sys; d=json.load(sys.stdin)['devices']; devs=[x for k in d for x in d[k] if x['isAvailable'] and 'iPhone' in x['name']]; print(devs[0]['udid'])")
+            "import json,sys; d=json.load(sys.stdin)['devices']; devs=[x for k in d for x in d[k] if x['isAvailable'] and 'iPhone 16' in x['name']]; print(devs[0]['udid'])")
           echo "Device: $DEVICE"
           xcrun simctl boot "$DEVICE" 2>/dev/null || true
           xcrun simctl bootstatus "$DEVICE" -b
+          APP=$(find build/Build/Products -name "MsMessenger.app" -type d -maxdepth 2 | head -1)
+          xcrun simctl install "$DEVICE" "$APP"
+          xcrun simctl launch "$DEVICE" com.ms.messenger
+          sleep 3
           mkdir -p "$GITHUB_WORKSPACE/ios-video"
           xcrun simctl io "$DEVICE" recordVideo --codec h264 --force "$GITHUB_WORKSPACE/ios-video/review.mp4" &
           REC_PID=$!
-          sleep 3
+          sleep 2
           xcodebuild test \
             -project MsMessenger.xcodeproj \
             -scheme MsMessenger \
