@@ -115,10 +115,15 @@ jobs:
           sleep 12
           xcrun simctl ui "$DEVICE" appearance light
           sleep 12
-          kill $REC_PID 2>/dev/null || true
-          wait $REC_PID 2>/dev/null || true
+          kill -INT $REC_PID 2>/dev/null || true
+          for i in $(seq 1 10); do
+            if ! kill -0 $REC_PID 2>/dev/null; then break; fi
+            sleep 1
+          done
+          kill -9 $REC_PID 2>/dev/null || true
           xcrun simctl shutdown "$DEVICE" 2>/dev/null || true
           ls -la "$GITHUB_WORKSPACE/ios-video"
+          test -s "$GITHUB_WORKSPACE/ios-video/review.mp4"
 
       - uses: actions/upload-artifact@v4
         if: success()
