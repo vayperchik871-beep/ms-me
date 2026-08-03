@@ -3,9 +3,8 @@ export function getApiBase() {
 }
 
 function getApiUrl(path = '') {
-  if (window.Capacitor?.isNativePlatform?.()) {
-    return `https://ms-messenger-server.onrender.com/api${path}`
-  }
+  const base = getApiBase().replace(/\/$/, '')
+  if (base) return `${base}/api${path}`
   return `/api${path}`
 }
 
@@ -179,14 +178,14 @@ export function resolveMediaUrl(url) {
   if (url.startsWith('http://')) {
     return url.replace(/^http:\/\//i, 'https://')
   }
-  if (window.Capacitor?.isNativePlatform?.()) {
-    return `https://ms-messenger-server.onrender.com${url}`
-  }
+  const base = getApiBase().replace(/\/$/, '')
+  if (window.Capacitor?.isNativePlatform?.() && base) return `${base}${url}`
   return url
 }
 
 export function getWsUrl() {
   const token = getToken()
   if (!token) return null
-  return `wss://ms-messenger-server.onrender.com/ws?token=${token}`
+  const base = getApiBase().replace(/\/$/, '').replace(/^https:\/\//i, 'wss://').replace(/^http:\/\//i, 'ws://')
+  return `${base}/ws?token=${token}`
 }

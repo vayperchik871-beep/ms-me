@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { t } from '../i18n'
-import { api, resolveMediaUrl } from '../api/client'
+import { api, resolveMediaUrl, getApiBase } from '../api/client'
 
 const STATUS_LABELS = {
   moderation: 'На модерации',
@@ -195,7 +195,7 @@ function ArtistModal({ onDone, onClose }) {
       if (photo) form.append('photo', photo)
       if (banner) form.append('banner', banner)
       const token = localStorage.getItem('ms_active_account')
-      const res = await fetch(`https://ms-messenger-server.onrender.com/api/music/artist`, {
+      const res = await fetch(`${getApiBase().replace(/\/$/, '')}/api/music/artist`, {
         method: 'POST',
         headers: { Authorization: `Bearer ${getTokenValue()}` },
         body: form,
@@ -266,7 +266,7 @@ function UploadTrackModal({ onDone, onClose }) {
       form.append('releaseNow', String(releaseNow))
       if (cover) form.append('cover', cover)
       if (!releaseNow && scheduledAt) form.append('scheduledAt', new Date(scheduledAt).getTime())
-      const res = await fetch(`https://ms-messenger-server.onrender.com/api/music/track`, {
+      const res = await fetch(`${getApiBase().replace(/\/$/, '')}/api/music/track`, {
         method: 'POST',
         headers: { Authorization: `Bearer ${getTokenValue()}` },
         body: form,

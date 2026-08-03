@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react'
-import { api } from '../../api/client'
+import { api, getApiBase } from '../../api/client'
 import { useAuth } from '../../context/AuthContext'
 import { t } from '../../i18n'
 
@@ -66,7 +66,7 @@ export default function GoogleSetupStep({ result, onComplete }) {
       <form onSubmit={handleSubmit} className="setup-form">
         <div className="setup-avatar" onClick={() => fileRef.current?.click()}>
           {avatar ? (
-            <img src={avatar.startsWith('data:') || avatar?.startsWith('http') ? avatar : `https://ms-messenger-server.onrender.com${avatar}`} alt="" className="setup-avatar-img" />
+            <img src={avatar.startsWith('data:') || avatar?.startsWith('http') ? avatar : `${getApiBase().replace(/\/$/, '')}${avatar}`} alt="" className="setup-avatar-img" />
           ) : (
             <div className="setup-avatar-placeholder">
               <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.5-6 8-6s8 2 8 6"/></svg>

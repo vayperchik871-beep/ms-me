@@ -1,7 +1,6 @@
 export default function GoogleSignInButton({ onComplete, label }) {
   const handleClick = () => {
-    const apiBase = import.meta.env.VITE_API_BASE_URL || ''
-    const serverUrl = apiBase.replace(/\/$/, '') || 'https://ms-messenger-server.onrender.com'
+    const serverUrl = (import.meta.env.VITE_API_BASE_URL || '').replace(/\/$/, '')
     window.location.href = serverUrl + '/api/auth/google/redirect'
   }
 
