@@ -74,7 +74,7 @@ jobs:
           APP=$(find build/Build/Products -name "MsMessenger.app" -type d -maxdepth 2 | head -1)
           echo "App: $APP"
           DEVICE=$(xcrun simctl list devices available -j | python3 -c \
-            "import json,sys; d=json.load(sys.stdin)['devices']; devs=[x for k in d for x in d[k] if x['isAvailable'] and 'iPhone 17 Pro' in x['name'] and '26.2' in x['osVersion']]; print(devs[0]['udid'])")
+            "import json,sys; d=json.load(sys.stdin)['devices']; devs=[x for k in d for x in d[k] if x['isAvailable'] and 'iPhone 17 Pro' in x['name'] and 'iOS-26-2' in k]; print(devs[0]['udid'])")
           echo "Device: $DEVICE"
           xcrun simctl boot "$DEVICE" 2>/dev/null || true
           xcrun simctl bootstatus "$DEVICE" -b
@@ -99,7 +99,7 @@ jobs:
         run: |
           set -e
           DEVICE=$(xcrun simctl list devices available -j | python3 -c \
-            "import json,sys; d=json.load(sys.stdin)['devices']; devs=[x for k in d for x in d[k] if x['isAvailable'] and 'iPhone 17 Pro' in x['name'] and '26.2' in x['osVersion']]; print(devs[0]['udid'])")
+            "import json,sys; d=json.load(sys.stdin)['devices']; devs=[x for k in d for x in d[k] if x['isAvailable'] and 'iPhone 17 Pro' in x['name'] and 'iOS-26-2' in k]; print(devs[0]['udid'])")
           echo "Device: $DEVICE"
           xcrun simctl boot "$DEVICE" 2>/dev/null || true
           xcrun simctl bootstatus "$DEVICE" -b
