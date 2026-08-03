@@ -48,67 +48,139 @@ struct SubscriptionView: View {
         .sheet(isPresented: $showPaymentSheet) {
             if let order = currentOrder {
                 paymentSheet(order)
+                    .presentationDetents([.medium, .large])
+                    .presentationDragIndicator(.hidden)
             }
         }
     }
 
     // MARK: - Purchase / SBP
 
+    private func planGradient(_ key: String) -> [Color] {
+        if key == "premium" {
+            return [Color(hex: "F5C311"), Color(hex: "FF7A00"), Color(hex: "FF3D6E")]
+        }
+        if key == "plus" {
+            return [Color(hex: "12C2E9"), Color(hex: "4776E6")]
+        }
+        return [theme.accent, theme.accent.opacity(0.8)]
+    }
+
+    private func daysLabel(_ key: String, days: Int) -> String {
+        key == "premium" ? "Целый год бонусов" : "\(days) дней бонусов"
+    }
+
+    private func perDayLabel(_ key: String, price: Int, days: Int) -> String {
+        guard days > 0 else { return "за период" }
+        let perMonth = price / max(1, Int(round(Double(days) / 30.0)))
+        return "~\(perMonth) ₽/мес"
+    }
+
+    private func planIcon(_ key: String) -> String {
+        key == "premium" ? "crown.fill" : "sparkles"
+    }
+
+    private func planBadge(_ key: String) -> String? {
+        key == "premium" ? "Выгодно" : (key == "plus" ? "Популярно" : nil)
+    }
+
     private var purchaseCard: some View {
         VStack(alignment: .leading, spacing: 12) {
-            HStack(spacing: 12) {
-                Image(systemName: "creditcard.fill")
-                    .font(.system(size: 24))
-                    .foregroundColor(theme.accent)
-                VStack(alignment: .leading, spacing: 3) {
-                    Text("Оплатить подписку")
-                        .font(.system(size: 17, weight: .semibold))
-                        .foregroundColor(theme.textPrimary)
-                    Text(plans?.demoMode == true ? "Демо-режим: активация без оплаты" : "Оплата по СБП-переводу")
-                        .font(.system(size: 13))
-                        .foregroundColor(theme.textSecondary)
-                }
-                Spacer()
+            VStack(alignment: .leading, spacing: 4) {
+                Text("Подписка")
+                    .font(.system(size: 26, weight: .bold))
+                    .foregroundColor(theme.textPrimary)
+                Text(plans?.demoMode == true ? "Демо-режим: подписка активируется сразу" : "Оплата по СБП-переводу")
+                    .font(.system(size: 14))
+                    .foregroundColor(theme.textSecondary)
             }
-            .padding(.bottom, 4)
+            .padding(.bottom, 6)
 
             ForEach(plans?.plans ?? [], id: \.key) { plan in
-                HStack(spacing: 12) {
+                let key = plan.key ?? ""
+                let grad = planGradient(key)
+                HStack(spacing: 14) {
+                    ZStack {
+                        RoundedRectangle(cornerRadius: 14)
+                            .fill(LinearGradient(colors: grad, startPoint: .topLeading, endPoint: .bottomTrailing))
+                            .frame(width: 52, height: 52)
+                        Image(systemName: planIcon(key))
+                            .font(.system(size: 24, weight: .semibold))
+                            .foregroundColor(.white)
+                    }
+
                     VStack(alignment: .leading, spacing: 3) {
-                        Text(plan.name ?? "—")
-                            .font(.system(size: 16, weight: .semibold))
-                            .foregroundColor(theme.textPrimary)
-                        Text("\(plan.durationDays ?? 0) дней")
+                        HStack(spacing: 6) {
+                            Text(plan.name ?? "—")
+                                .font(.system(size: 17, weight: .bold))
+                                .foregroundColor(theme.textPrimary)
+                            if let badge = planBadge(key) {
+                                Text(badge)
+                                    .font(.system(size: 10, weight: .bold))
+                                    .foregroundColor(.white)
+                                    .padding(.horizontal, 7)
+                                    .padding(.vertical, 3)
+                                    .background(LinearGradient(colors: grad, startPoint: .leading, endPoint: .trailing))
+                                    .cornerRadius(6)
+                            }
+                        }
+                        Text(daysLabel(key, days: plan.durationDays ?? 0))
                             .font(.system(size: 13))
                             .foregroundColor(theme.textSecondary)
                     }
                     Spacer()
-                    Text("\(plan.priceRub ?? 0) ₽")
-                        .font(.system(size: 16, weight: .bold))
-                        .foregroundColor(theme.accent)
-                    Button(action: { start(plan.key ?? "") }) {
-                        if paying == plan.key {
-                            ProgressView().tint(theme.accentText)
+
+                    VStack(alignment: .trailing, spacing: 3) {
+                        Text("\(plan.priceRub ?? 0) ₽")
+                            .font(.system(size: 20, weight: .heavy))
+                            .foregroundColor(theme.accent)
+                        Text(perDayLabel(key, price: plan.priceRub ?? 0, days: plan.durationDays ?? 0))
+                            .font(.system(size: 11))
+                            .foregroundColor(theme.textSecondary)
+                    }
+                }
+                .padding(14)
+                .background(
+                    RoundedRectangle(cornerRadius: 16)
+                        .fill(Color.white.opacity(0.05))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 16)
+                                .strokeBorder(
+                                    LinearGradient(colors: grad, startPoint: .topLeading, endPoint: .bottomTrailing),
+                                    lineWidth: 1.5
+                                )
+                        )
+                )
+                .contentShape(RoundedRectangle(cornerRadius: 16))
+                .onTapGesture { start(key) }
+
+                Button(action: { start(key) }) {
+                    Group {
+                        if paying == key {
+                            ProgressView().tint(.white)
                         } else {
-                            Text("Оплатить")
-                                .font(.system(size: 14, weight: .semibold))
-                                .foregroundColor(theme.accentText)
+                            HStack(spacing: 8) {
+                                Text("Купить за \(plan.priceRub ?? 0) ₽")
+                                    .font(.system(size: 16, weight: .bold))
+                            }
                         }
                     }
-                    .frame(width: 92)
-                    .padding(.vertical, 10)
-                    .background(theme.accent)
-                    .cornerRadius(10)
-                    .disabled(paying != nil)
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 48)
+                    .foregroundColor(.white)
+                    .background(LinearGradient(colors: grad, startPoint: .leading, endPoint: .trailing))
+                    .cornerRadius(14)
+                    .shadow(color: grad[0].opacity(0.35), radius: 10, x: 0, y: 4)
                 }
-                .padding(12)
-                .background(Color.white.opacity(0.05))
-                .cornerRadius(12)
+                .buttonStyle(.plain)
+                .disabled(paying != nil)
             }
         }
-        .padding(14)
-        .background(Color.white.opacity(0.06))
-        .cornerRadius(14)
+        .padding(18)
+        .background(
+            RoundedRectangle(cornerRadius: 20)
+                .fill(theme.cardColor ?? Color.white.opacity(0.06))
+        )
     }
 
     private func start(_ plan: String) {
@@ -144,55 +216,80 @@ struct SubscriptionView: View {
 
     private func paymentSheet(_ order: APIClient.PurchaseOrder) -> some View {
         VStack(spacing: 20) {
-            VStack(spacing: 6) {
-                Text("Переведите \(order.amountRub ?? 0) ₽ через СБП")
-                    .font(.system(size: 18, weight: .bold))
+            Capsule()
+                .fill(Color.white.opacity(0.2))
+                .frame(width: 40, height: 5)
+                .padding(.top, 10)
+
+            VStack(spacing: 8) {
+                Text("Оплата подписки")
+                    .font(.system(size: 20, weight: .bold))
                     .foregroundColor(theme.textPrimary)
-                if let bank = order.bank {
-                    Text("Банк: \(bank)")
-                        .font(.system(size: 14))
-                        .foregroundColor(theme.textSecondary)
+                if let planName = order.planName {
+                    Text(planName)
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundColor(theme.accent)
                 }
-                if let phone = order.phone {
-                    Text("Телефон: \(phone)")
-                        .font(.system(size: 14, weight: .medium))
-                        .foregroundColor(theme.textSecondary)
-                }
+                Text("\(order.amountRub ?? 0) ₽")
+                    .font(.system(size: 34, weight: .heavy))
+                    .foregroundColor(theme.accent)
+                    .padding(.top, 2)
             }
 
-            if let url = order.qrImageUrl, !url.isEmpty {
-                AsyncImage(url: URL(string: url)) { image in
-                    image.resizable().interpolation(.none)
-                } placeholder: {
-                    ProgressView()
+            VStack(spacing: 8) {
+                if let url = order.qrImageUrl, !url.isEmpty {
+                    AsyncImage(url: URL(string: url)) { image in
+                        image.resizable().interpolation(.none)
+                    } placeholder: {
+                        ProgressView()
+                    }
+                    .frame(width: 190, height: 190)
+                } else {
+                    sbpQRCode(order: order)
                 }
-                .frame(width: 200, height: 200)
-                .cornerRadius(12)
-            } else {
-                sbpQRCode(order: order)
             }
+            .padding(14)
+            .background(Color.white)
+            .cornerRadius(16)
+            .shadow(color: .black.opacity(0.15), radius: 14, x: 0, y: 6)
 
-            Text("Отсканируйте QR в приложении банка, переведите сумму и вернитесь сюда")
-                .font(.system(size: 13))
-                .multilineTextAlignment(.center)
-                .foregroundColor(theme.textSecondary)
-                .padding(.horizontal, 20)
+            VStack(spacing: 6) {
+                Text("1. Отсканируйте QR в приложении банка")
+                Text("2. Переведите \(order.amountRub ?? 0) ₽ на указанный номер")
+                Text("3. Вернитесь и нажмите «Я оплатил»")
+            }
+            .font(.system(size: 13))
+            .multilineTextAlignment(.center)
+            .foregroundColor(theme.textSecondary)
+            .padding(.horizontal, 24)
+
+            if let phone = order.phone {
+                Text("Получатель: \(phone)")
+                    .font(.system(size: 14, weight: .medium))
+                    .foregroundColor(theme.textPrimary)
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 8)
+                    .background(Color.white.opacity(0.08))
+                    .cornerRadius(10)
+            }
 
             Button {
                 confirm(order)
             } label: {
-                if confirming {
-                    ProgressView().tint(theme.accentText)
-                } else {
-                    Text("Я оплатил")
-                        .font(.system(size: 16, weight: .semibold))
-                        .foregroundColor(theme.accentText)
+                Group {
+                    if confirming {
+                        ProgressView().tint(theme.accentText)
+                    } else {
+                        Text("Я оплатил")
+                            .font(.system(size: 16, weight: .semibold))
+                            .foregroundColor(theme.accentText)
+                    }
                 }
+                .frame(maxWidth: .infinity)
+                .frame(height: 50)
             }
-            .frame(maxWidth: .infinity)
-            .padding(.vertical, 14)
             .background(theme.accent)
-            .cornerRadius(12)
+            .cornerRadius(14)
             .disabled(confirming)
 
             Button("Отмена") {
@@ -201,7 +298,9 @@ struct SubscriptionView: View {
             .font(.system(size: 15))
             .foregroundColor(theme.textSecondary)
         }
-        .padding(24)
+        .padding(.horizontal, 20)
+        .padding(.bottom, 24)
+        .frame(maxWidth: .infinity)
         .background(theme.bgColor.ignoresSafeArea())
     }
 
@@ -256,26 +355,39 @@ struct SubscriptionView: View {
     // MARK: - Status
 
     private var statusCard: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        let active = status?.active == true
+        let grad: [Color] = status?.plan == "premium"
+            ? [Color(hex: "F5C311"), Color(hex: "FF7A00"), Color(hex: "FF3D6E")]
+            : [Color(hex: "12C2E9"), Color(hex: "4776E6")]
+        return VStack(alignment: .leading, spacing: 12) {
             HStack(spacing: 12) {
-                Image(systemName: status?.active == true ? "crown.fill" : "crown")
-                    .font(.system(size: 26))
-                    .foregroundColor(.yellow)
+                ZStack {
+                    Circle()
+                        .fill(LinearGradient(colors: active ? grad : [Color.white.opacity(0.08)], startPoint: .topLeading, endPoint: .bottomTrailing))
+                        .frame(width: 46, height: 46)
+                    Image(systemName: active ? "crown.fill" : "crown")
+                        .font(.system(size: 20))
+                        .foregroundColor(active ? .white : theme.textSecondary)
+                }
                 VStack(alignment: .leading, spacing: 3) {
-                    Text(status == nil ? "Загрузка..." : (status?.active == true ? "Premium активен" : "Нет подписки"))
+                    Text(status == nil ? "Загрузка..." : (active ? "Premium активен" : "Нет подписки"))
                         .font(.system(size: 17, weight: .semibold))
                         .foregroundColor(theme.textPrimary)
                     if let s = status, s.active == true {
-                        Text("План: \(s.planName ?? s.plan ?? "—") · до \(formatDate(s.until))")
+                        Text("\(s.planName ?? s.plan ?? "Подписка") · до \(formatDate(s.until))")
                             .font(.system(size: 13))
                             .foregroundColor(theme.textSecondary)
                         if let d = s.daysLeft {
                             Text("Осталось дней: \(d)")
-                                .font(.system(size: 13, weight: .medium))
+                                .font(.system(size: 13, weight: .semibold))
                                 .foregroundColor(theme.accent)
                         }
                     } else if let s = status {
-                        Text("Активируйте код или купите подписку, чтобы получить бонусы")
+                        Text("Купите подписку, чтобы получить все бонусы")
+                            .font(.system(size: 13))
+                            .foregroundColor(theme.textSecondary)
+                    } else {
+                        Text("Проверяем статус...")
                             .font(.system(size: 13))
                             .foregroundColor(theme.textSecondary)
                     }
@@ -283,8 +395,10 @@ struct SubscriptionView: View {
                 Spacer()
             }
             .padding(14)
-            .background(Color.white.opacity(0.06))
-            .cornerRadius(14)
+            .background(
+                RoundedRectangle(cornerRadius: 14)
+                    .fill(theme.cardColor ?? Color.white.opacity(0.06))
+            )
         }
     }
 
