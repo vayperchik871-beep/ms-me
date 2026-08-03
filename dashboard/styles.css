@@ -250,6 +250,10 @@ main { padding: 20px 24px 12px; max-width: 1100px; margin: 0 auto; }
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 .mod-track-sub { font-size: 12px; color: var(--muted); margin-top: 2px; }
+.mod-audio {
+  width: 100%; max-width: 320px; height: 32px; margin-top: 8px;
+  filter: invert(0.9) hue-rotate(180deg);
+}
 .mod-actions { display: flex; gap: 6px; flex-shrink: 0; }
 .btn-approve, .btn-reject {
   border: none; border-radius: 8px; padding: 7px 12px;

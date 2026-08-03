@@ -72,6 +72,10 @@ app.get('/debug', (req, res) => {
     indexExists: fs.existsSync(indexHtmlPath),
     cwd: process.cwd(),
     dirname: __dirname,
+    dataDir,
+    uploadsDir,
+    uploadsExists: fs.existsSync(uploadsDir),
+    tursoEnabled: !!process.env.TURSO_DATABASE_URL,
   })
 })
 

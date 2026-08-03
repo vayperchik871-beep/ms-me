@@ -156,6 +156,7 @@ function renderModeration(tracks, token) {
         <div class="mod-track-title">${esc(t.title)}</div>
         <div class="mod-track-sub">${esc(t.artist)} · ${esc(t.format || 'mp3').toUpperCase()} · от ${esc(t.submitterHandle || '')}</div>
         <div class="mod-track-sub">${new Date(t.createdAt || Date.now()).toLocaleString('ru-RU')}</div>
+        ${t.fileUrl ? `<audio class="mod-audio" controls preload="none" src="${esc(t.fileUrl)}"></audio>` : ''}
       </div>
       <div class="mod-actions">
         <button class="btn-approve" onclick="reviewTrack('${t.id}','approve','${token}')">Принять</button>
