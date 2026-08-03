@@ -206,8 +206,8 @@ struct OnboardingView: View {
             }
 
             VStack(spacing: 16) {
-                simpleField(placeholder: "Уникальный ID", text: $userId, isSecure: false)
-                simpleField(placeholder: "Пароль (минимум 6 символов)", text: $password, isSecure: true)
+                simpleField(placeholder: "Уникальный ID", text: $userId, isSecure: false, identifier: "idField")
+                simpleField(placeholder: "Пароль (минимум 6 символов)", text: $password, isSecure: true, identifier: "passwordField")
             }
             .padding(.horizontal, 16)
 
@@ -267,8 +267,8 @@ struct OnboardingView: View {
             }
 
             VStack(spacing: 16) {
-                simpleField(placeholder: "Как вас зовут?", text: $name, isSecure: false)
-                simpleField(placeholder: "О себе (необязательно)", text: $bio, isSecure: false)
+                simpleField(placeholder: "Как вас зовут?", text: $name, isSecure: false, identifier: "nameField")
+                simpleField(placeholder: "О себе (необязательно)", text: $bio, isSecure: false, identifier: "bioField")
             }
             .padding(.horizontal, 16)
 
@@ -297,7 +297,7 @@ struct OnboardingView: View {
 
     // MARK: - Shared Components
 
-    private func simpleField(placeholder: String, text: Binding<String>, isSecure: Bool) -> some View {
+    private func simpleField(placeholder: String, text: Binding<String>, isSecure: Bool, identifier: String? = nil) -> some View {
         Group {
             if isSecure {
                 SecureField(placeholder, text: text)
@@ -313,6 +313,7 @@ struct OnboardingView: View {
         .padding(.vertical, 14)
         .background(theme.inputBg)
         .cornerRadius(12)
+        .accessibilityIdentifier(identifier ?? placeholder)
     }
 
     // MARK: - Register

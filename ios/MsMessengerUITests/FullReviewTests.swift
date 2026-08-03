@@ -32,12 +32,12 @@ final class FullReviewTests: XCTestCase {
         XCTAssertTrue(doneButton.isEnabled, "«Готово» неактивна — номер введён не полностью")
         doneButton.tap()
 
-        let idField = app.textFields["Уникальный ID"]
+        let idField = app.textFields["idField"]
         XCTAssertTrue(idField.waitForExistence(timeout: 10), "Поле ID не появилось после шага номера")
         idField.tap()
         idField.typeText(userId)
 
-        let passwordField = app.secureTextFields["Пароль (минимум 6 символов)"]
+        let passwordField = app.secureTextFields["passwordField"]
         XCTAssertTrue(passwordField.waitForExistence(timeout: 5), "Поле пароля не найдено")
         passwordField.tap()
         passwordField.typeText("Test123!")
@@ -47,7 +47,7 @@ final class FullReviewTests: XCTestCase {
         XCTAssertTrue(nextButton.isEnabled, "«Далее» неактивна")
         nextButton.tap()
 
-        let nameField = app.textFields["Как вас зовут?"]
+        let nameField = app.textFields["nameField"]
         XCTAssertTrue(nameField.waitForExistence(timeout: 10), "Поле имени не появилось")
         nameField.tap()
         nameField.typeText("Review User")
