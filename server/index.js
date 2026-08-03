@@ -2286,6 +2286,8 @@ const server = http.createServer(app)
 const wss = new WebSocketServer({ server, path: '/ws' })
 
 wss.on('connection', (ws, req) => {
+  ws.isAlive = true
+  ws.on('pong', () => { ws.isAlive = true })
   const url = new URL(req.url, `http://${req.headers.host}`)
   const token = url.searchParams.get('token')
   if (!token) { ws.close(); return }
@@ -2341,6 +2343,15 @@ wss.on('connection', (ws, req) => {
     ws.close()
   }
 })
+
+const heartbeat = setInterval(() => {
+  wss.clients.forEach((ws) => {
+    if (ws.isAlive === false) return ws.terminate()
+    ws.isAlive = false
+    ws.ping()
+  })
+}, 30000)
+wss.on('close', () => clearInterval(heartbeat))
 
 // ─── AI Chat ───
 
