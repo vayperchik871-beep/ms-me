@@ -110,14 +110,14 @@ jobs:
           mkdir -p "$GITHUB_WORKSPACE/ios-video"
           xcrun simctl io "$DEVICE" recordVideo --codec h264 --force "$GITHUB_WORKSPACE/ios-video/review.mp4" &
           REC_PID=$!
+          TEST_STATUS=0
           xcodebuild test \
             -project MsMessenger.xcodeproj \
             -scheme MsMessenger \
             -destination "id=$DEVICE" \
             -derivedDataPath build \
             -only-testing:MsMessengerUITests/FullReviewTests/testFullReview \
-            CODE_SIGNING_ALLOWED=NO 2>&1 | tee ui-test.log || true
-          grep -E "Test Case|Test Suite|error:|Testing failed" ui-test.log | head -40 || true
+            CODE_SIGNING_ALLOWED=NO 2>&1 | tee ui-test.log || TEST_STATUS=${PIPESTATUS[0]}
           sleep 3
           kill -INT $REC_PID 2>/dev/null || true
           for i in $(seq 1 10); do
@@ -126,8 +126,13 @@ jobs:
           done
           kill -9 $REC_PID 2>/dev/null || true
           xcrun simctl shutdown "$DEVICE" 2>/dev/null || true
+          echo "=== ui-test.log tail ==="
+          tail -60 ui-test.log || true
+          grep -E "error:|Testing failed|failed|Test Case '.*' (passed|failed)" ui-test.log | head -20 | while IFS= read -r line; do echo "::error::$line"; done || true
+          echo "TEST_STATUS=$TEST_STATUS"
           ls -la "$GITHUB_WORKSPACE/ios-video"
           test -s "$GITHUB_WORKSPACE/ios-video/review.mp4"
+          exit $TEST_STATUS
 
       - uses: actions/upload-artifact@v4
         if: success()
