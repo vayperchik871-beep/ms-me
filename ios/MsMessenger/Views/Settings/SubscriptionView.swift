@@ -81,7 +81,8 @@ struct SubscriptionView: View {
     }
 
     private func planBadge(_ key: String) -> String? {
-        key == "premium" ? "Выгодно" : (key == "plus" ? "Популярно" : nil)
+        if key == "premium" { return "Лучший выбор" }
+        return nil
     }
 
     private var purchaseCard: some View {
@@ -99,6 +100,7 @@ struct SubscriptionView: View {
             ForEach(plans?.plans ?? [], id: \.key) { plan in
                 let key = plan.key ?? ""
                 let grad = planGradient(key)
+                let isPremium = key == "premium"
                 HStack(spacing: 14) {
                     ZStack {
                         RoundedRectangle(cornerRadius: 14)
@@ -142,15 +144,16 @@ struct SubscriptionView: View {
                 .padding(14)
                 .background(
                     RoundedRectangle(cornerRadius: 16)
-                        .fill(Color.white.opacity(0.05))
+                        .fill(isPremium ? grad[0].opacity(0.14) : Color.white.opacity(0.05))
                         .overlay(
                             RoundedRectangle(cornerRadius: 16)
                                 .strokeBorder(
                                     LinearGradient(colors: grad, startPoint: .topLeading, endPoint: .bottomTrailing),
-                                    lineWidth: 1.5
+                                    lineWidth: isPremium ? 2 : 1.2
                                 )
                         )
                 )
+                .shadow(color: isPremium ? grad[0].opacity(0.18) : .clear, radius: 10, x: 0, y: 4)
                 .contentShape(RoundedRectangle(cornerRadius: 16))
                 .onTapGesture { start(key) }
 
