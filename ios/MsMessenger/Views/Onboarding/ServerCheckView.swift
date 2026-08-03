@@ -8,34 +8,60 @@ struct ServerCheckView: View {
 
     var body: some View {
         ZStack {
-            Color.black.ignoresSafeArea()
+            LinearGradient(
+                colors: [Color.black, Color(red: 0.06, green: 0.06, blue: 0.09)],
+                startPoint: .top,
+                endPoint: .bottom
+            )
+            .ignoresSafeArea()
 
-            VStack(spacing: 24) {
-                Image(systemName: "bubble.left.and.bubble.right.fill")
-                    .font(.system(size: 56))
-                    .foregroundColor(ThemeManager.shared.accent)
+            VStack(spacing: 0) {
+                Spacer(minLength: 40)
+
+                Image("Logo")
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: 128, height: 128)
+                    .cornerRadius(30)
+                    .shadow(color: .black.opacity(0.5), radius: 20, x: 0, y: 10)
+                    .padding(.bottom, 28)
 
                 Text("MS Messenger")
-                    .font(.system(size: 28, weight: .bold))
+                    .font(.system(size: 32, weight: .bold))
                     .foregroundColor(.white)
 
-                VStack(spacing: 12) {
+                Text("Безопасный и быстрый мессенджер")
+                    .font(.system(size: 16))
+                    .foregroundColor(.white.opacity(0.6))
+                    .padding(.top, 6)
+
+                Spacer(minLength: 40)
+
+                VStack(spacing: 14) {
                     ProgressView()
                         .tint(ThemeManager.shared.accent)
-                        .scaleEffect(1.2)
+                        .scaleEffect(1.3)
 
                     Text(status)
                         .font(.system(size: 15))
-                        .foregroundColor(.white.opacity(0.7))
+                        .foregroundColor(.white.opacity(0.75))
 
                     if attempts > 3 {
                         Text("Если ничего не меняется — проверьте интернет.\nПочти готово...")
                             .font(.system(size: 13))
-                            .foregroundColor(.white.opacity(0.5))
+                            .foregroundColor(.white.opacity(0.45))
                             .multilineTextAlignment(.center)
                     }
                 }
+
+                Spacer(minLength: 30)
+
+                Text("Версия 1.0.2")
+                    .font(.system(size: 12))
+                    .foregroundColor(.white.opacity(0.35))
+                    .padding(.bottom, 24)
             }
+            .frame(maxWidth: .infinity)
         }
         .onAppear { startCheck() }
         .onDisappear { timer?.invalidate() }
