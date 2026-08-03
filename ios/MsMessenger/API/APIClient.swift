@@ -239,4 +239,49 @@ final class APIClient {
     func activateSubscription(code: String) async throws -> SubscriptionStatus {
         try await request("/subscriptions/activate", method: "POST", body: try JSONEncoder().encode(["code": code]))
     }
+
+    struct PaymentPlan: Codable {
+        let key: String?
+        let name: String?
+        let durationDays: Int?
+        let priceRub: Int?
+    }
+
+    struct PaymentPlansResponse: Codable {
+        let method: String?
+        let enabled: Bool?
+        let demoMode: Bool?
+        let currency: String?
+        let phone: String?
+        let bank: String?
+        let qrImageUrl: String?
+        let plans: [PaymentPlan]?
+    }
+
+    struct PurchaseOrder: Codable {
+        let ok: Bool?
+        let demo: Bool?
+        let purchaseId: String?
+        let phone: String?
+        let bank: String?
+        let qrImageUrl: String?
+        let amountRub: Int?
+        let plan: String?
+        let planName: String?
+        let provider: String?
+        let active: Bool?
+        let until: Int?
+    }
+
+    func paymentPlans() async throws -> PaymentPlansResponse {
+        try await request("/subscriptions/plans")
+    }
+
+    func purchaseSubscription(plan: String) async throws -> PurchaseOrder {
+        try await request("/subscriptions/purchase", method: "POST", body: try JSONEncoder().encode(["plan": plan]))
+    }
+
+    func confirmPurchase(purchaseId: String) async throws -> SubscriptionStatus {
+        try await request("/subscriptions/confirm", method: "POST", body: try JSONEncoder().encode(["purchaseId": purchaseId]))
+    }
 }

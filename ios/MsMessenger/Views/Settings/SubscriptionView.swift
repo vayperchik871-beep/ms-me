@@ -1,12 +1,18 @@
 import SwiftUI
+import CoreImage.CIFilterBuiltins
 
 struct SubscriptionView: View {
     @ObservedObject private var theme = ThemeManager.shared
     @State private var status: APIClient.SubscriptionStatus?
+    @State private var plans: APIClient.PaymentPlansResponse?
     @State private var code = ""
     @State private var loading = false
     @State private var errorText: String?
     @State private var successText: String?
+    @State private var paying: String?
+    @State private var currentOrder: APIClient.PurchaseOrder?
+    @State private var confirming = false
+    @State private var showPaymentSheet = false
 
     private let features: [(icon: String, title: String, value: String)] = [
         ("person.2.fill", "Больше контактов", "До 500 вместо 100"),
@@ -20,6 +26,7 @@ struct SubscriptionView: View {
         ScrollView {
             VStack(spacing: 16) {
                 statusCard
+                purchaseCard
                 activateCard
                 perksCard
             }
@@ -38,6 +45,212 @@ struct SubscriptionView: View {
         .toolbarBackground(Color.clear, for: .navigationBar)
         .toolbarBackground(.visible, for: .navigationBar)
         .task { await load() }
+        .sheet(isPresented: $showPaymentSheet) {
+            if let order = currentOrder {
+                paymentSheet(order)
+            }
+        }
+    }
+
+    // MARK: - Purchase / SBP
+
+    private var purchaseCard: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack(spacing: 12) {
+                Image(systemName: "creditcard.fill")
+                    .font(.system(size: 24))
+                    .foregroundColor(theme.accent)
+                VStack(alignment: .leading, spacing: 3) {
+                    Text("Оплатить подписку")
+                        .font(.system(size: 17, weight: .semibold))
+                        .foregroundColor(theme.textPrimary)
+                    Text(plans?.demoMode == true ? "Демо-режим: активация без оплаты" : "Оплата по СБП-переводу")
+                        .font(.system(size: 13))
+                        .foregroundColor(theme.textSecondary)
+                }
+                Spacer()
+            }
+            .padding(.bottom, 4)
+
+            ForEach(plans?.plans ?? [], id: \.key) { plan in
+                HStack(spacing: 12) {
+                    VStack(alignment: .leading, spacing: 3) {
+                        Text(plan.name ?? "—")
+                            .font(.system(size: 16, weight: .semibold))
+                            .foregroundColor(theme.textPrimary)
+                        Text("\(plan.durationDays ?? 0) дней")
+                            .font(.system(size: 13))
+                            .foregroundColor(theme.textSecondary)
+                    }
+                    Spacer()
+                    Text("\(plan.priceRub ?? 0) ₽")
+                        .font(.system(size: 16, weight: .bold))
+                        .foregroundColor(theme.accent)
+                    Button(action: { start(plan.key ?? "") }) {
+                        if paying == plan.key {
+                            ProgressView().tint(theme.accentText)
+                        } else {
+                            Text("Оплатить")
+                                .font(.system(size: 14, weight: .semibold))
+                                .foregroundColor(theme.accentText)
+                        }
+                    }
+                    .frame(width: 92)
+                    .padding(.vertical, 10)
+                    .background(theme.accent)
+                    .cornerRadius(10)
+                    .disabled(paying != nil)
+                }
+                .padding(12)
+                .background(Color.white.opacity(0.05))
+                .cornerRadius(12)
+            }
+        }
+        .padding(14)
+        .background(Color.white.opacity(0.06))
+        .cornerRadius(14)
+    }
+
+    private func start(_ plan: String) {
+        errorText = nil
+        paying = plan
+        Task {
+            do {
+                let order = try await APIClient.shared.purchaseSubscription(plan: plan)
+                await MainActor.run {
+                    paying = nil
+                    currentOrder = order
+                    if order.demo == true {
+                        status = APIClient.SubscriptionStatus(
+                            plan: order.plan,
+                            planName: order.planName,
+                            active: order.active,
+                            until: order.until,
+                            daysLeft: nil
+                        )
+                        successText = "Подписка активирована!"
+                    } else {
+                        showPaymentSheet = true
+                    }
+                }
+            } catch {
+                await MainActor.run {
+                    paying = nil
+                    errorText = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
+                }
+            }
+        }
+    }
+
+    private func paymentSheet(_ order: APIClient.PurchaseOrder) -> some View {
+        VStack(spacing: 20) {
+            VStack(spacing: 6) {
+                Text("Переведите \(order.amountRub ?? 0) ₽ через СБП")
+                    .font(.system(size: 18, weight: .bold))
+                    .foregroundColor(theme.textPrimary)
+                if let bank = order.bank {
+                    Text("Банк: \(bank)")
+                        .font(.system(size: 14))
+                        .foregroundColor(theme.textSecondary)
+                }
+                if let phone = order.phone {
+                    Text("Телефон: \(phone)")
+                        .font(.system(size: 14, weight: .medium))
+                        .foregroundColor(theme.textSecondary)
+                }
+            }
+
+            if let url = order.qrImageUrl, !url.isEmpty {
+                AsyncImage(url: URL(string: url)) { image in
+                    image.resizable().interpolation(.none)
+                } placeholder: {
+                    ProgressView()
+                }
+                .frame(width: 200, height: 200)
+                .cornerRadius(12)
+            } else {
+                sbpQRCode(order: order)
+            }
+
+            Text("Отсканируйте QR в приложении банка, переведите сумму и вернитесь сюда")
+                .font(.system(size: 13))
+                .multilineTextAlignment(.center)
+                .foregroundColor(theme.textSecondary)
+                .padding(.horizontal, 20)
+
+            Button {
+                confirm(order)
+            } label: {
+                if confirming {
+                    ProgressView().tint(theme.accentText)
+                } else {
+                    Text("Я оплатил")
+                        .font(.system(size: 16, weight: .semibold))
+                        .foregroundColor(theme.accentText)
+                }
+            }
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 14)
+            .background(theme.accent)
+            .cornerRadius(12)
+            .disabled(confirming)
+
+            Button("Отмена") {
+                showPaymentSheet = false
+            }
+            .font(.system(size: 15))
+            .foregroundColor(theme.textSecondary)
+        }
+        .padding(24)
+        .background(theme.bgColor.ignoresSafeArea())
+    }
+
+    private func sbpQRCode(order: APIClient.PurchaseOrder) -> some View {
+        let phone = order.phone ?? ""
+        let payload = "СТ111118\(phone.hashValue % 100000);\(order.amountRub ?? 0).00"
+        let data = Data(payload.utf8)
+        let filter = CIFilter.qrCodeGenerator()
+        filter.setValue(data, forKey: "inputMessage")
+        filter.setValue("M", forKey: "inputCorrectionLevel")
+        if let output = filter.outputImage {
+            let transformed = output.transformed(by: CGAffineTransform(scaleX: 12, y: 12))
+            return Image(uiImage: UIImage(ciImage: transformed))
+                .interpolation(.none)
+                .resizable()
+                .scaledToFit()
+                .frame(width: 200, height: 200)
+                .padding(8)
+                .background(Color.white)
+                .cornerRadius(12)
+                .id(identity)
+        }
+        return Image(systemName: "qrcode")
+            .font(.system(size: 100))
+            .foregroundColor(theme.textSecondary)
+    }
+
+    private var identity: Int { currentOrder?.purchaseId?.hashValue ?? 0 }
+
+    private func confirm(_ order: APIClient.PurchaseOrder) {
+        confirming = true
+        errorText = nil
+        Task {
+            do {
+                let s = try await APIClient.shared.confirmPurchase(purchaseId: order.purchaseId ?? "")
+                await MainActor.run {
+                    confirming = false
+                    showPaymentSheet = false
+                    status = s
+                    successText = "Оплата подтверждена! Подписка активна"
+                }
+            } catch {
+                await MainActor.run {
+                    confirming = false
+                    errorText = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
+                    showPaymentSheet = false
+                }
+            }
+        }
     }
 
     // MARK: - Status
@@ -157,7 +370,11 @@ struct SubscriptionView: View {
     private func load() async {
         do {
             let s = try await APIClient.shared.subscriptionStatus()
-            await MainActor.run { status = s }
+            let p = try await APIClient.shared.paymentPlans()
+            await MainActor.run {
+                status = s
+                plans = p
+            }
         } catch { print(error) }
     }
 

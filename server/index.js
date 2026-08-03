@@ -1989,26 +1989,105 @@ app.post('/api/subscriptions/activate', authMiddleware, async (req, res) => {
   res.json({ ok: true, ...formatSubscription({ subscription_plan: row.plan, subscription_until: newUntil }) })
 })
 
+// ─── SBP (СБП-оплата по QR на личный телефон) ───
+// Работает без ИП: покупатель сканирует QR из банковского приложения получателя
+// и переводит сумму. Конфигурация через env:
+//   SBP_PHONE          — номер телефона (формат 79xxxxxxxxx) для перевода
+//   SBP_BANK           — название банка получателя (опционально)
+//   SBP_QR_IMAGE_URL   — URL готовой картинки QR или подписи (опционально;
+//                        если нет — приложение сгенерит QR из телефона+суммы)
+// Если ничего не задано — включается демо-режим (мгновенная активация).
+const SBP_PHONE = process.env.SBP_PHONE || ''
+const SBP_BANK = process.env.SBP_BANK || ''
+const SBP_QR_IMAGE_URL = process.env.SBP_QR_IMAGE_URL || ''
+const SBP_ENABLED = !!(SBP_PHONE || SBP_QR_IMAGE_URL)
+const SBP_DEMO = !SBP_ENABLED
+
+app.get('/api/subscriptions/plans', authMiddleware, (req, res) => {
+  res.json({
+    method: 'sbp',
+    enabled: SBP_ENABLED,
+    demoMode: SBP_DEMO,
+    currency: 'RUB',
+    phone: SBP_PHONE || null,
+    bank: SBP_BANK || null,
+    qrImageUrl: SBP_QR_IMAGE_URL || null,
+    plans: Object.entries(SUBSCRIPTION_PLANS).map(([key, p]) => ({
+      key,
+      name: p.name,
+      durationDays: p.durationDays,
+      priceRub: Math.round(p.priceCents / 100),
+    })),
+  })
+})
+
+// Создание СБП-покупки. В демо-режиме (нет номера телефона) — мгновенная активация.
 app.post('/api/subscriptions/purchase', authMiddleware, async (req, res) => {
-  const { plan, provider, token } = req.body
+  const { plan } = req.body
   if (!plan || !SUBSCRIPTION_PLANS[plan]) return res.status(400).json({ error: 'Неверный план' })
-  if (!provider) return res.status(400).json({ error: 'Укажите провайдера (google_play, apple_appstore, crypto)' })
   const p = SUBSCRIPTION_PLANS[plan]
   const purchaseId = uuidv4()
   const now = Date.now()
+  if (SBP_DEMO) {
+    try {
+      await dbRun(
+        'INSERT INTO subscription_purchases (id, user_id, plan, provider, provider_token, amount, currency, status, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+        purchaseId, req.user.id, plan, 'sbp', null, p.priceCents, 'RUB', 'completed', now
+      )
+      const existing = await dbGet('SELECT subscription_plan, subscription_until FROM users WHERE id = ?', req.user.id)
+      const currentUntil = (existing.subscription_until && existing.subscription_until > now) ? existing.subscription_until : now
+      const newUntil = currentUntil + p.durationDays * 86400000
+      await dbRun('UPDATE users SET subscription_plan = ?, subscription_until = ? WHERE id = ?', plan, newUntil, req.user.id)
+      res.json({ ok: true, demo: true, ...formatSubscription({ subscription_plan: plan, subscription_until: newUntil }) })
+      return
+    } catch (err) {
+      return res.status(500).json({ error: 'Ошибка оформления (демо)' })
+    }
+  }
   try {
     await dbRun(
       'INSERT INTO subscription_purchases (id, user_id, plan, provider, provider_token, amount, currency, status, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
-      purchaseId, req.user.id, plan, provider, token || null, p.priceCents, 'USD', 'completed', now
+      purchaseId, req.user.id, plan, 'sbp', purchaseId, p.priceCents, 'RUB', 'pending', now
     )
-    const existing = await dbGet('SELECT subscription_plan, subscription_until FROM users WHERE id = ?', req.user.id)
-    const currentUntil = (existing.subscription_until && existing.subscription_until > now) ? existing.subscription_until : now
-    const newUntil = currentUntil + p.durationDays * 86400000
-    await dbRun('UPDATE users SET subscription_plan = ?, subscription_until = ? WHERE id = ?', plan, newUntil, req.user.id)
-    res.json({ ok: true, purchaseId, ...formatSubscription({ subscription_plan: plan, subscription_until: newUntil }) })
+    res.json({
+      ok: true,
+      demo: false,
+      purchaseId,
+      phone: SBP_PHONE || null,
+      bank: SBP_BANK || null,
+      qrImageUrl: SBP_QR_IMAGE_URL || null,
+      amountRub: Math.round(p.priceCents / 100),
+      plan,
+      planName: p.name,
+      provider: 'sbp',
+    })
   } catch (err) {
-    res.status(500).json({ error: 'Ошибка обработки покупки' })
+    res.status(500).json({ error: 'Ошибка создания заказа' })
   }
+})
+
+// Подтверждение после ручного СБП-перевода ("Я оплатил")
+app.post('/api/subscriptions/confirm', authMiddleware, async (req, res) => {
+  const { purchaseId } = req.body
+  if (!purchaseId) return res.status(400).json({ error: 'Нет id заказа' })
+  const row = await dbGet('SELECT * FROM subscription_purchases WHERE id = ? AND user_id = ?', purchaseId, req.user.id)
+  if (!row || row.status !== 'pending') return res.status(404).json({ error: 'Заказ не найден или уже обработан' })
+  const plan = row.plan
+  const p = SUBSCRIPTION_PLANS[plan]
+  if (!p) return res.status(400).json({ error: 'Неверный план' })
+  const now = Date.now()
+  await dbRun("UPDATE subscription_purchases SET status = 'completed' WHERE id = ?", purchaseId)
+  const existing = await dbGet('SELECT subscription_plan, subscription_until FROM users WHERE id = ?', req.user.id)
+  const currentUntil = (existing.subscription_until && existing.subscription_until > now) ? existing.subscription_until : now
+  const newUntil = currentUntil + p.durationDays * 86400000
+  await dbRun('UPDATE users SET subscription_plan = ?, subscription_until = ? WHERE id = ?', plan, newUntil, req.user.id)
+  res.json({ ok: true, ...formatSubscription({ subscription_plan: plan, subscription_until: newUntil }) })
+})
+
+// Просмотр своих СБП-заказов (опционально)
+app.get('/api/subscriptions/orders', authMiddleware, async (req, res) => {
+  const rows = await dbAll('SELECT id, plan, amount, status, created_at FROM subscription_purchases WHERE user_id = ? ORDER BY created_at DESC LIMIT 20', req.user.id)
+  res.json({ orders: rows.map(r => ({ ...r })) })
 })
 
 // ─── Plus: Profile (Change ID, Banner) ───
