@@ -160,6 +160,7 @@ struct OnboardingView: View {
                 .frame(width: 80)
                 .background(theme.inputBg)
                 .cornerRadius(12)
+                .accessibilityIdentifier("prefixField")
                 .onChange(of: phonePrefix) { new in
                     let filtered = new.filter(\.isNumber)
                     phonePrefix = String(filtered.prefix(4))
@@ -179,6 +180,7 @@ struct OnboardingView: View {
                 .frame(width: 80)
                 .background(theme.inputBg)
                 .cornerRadius(12)
+                .accessibilityIdentifier("lastField")
                 .onChange(of: phoneLast) { new in
                     let filtered = new.filter(\.isNumber)
                     phoneLast = String(filtered.prefix(4))

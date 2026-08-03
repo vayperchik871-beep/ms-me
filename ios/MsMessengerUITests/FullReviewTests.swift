@@ -10,101 +10,86 @@ final class FullReviewTests: XCTestCase {
     }
 
     func testFullReview() throws {
-        sleep(3)
+        let unique = String(format: "%04d", Int(Date().timeIntervalSince1970) % 10000)
+        let userId = "review\(unique)"
 
         let startButton = app.buttons["Начать"]
-        if startButton.waitForExistence(timeout: 10) {
-            startButton.tap()
-            sleep(2)
-        }
+        XCTAssertTrue(startButton.waitForExistence(timeout: 15), "Кнопка «Начать» не найдена")
+        startButton.tap()
 
-        let phonePrefix = app.textFields.element(boundBy: 0)
-        if phonePrefix.waitForExistence(timeout: 5) {
-            phonePrefix.tap()
-            phonePrefix.typeText("7777")
-        }
+        let phonePrefix = app.textFields["prefixField"]
+        XCTAssertTrue(phonePrefix.waitForExistence(timeout: 10), "Поле первой части номера не найдено")
+        phonePrefix.tap()
+        phonePrefix.typeText("7777")
 
-        let phoneLast = app.textFields.element(boundBy: 1)
-        if phoneLast.waitForExistence(timeout: 3) {
-            phoneLast.tap()
-            phoneLast.typeText("1234")
-        }
+        let phoneLast = app.textFields["lastField"]
+        XCTAssertTrue(phoneLast.waitForExistence(timeout: 5), "Поле второй части номера не найдено")
+        phoneLast.tap()
+        phoneLast.typeText(unique)
 
         let doneButton = app.buttons["Готово"]
-        if doneButton.waitForExistence(timeout: 3) {
-            doneButton.tap()
-            sleep(2)
-        }
+        XCTAssertTrue(doneButton.waitForExistence(timeout: 5), "Кнопка «Готово» не найдена")
+        XCTAssertTrue(doneButton.isEnabled, "«Готово» неактивна — номер введён не полностью")
+        doneButton.tap()
 
         let idField = app.textFields["Уникальный ID"]
-        if idField.waitForExistence(timeout: 5) {
-            idField.tap()
-            idField.typeText("reviewuser")
-        }
+        XCTAssertTrue(idField.waitForExistence(timeout: 10), "Поле ID не появилось после шага номера")
+        idField.tap()
+        idField.typeText(userId)
 
         let passwordField = app.secureTextFields["Пароль (минимум 6 символов)"]
-        if passwordField.waitForExistence(timeout: 3) {
-            passwordField.tap()
-            passwordField.typeText("Test123!")
-        }
+        XCTAssertTrue(passwordField.waitForExistence(timeout: 5), "Поле пароля не найдено")
+        passwordField.tap()
+        passwordField.typeText("Test123!")
 
         let nextButton = app.buttons["Далее"]
-        if nextButton.waitForExistence(timeout: 3) {
-            nextButton.tap()
-            sleep(2)
-        }
+        XCTAssertTrue(nextButton.waitForExistence(timeout: 5), "Кнопка «Далее» не найдена")
+        XCTAssertTrue(nextButton.isEnabled, "«Далее» неактивна")
+        nextButton.tap()
 
         let nameField = app.textFields["Как вас зовут?"]
-        if nameField.waitForExistence(timeout: 5) {
-            nameField.tap()
-            nameField.typeText("Review User")
-        }
+        XCTAssertTrue(nameField.waitForExistence(timeout: 10), "Поле имени не появилось")
+        nameField.tap()
+        nameField.typeText("Review User")
 
         let registerButton = app.buttons["Зарегистрироваться"]
-        if registerButton.waitForExistence(timeout: 3) {
-            registerButton.tap()
-            sleep(8)
-        }
+        XCTAssertTrue(registerButton.waitForExistence(timeout: 5), "Кнопка «Зарегистрироваться» не найдена")
+        registerButton.tap()
 
         let settingsTab = app.tabBars.buttons["Настройки"]
-        if settingsTab.waitForExistence(timeout: 15) {
-            settingsTab.tap()
-            sleep(4)
-        }
+        XCTAssertTrue(settingsTab.waitForExistence(timeout: 30), "Регистрация не завершилась, таббар не появился (userId: \(userId))")
+        settingsTab.tap()
 
         let premiumRow = app.staticTexts["Premium и бонусы"]
-        if premiumRow.waitForExistence(timeout: 5) {
-            premiumRow.tap()
-            sleep(4)
-        }
+        XCTAssertTrue(premiumRow.waitForExistence(timeout: 10), "Строка «Premium и бонусы» не найдена")
+        premiumRow.tap()
 
         let buyButton = app.buttons.matching(
             NSPredicate(format: "label BEGINSWITH 'Купить за'")
         ).firstMatch
-        if buyButton.waitForExistence(timeout: 5) {
-            buyButton.tap()
-            sleep(5)
-        }
+        XCTAssertTrue(buyButton.waitForExistence(timeout: 10), "Кнопка «Купить за …» не найдена")
+        buyButton.tap()
+        sleep(4)
 
-        app.navigationBars.buttons.firstMatch.tap()
+        let backButton = app.navigationBars.buttons.firstMatch
+        if backButton.waitForExistence(timeout: 5) {
+            backButton.tap()
+        }
         sleep(2)
 
         let chatsTab = app.tabBars.buttons["Чаты"]
-        if chatsTab.waitForExistence(timeout: 5) {
-            chatsTab.tap()
-            sleep(3)
-        }
+        XCTAssertTrue(chatsTab.waitForExistence(timeout: 10), "Таб «Чаты» не найден")
+        chatsTab.tap()
+        sleep(3)
 
         let musicTab = app.tabBars.buttons["Музыка"]
-        if musicTab.waitForExistence(timeout: 5) {
-            musicTab.tap()
-            sleep(3)
-        }
+        XCTAssertTrue(musicTab.waitForExistence(timeout: 5), "Таб «Музыка» не найден")
+        musicTab.tap()
+        sleep(3)
 
         let profileTab = app.tabBars.buttons["Профиль"]
-        if profileTab.waitForExistence(timeout: 5) {
-            profileTab.tap()
-            sleep(3)
-        }
+        XCTAssertTrue(profileTab.waitForExistence(timeout: 5), "Таб «Профиль» не найден")
+        profileTab.tap()
+        sleep(3)
     }
 }
