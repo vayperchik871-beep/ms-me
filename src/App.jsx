@@ -172,11 +172,9 @@ export default function App() {
     return <Onboarding onComplete={() => { setShowOnboarding(false); refreshUser() }} />
   }
 
-  const accentColor = user?.profileColor || '#7c5cfc'
-
   if (isDesktop) {
     return (
-      <div className="app desktop-app" style={{ '--user-accent': accentColor }}>
+      <div className="app desktop-app">
         <div className="desktop-panels">
           <div className="desktop-panel desktop-panel-list">
             <div className="desktop-panel-header">
@@ -201,11 +199,12 @@ export default function App() {
               />
             )}
             <div className="desktop-bottom-nav">
-              <div className="bn-glass" style={{ '--active': ['chats','contacts','profile','settings'].indexOf(tab) }}>
+              <div className="bn-glass" style={{ '--active': ['chats','contacts','music','profile','settings'].indexOf(tab) }}>
                 <div className="bn-indicator" />
                 {[
                   { id: 'chats', label: 'Чаты', icon: SideChatIcon },
                   { id: 'contacts', label: 'Контакты', icon: SideContactsIcon },
+                  { id: 'music', label: 'Музыка', icon: SideMusicIcon },
                   { id: 'profile', label: 'Профиль', icon: SideProfileIcon },
                   { id: 'settings', label: 'Настройки', icon: SideSettingsIcon },
                 ].map(({ id, label, icon: Icon }) => (
@@ -242,7 +241,7 @@ export default function App() {
   }
 
   return (
-    <div className="app mobile-app" style={{ '--user-accent': accentColor }}>
+    <div className="app mobile-app">
       {tab === 'chats' && (
         <ChatsTab
           activeChatId={activeChatId}

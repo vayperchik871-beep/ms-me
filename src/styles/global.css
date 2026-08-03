@@ -23,6 +23,7 @@
   --header-height: 56px;
   --nav-height: 72px;
   --transition: 0.2s ease;
+  --user-accent: #FFFFFF;
 }
 
 [data-theme="light"] {
@@ -40,6 +41,7 @@
   --border: #D1D1D6;
   --glass: rgba(255, 255, 255, 0.72);
   --glass-border: rgba(0, 0, 0, 0.08);
+  --user-accent: #000000;
 }
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -196,8 +198,8 @@ input, textarea { font-family: inherit; border: none; outline: none; background:
 .bn-indicator {
   position: absolute;
   top: 6px; bottom: 6px;
-  width: calc((100% - 8px) / 4 - 8px);
-  left: calc(8px + var(--active, 0) * ((100% - 8px) / 4));
+  width: calc((100% - 10px) / 5 - 8px);
+  left: calc(6px + var(--active, 0) * ((100% - 10px) / 5));
   border-radius: 28px;
   background: rgba(255, 255, 255, 0.12);
   transition: left 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
@@ -243,7 +245,7 @@ input, textarea { font-family: inherit; border: none; outline: none; background:
   transform: scale(1.08);
 }
 
-[data-theme="light"] .bn-tab-active { color: var(--user-accent, #7c5cfc); }
+[data-theme="light"] .bn-tab-active { color: var(--user-accent); }
 
 /* ─── Tab header (title + button) ─── */
 
@@ -262,7 +264,7 @@ input, textarea { font-family: inherit; border: none; outline: none; background:
   border-radius: 50%;
   background: var(--bg-secondary);
   border: 1px solid var(--border);
-  color: var(--user-accent, #7c5cfc);
+  color: var(--user-accent);
   display: flex; align-items: center; justify-content: center;
   flex-shrink: 0;
 }
@@ -289,7 +291,7 @@ input, textarea { font-family: inherit; border: none; outline: none; background:
 
 .chat-badge {
   min-width: 20px; height: 20px; padding: 0 6px;
-  background: var(--user-accent, #7c5cfc); color: #fff;
+  background: var(--user-accent, #fff); color: #000;
   font-size: 11px; font-weight: 700; border-radius: 10px;
   display: flex; align-items: center; justify-content: center;
   flex-shrink: 0;
@@ -421,7 +423,7 @@ input, textarea { font-family: inherit; border: none; outline: none; background:
   display: flex; align-items: center; gap: 8px;
   font-size: 14px; color: var(--text-primary); margin-bottom: 10px; cursor: pointer;
 }
-.track-toggle input { accent-color: #6C63FF; width: 17px; height: 17px; }
+.track-toggle input { accent-color: var(--user-accent); width: 17px; height: 17px; }
 .form-error { color: #ff453a; font-size: 13px; margin-top: 4px; }
 
 [data-theme="light"] .bn-context-menu { background: rgba(242, 242, 247, 0.88); border-color: rgba(60, 60, 67, 0.08); }
@@ -640,7 +642,7 @@ input, textarea { font-family: inherit; border: none; outline: none; background:
 }
 .msg-loading-spinner {
   width: 32px; height: 32px; border: 3px solid var(--border);
-  border-top-color: var(--user-accent, #7c5cfc);
+  border-top-color: var(--user-accent);
   border-radius: 50%; animation: msgSpinner 0.8s linear infinite;
 }
 @keyframes msgSpinner { to { transform: rotate(360deg); } }
@@ -800,11 +802,11 @@ input, textarea { font-family: inherit; border: none; outline: none; background:
 .ig-attach svg { transition: transform 0.15s ease; }
 .ig-mic {
   touch-action: none;
-  color: #7c5cfc;
+  color: var(--user-accent);
   background: rgba(124, 92, 252, 0.15) !important;
   border-color: rgba(124, 92, 252, 0.3) !important;
 }
-.ig-mic svg { stroke: #7c5cfc; }
+.ig-mic svg { stroke: var(--user-accent); }
 .ig-mic:active { background: rgba(124, 92, 252, 0.3) !important; }
 
 .ig-send {
@@ -1389,7 +1391,7 @@ input, textarea { font-family: inherit; border: none; outline: none; background:
   background: var(--text-muted); opacity: 0.3;
   transition: opacity 0.1s;
 }
-.ap-bar-active { opacity: 1; background: var(--user-accent, #7c5cfc); }
+.ap-bar-active { opacity: 1; background: var(--user-accent); }
 .ap-info {
   display: flex; align-items: center; gap: 4px; flex-shrink: 0;
 }
@@ -1420,7 +1422,7 @@ input, textarea { font-family: inherit; border: none; outline: none; background:
 .msg-file-icon {
   width: 36px; height: 36px; border-radius: 8px;
   background: var(--bg-secondary); display: flex; align-items: center; justify-content: center;
-  flex-shrink: 0; color: var(--user-accent, #7c5cfc);
+  flex-shrink: 0; color: var(--user-accent);
 }
 .msg-file-info { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
 .msg-file-name { font-size: 13px; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -1501,7 +1503,7 @@ input, textarea { font-family: inherit; border: none; outline: none; background:
 }
 .sticker-pack-tab img { width: 100%; height: 100%; object-fit: cover; border-radius: 8px; }
 .sticker-pack-tab span { font-size: 16px; font-weight: 600; color: var(--text-muted); }
-.sticker-pack-tab.active { border-color: var(--user-accent, #7c5cfc); }
+.sticker-pack-tab.active { border-color: var(--user-accent); }
 .sticker-pack-tab.sticker-add { font-size: 20px; color: var(--text-muted); border-style: dashed; }
 
 .sticker-grid {
@@ -1538,7 +1540,7 @@ input, textarea { font-family: inherit; border: none; outline: none; background:
 .sticker-create-title { font-size: 14px; font-weight: 600; color: var(--text-primary); }
 .sticker-create-save {
   padding: 6px 14px; border-radius: 8px; border: none;
-  background: var(--user-accent, #7c5cfc); color: #fff;
+  background: var(--user-accent, #fff); color: #000;
   font-size: 13px; font-weight: 600; cursor: pointer;
 }
 .sticker-create-save:disabled { opacity: 0.4; cursor: default; }
@@ -1561,7 +1563,7 @@ input, textarea { font-family: inherit; border: none; outline: none; background:
   align-items: center; justify-content: center;
   transition: border-color 0.15s;
 }
-.sticker-upload-btn:hover { border-color: var(--user-accent, #7c5cfc); }
+.sticker-upload-btn:hover { border-color: var(--user-accent); }
 .sticker-upload-preview {
   width: 64px; height: 64px; border-radius: 12px; overflow: hidden;
   position: relative;
@@ -1582,7 +1584,7 @@ input, textarea { font-family: inherit; border: none; outline: none; background:
   padding-right: 6px;
 }
 .ig-capsule-actions .ig-emoji { padding: 4px; }
-.ig-emoji-active { color: var(--user-accent, #7c5cfc) !important; }
+.ig-emoji-active { color: var(--user-accent) !important; }
 
 /* Error toast */
 .ig-error-toast {
@@ -2328,7 +2330,7 @@ input, textarea { font-family: inherit; border: none; outline: none; background:
 .settings-card-icon {
   width: 28px; height: 28px; border-radius: 7px;
   display: flex; align-items: center; justify-content: center;
-  color: var(--user-accent, #7c5cfc);
+  color: var(--user-accent);
 }
 .settings-card-label {
   font-size: 15px; color: var(--text-primary); font-weight: 400;
@@ -2367,7 +2369,7 @@ input, textarea { font-family: inherit; border: none; outline: none; background:
 .profile-avatar {
   width: 88px; height: 88px; border-radius: 50%;
   display: flex; align-items: center; justify-content: center;
-  font-size: 36px; font-weight: 700; color: var(--user-accent, #7c5cfc);
+  font-size: 36px; font-weight: 700; color: var(--user-accent);
   background: var(--bg-secondary);
   position: relative;
 }
@@ -2384,7 +2386,7 @@ input, textarea { font-family: inherit; border: none; outline: none; background:
   background: var(--bg-secondary); border-radius: 12px;
   padding: 12px 14px; margin-bottom: 14px;
 }
-.profile-field-icon { color: var(--user-accent, #7c5cfc); flex-shrink: 0; }
+.profile-field-icon { color: var(--user-accent); flex-shrink: 0; }
 .profile-field-input {
   flex: 1; font-size: 15px; color: var(--text-primary);
   background: none; border: none; outline: none;

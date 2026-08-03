@@ -24,6 +24,7 @@ export default function BottomNav({ active, onChange, onMenuAction }) {
   const tabs = [
     { id: 'chats', label: t('Чаты'), icon: ChatIcon },
     { id: 'contacts', label: t('Контакты'), icon: ContactsIcon },
+    { id: 'music', label: t('Музыка'), icon: MusicIcon },
     { id: 'profile', label: t('Профиль'), icon: ProfileIcon },
     { id: 'settings', label: t('Настройки'), icon: SettingsIcon },
   ]

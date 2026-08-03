@@ -18,10 +18,10 @@ export default function AccountScreen({ onBack, onLogout, onAddAccount }) {
           <>
             <button className="settings-card-row clickable" onClick={onAddAccount}>
               <div className="settings-card-left">
-                <span className="settings-card-icon" style={{ color: 'var(--user-accent, #7c5cfc)' }}>
+                <span className="settings-card-icon" style={{ color: 'var(--user-accent)' }}>
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
                 </span>
-                <span className="settings-card-label" style={{ color: 'var(--user-accent, #7c5cfc)' }}>{t('Создать аккаунт')}</span>
+                <span className="settings-card-label" style={{ color: 'var(--user-accent)' }}>{t('Создать аккаунт')}</span>
               </div>
             </button>
             <div className="settings-card-divider" />
