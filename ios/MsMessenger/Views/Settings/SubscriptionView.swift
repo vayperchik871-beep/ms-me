@@ -126,7 +126,7 @@ struct SubscriptionView: View {
                 .font(.system(size: 15, weight: .semibold))
                 .foregroundColor(theme.textPrimary)
                 .padding(.bottom, 4)
-            ForEach(plans, id: \.title) { p in
+            ForEach(features, id: \.title) { p in
                 HStack(spacing: 12) {
                     Image(systemName: p.icon)
                         .font(.system(size: 16))
