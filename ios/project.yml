@@ -25,3 +25,11 @@ targets:
       - sdk: AuthenticationServices.framework
       - sdk: CryptoKit.framework
       - sdk: UIKit.framework
+
+  MsMessengerUITests:
+    type: bundle.ui-testing
+    platform: iOS
+    sources:
+      - path: MsMessengerUITests
+    dependencies:
+      - target: MsMessenger
