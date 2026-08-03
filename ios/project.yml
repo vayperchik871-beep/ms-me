@@ -26,6 +26,9 @@ targets:
       - sdk: AuthenticationServices.framework
       - sdk: CryptoKit.framework
       - sdk: UIKit.framework
+    scheme:
+      testTargets:
+        - MsMessengerUITests
 
   MsMessengerUITests:
     type: bundle.ui-testing
