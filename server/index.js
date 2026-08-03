@@ -101,8 +101,8 @@ async function authMiddleware(req, res, next) {
 }
 
 const SUBSCRIPTION_PLANS = {
-  plus: { name: 'Plus', durationDays: 30, priceCents: 299 },
-  premium: { name: 'Premium', durationDays: 365, priceCents: 1999 },
+  plus: { name: 'Plus', durationDays: 30, priceCents: 15000 },
+  premium: { name: 'Premium', durationDays: 365, priceCents: 40000 },
 }
 
 function isSubActive(user) {
