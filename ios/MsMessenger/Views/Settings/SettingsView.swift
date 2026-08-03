@@ -91,6 +91,11 @@ struct SettingsView: View {
                     settingsRow(icon: "hand.raised.fill", label: "Политика конфиденциальности")
                 }
             }
+            settingsSection(title: "Подписка") {
+                NavigationLink { SubscriptionView() } label: {
+                    settingsRow(icon: "crown.fill", label: "Premium и бонусы")
+                }
+            }
             settingsSection(title: "Аккаунт") {
                 if let user {
                     NavigationLink { ProfileView(user: user, isOwnProfile: true) } label: {

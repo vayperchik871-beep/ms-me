@@ -37,6 +37,14 @@ class ThemeManager: ObservableObject {
         return Color(hex: accentHex)
     }
 
+    // Text color that stays visible on top of accent (white bg → black text, etc.)
+    var accentText: Color {
+        var r: CGFloat = 0, g: CGFloat = 0, b: CGFloat = 0
+        UIColor(accent).getRed(&r, green: &g, blue: &b, alpha: nil)
+        let luminance = 0.299 * r + 0.587 * g + 0.114 * b
+        return luminance > 0.5 ? .black : .white
+    }
+
     var bgColor: Color { isDark ? Color(hex: "#0d0d0d") : Color(hex: "#f2f2f7") }
     var backgroundColor: Color { bgColor }
     var surfaceColor: Color { isDark ? Color(hex: "#1c1c1e") : .white }

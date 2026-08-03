@@ -132,7 +132,7 @@ struct AppearanceSettingsView: View {
                             if theme.accentHex == c.hex {
                                 Image(systemName: "checkmark")
                                     .font(.system(size: 16, weight: .bold))
-                                    .foregroundColor(c.hex == "" ? (theme.isDark ? .black : .white) : .white)
+                                    .foregroundColor(checkColor(for: c.hex))
                             }
                         }
                         Text(c.name).font(.system(size: 11)).foregroundColor(theme.textSecondary)
@@ -141,5 +141,13 @@ struct AppearanceSettingsView: View {
             }
         }
         .padding(.vertical, 8)
+    }
+
+    private func checkColor(for hex: String) -> Color {
+        let color = hex.isEmpty ? (theme.isDark ? Color.white : Color.black) : Color(hex: hex)
+        var r: CGFloat = 0, g: CGFloat = 0, b: CGFloat = 0
+        UIColor(color).getRed(&r, green: &g, blue: &b, alpha: nil)
+        let luminance = 0.299 * r + 0.587 * g + 0.114 * b
+        return luminance > 0.6 ? .black : .white
     }
 }

@@ -193,13 +193,13 @@ struct CreateAccountView: View {
                 }
 
                 Button(action: login) {
-                    if loading { ProgressView().tint(.white) }
+                    if loading { ProgressView().tint(theme.accentText) }
                     else { Text("Войти").font(.system(size: 17, weight: .semibold)) }
                 }
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 16)
                 .background((!userId.isEmpty && !password.isEmpty) ? theme.accent : Color.white.opacity(0.15))
-                .foregroundColor((!userId.isEmpty && !password.isEmpty) ? .white : .white.opacity(0.3))
+                .foregroundColor((!userId.isEmpty && !password.isEmpty) ? theme.accentText : .white.opacity(0.3))
                 .cornerRadius(14)
                 .disabled(userId.isEmpty || password.isEmpty || loading)
                 .padding(.horizontal, 40)

@@ -36,7 +36,7 @@ struct GiftAnimationView: View {
                 Button(action: onDismiss) {
                     Text("Отлично")
                         .font(.system(size: 17, weight: .semibold))
-                        .foregroundColor(.white)
+                        .foregroundColor(ThemeManager.shared.accentText)
                         .padding(.horizontal, 40)
                         .padding(.vertical, 14)
                         .background(ThemeManager.shared.accent)

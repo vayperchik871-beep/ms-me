@@ -124,7 +124,7 @@ struct ChatRowView: View {
                 if let unread = chat.unreadCount, unread > 0 {
                     Text("\(unread)")
                         .font(.system(size: 12, weight: .bold))
-                        .foregroundColor(.white)
+                        .foregroundColor(theme.accentText)
                         .padding(.horizontal, 7)
                         .padding(.vertical, 3)
                         .background(theme.accent)

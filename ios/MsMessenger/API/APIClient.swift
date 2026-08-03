@@ -221,4 +221,22 @@ final class APIClient {
         if let message { body["message"] = message }
         return try await request("/gifts/send", method: "POST", body: try JSONSerialization.data(withJSONObject: body))
     }
+
+    // ─── Subscriptions (Plus/Premium) ───
+
+    struct SubscriptionStatus: Codable {
+        let plan: String?
+        let planName: String?
+        let active: Bool?
+        let until: Int?
+        let daysLeft: Int?
+    }
+
+    func subscriptionStatus() async throws -> SubscriptionStatus {
+        try await request("/subscriptions/status")
+    }
+
+    func activateSubscription(code: String) async throws -> SubscriptionStatus {
+        try await request("/subscriptions/activate", method: "POST", body: try JSONEncoder().encode(["code": code]))
+    }
 }

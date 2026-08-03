@@ -16,7 +16,8 @@ struct ProfileView: View {
 
     private var bannerHex: String {
         if let pc = displayUser.profileColor, !pc.isEmpty { return pc }
-        return theme.accentHex.isEmpty ? "#ffffff" : theme.accentHex
+        if !theme.accentHex.isEmpty { return theme.accentHex }
+        return theme.isDark ? "#2c2c2e" : "#8e8e93"
     }
 
     private var receivedGifts: [Gift] {
@@ -352,6 +353,7 @@ struct ProfileView: View {
                     .font(.system(size: 20, weight: .semibold))
                     .foregroundColor(.white)
                     .frame(width: 40, height: 40)
+                    .background(Color.black.opacity(0.3), in: Circle())
             }
             .buttonStyle(.plain)
 
@@ -362,6 +364,9 @@ struct ProfileView: View {
                     Text("Edit")
                         .font(.system(size: 16, weight: .medium))
                         .foregroundColor(.white)
+                        .padding(.horizontal, 14)
+                        .padding(.vertical, 8)
+                        .background(Color.black.opacity(0.3), in: Capsule())
                 }
                 .buttonStyle(.plain)
             }

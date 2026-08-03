@@ -139,7 +139,7 @@ struct ChatDetailView: View {
                     if let unread = chat.unreadCount, unread > 0 {
                         Text("\(unread)")
                             .font(.system(size: 11, weight: .bold))
-                            .foregroundColor(.white)
+                            .foregroundColor(theme.accentText)
                             .padding(.horizontal, 6)
                             .padding(.vertical, 2)
                             .background(theme.accent)

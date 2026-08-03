@@ -323,7 +323,7 @@ app.post('/api/auth/register', async (req, res) => {
       if (!fs.existsSync(avatarsDir)) fs.mkdirSync(avatarsDir, { recursive: true })
       const fileName = `${id}.png`
       fs.writeFileSync(path.join(avatarsDir, fileName), buf)
-      avatarUrl = `/uploads/avatars/${fileName}`
+      avatarUrl = fullUrl(req, `/uploads/avatars/${fileName}`)
     } catch (e) { console.error('Avatar save error:', e) }
   }
 
@@ -391,7 +391,7 @@ app.post('/api/auth/login', async (req, res) => {
     const token = await createToken(user.id, devId)
     return res.json({
       token,
-      user: { id: user.id, userId: user.user_id, name: user.name, phone: user.phone, bio: user.bio, avatar: user.avatar, premium: isPremium1, aiModel: user.ai_model || 'lite' },
+      user: { id: user.id, userId: user.user_id, name: user.name, phone: user.phone, bio: user.bio, avatar: resolveMediaUrl(req, user.avatar), premium: isPremium1, aiModel: user.ai_model || 'lite' },
       needsVerification: false,
     })
   }
@@ -403,7 +403,7 @@ app.post('/api/auth/login', async (req, res) => {
     const token = await createToken(user.id, devId)
     return res.json({
       token,
-      user: { id: user.id, userId: user.user_id, name: user.name, phone: user.phone, bio: user.bio, avatar: user.avatar, premium: isPremium2, aiModel: user.ai_model || 'lite' },
+      user: { id: user.id, userId: user.user_id, name: user.name, phone: user.phone, bio: user.bio, avatar: resolveMediaUrl(req, user.avatar), premium: isPremium2, aiModel: user.ai_model || 'lite' },
       needsVerification: false,
     })
   }
@@ -455,33 +455,17 @@ app.post('/api/auth/verify-device', async (req, res) => {
   const token = await createToken(user.id, devId)
   res.json({
     token,
-    user: { id: user.id, userId: user.user_id, name: user.name, phone: user.phone, bio: user.bio, avatar: user.avatar },
+    user: { id: user.id, userId: user.user_id, name: user.name, phone: user.phone, bio: user.bio, avatar: resolveMediaUrl(req, user.avatar) },
   })
 })
 
 app.get('/api/auth/me', authMiddleware, async (req, res) => {
   const u = await dbGet('SELECT id, user_id, name, phone, bio, is_system, avatar, birthday, gender, profile_color, mcoins, subscription_plan, subscription_until, ai_model, music FROM users WHERE id = ?', req.user.id)
   const extra = await dbGet('SELECT is_admin, banned FROM users WHERE id = ?', req.user.id)
-  const isPremium = u?.subscription_plan && u.subscription_until > Date.now()
   res.json({ user: {
-    id: u.id,
-    userId: u.user_id,
-    name: u.name,
-    phone: u.phone,
-    bio: u.bio,
-    isSystem: !!u.is_system,
-    avatar: u.avatar,
-    birthday: u.birthday,
-    gender: u.gender,
-    profileColor: u.profile_color,
-    mcoins: u.mcoins || 0,
-    isAdmin: !!extra?.is_admin,
-    banned: !!extra?.banned,
-    premium: isPremium,
+    ...serializeUser(u, { req, extra }),
     subscriptionPlan: u?.subscription_plan || null,
     subscriptionUntil: u?.subscription_until || null,
-    aiModel: u?.ai_model || 'lite',
-    music: u.music || null,
   } })
 })
 
@@ -1230,7 +1214,7 @@ app.get('/api/users/search', authMiddleware, async (req, res) => {
     LIMIT 20
   `, `${q}%`, `${q}%`, req.user.id)
 
-  res.json({ users: users.map((u) => ({ id: u.id, userId: u.user_id, name: u.name, phone: u.phone, avatar: u.avatar })) })
+  res.json({ users: users.map((u) => ({ id: u.id, userId: u.user_id, name: u.name, phone: u.phone, avatar: resolveMediaUrl(req, u.avatar) })) })
 })
 
 app.get('/api/users/:userId', authMiddleware, async (req, res) => {
@@ -1247,8 +1231,8 @@ app.get('/api/users/:userId', authMiddleware, async (req, res) => {
   res.json({
     user: {
       id: user.id, userId: user.user_id, name: user.name, isSystem: !!user.is_system,
-      avatar: user.avatar, birthday: user.birthday, gender: user.gender,
-      profileColor: user.profile_color, banner: user.profile_banner,
+      avatar: resolveMediaUrl(req, user.avatar), birthday: user.birthday, gender: user.gender,
+      profileColor: user.profile_color, banner: resolveMediaUrl(req, user.profile_banner),
       verified: !!user.is_verified, verifyType: user.verify_type,
       plus: hasPlus,
       music: user.music || null,
@@ -1280,8 +1264,8 @@ app.patch('/api/user/profile', authMiddleware, async (req, res) => {
     if (cleanId.length < 3) return res.status(400).json({ error: 'ID должен быть минимум 3 символа' })
     await dbRun('UPDATE users SET user_id = ? WHERE id = ?', cleanId, req.user.id)
   }
-  const u = await dbGet('SELECT id, user_id, name, avatar, birthday, gender, profile_color FROM users WHERE id = ?', req.user.id)
-  res.json({ user: { ...u } })
+  const u = await dbGet('SELECT id, user_id, name, phone, bio, is_system, avatar, birthday, gender, profile_color, mcoins, subscription_plan, subscription_until, ai_model, music FROM users WHERE id = ?', req.user.id)
+  res.json({ user: serializeUser(u, { req }) })
 })
 
 // ─── Verification ───
@@ -1348,7 +1332,7 @@ app.get('/api/contacts', authMiddleware, async (req, res) => {
       userId: c.user_id,
       name: c.name,
       isSystem: !!c.is_system,
-      avatar: c.avatar,
+      avatar: resolveMediaUrl(req, c.avatar),
     })),
   })
 })
@@ -1370,7 +1354,7 @@ app.post('/api/contacts', authMiddleware, async (req, res) => {
 
   const chatId = await getOrCreateDirectChat(req.user.id, contact.id)
   res.json({
-    contact: { id: contact.id, userId: contact.user_id, name: contact.name, isSystem: !!contact.is_system, avatar: contact.avatar },
+    contact: { id: contact.id, userId: contact.user_id, name: contact.name, isSystem: !!contact.is_system, avatar: resolveMediaUrl(req, contact.avatar) },
     chatId,
   })
 })
@@ -1417,6 +1401,37 @@ function fullUrl(req, path) {
     return `${proto}://${host}${path}`
   }
   return `${path}`
+}
+
+// Convert a possibly-relative upload path into an absolute URL for the clients.
+function resolveMediaUrl(req, url) {
+  if (!url) return null
+  if (/^https?:\/\//i.test(url)) return url
+  if (url.startsWith('/')) return fullUrl(req, url)
+  return url
+}
+
+// Serialize a user row into the camelCase shape the clients expect.
+function serializeUser(u, opts = {}) {
+  const { req, extra } = opts
+  return {
+    id: u.id,
+    userId: u.user_id,
+    name: u.name,
+    phone: u.phone || null,
+    bio: u.bio || null,
+    isSystem: !!u.is_system,
+    avatar: resolveMediaUrl(req, u.avatar),
+    birthday: u.birthday || null,
+    gender: u.gender || null,
+    profileColor: u.profile_color || null,
+    mcoins: u.mcoins || 0,
+    isAdmin: !!extra?.is_admin,
+    banned: !!extra?.banned,
+    premium: isSubActive(u),
+    aiModel: u.ai_model || 'lite',
+    music: u.music || null,
+  }
 }
 
 app.post('/api/upload/avatar', authMiddleware, upload.single('avatar'), async (req, res) => {
@@ -1636,7 +1651,7 @@ app.get('/api/chats', authMiddleware, async (req, res) => {
       id: chat.id,
       type: chat.type || 'direct',
       name: chat.type !== 'direct' ? chat.name : (peer?.name || 'Чат'),
-      peer: peer ? { id: peer.id, userId: peer.user_id, name: peer.name, isSystem: !!peer.is_system, avatar: peer.avatar, profileColor: peer.profile_color, online: isUserOnline(peer.id), lastSeen } : null,
+      peer: peer ? { id: peer.id, userId: peer.user_id, name: peer.name, isSystem: !!peer.is_system, avatar: resolveMediaUrl(req, peer.avatar), profileColor: peer.profile_color, online: isUserOnline(peer.id), lastSeen } : null,
       lastMessage,
       lastTime: chat.last_time ? formatTime(chat.last_time) : '',
       unread: chat.unread || 0,

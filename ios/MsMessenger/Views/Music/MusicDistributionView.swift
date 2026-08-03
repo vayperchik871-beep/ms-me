@@ -176,7 +176,7 @@ noArtistCard()
                     .frame(width: 180)
                     .padding(.vertical, 14)
                     .background(theme.accent)
-                    .foregroundColor(.white)
+                    .foregroundColor(theme.accentText)
                     .cornerRadius(14)
             }
             Spacer()
@@ -428,7 +428,7 @@ struct CreateArtistCardSheet: View {
                         Image(uiImage: photo.toUIImage()).resizable().scaledToFill()
                     } else {
                         Text(name.isEmpty ? "?" : name.prefix(1).uppercased())
-                            .font(.system(size: 28, weight: .bold)).foregroundColor(.white)
+                            .font(.system(size: 28, weight: .bold)).foregroundColor(theme.accentText)
                     }
                 }
                 .clipShape(Circle())

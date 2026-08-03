@@ -87,7 +87,7 @@ struct OnboardingView: View {
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 16)
                     .background(theme.accent)
-                    .foregroundColor(.white)
+                    .foregroundColor(theme.accentText)
                     .cornerRadius(14)
             }
             .padding(.horizontal, 40)
@@ -129,7 +129,7 @@ struct OnboardingView: View {
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 16)
                     .background(phoneValid ? theme.accent : Color.white.opacity(0.15))
-                    .foregroundColor(phoneValid ? .white : .white.opacity(0.3))
+                    .foregroundColor(phoneValid ? theme.accentText : .white.opacity(0.3))
                     .cornerRadius(14)
             }
             .disabled(!phoneValid)
@@ -218,7 +218,7 @@ struct OnboardingView: View {
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 16)
                     .background((!userId.isEmpty && password.count >= 6) ? theme.accent : Color.white.opacity(0.15))
-                    .foregroundColor((!userId.isEmpty && password.count >= 6) ? .white : .white.opacity(0.3))
+                    .foregroundColor((!userId.isEmpty && password.count >= 6) ? theme.accentText : .white.opacity(0.3))
                     .cornerRadius(14)
             }
             .disabled(userId.isEmpty || password.count < 6)
@@ -283,7 +283,7 @@ struct OnboardingView: View {
             .frame(maxWidth: .infinity)
             .padding(.vertical, 16)
             .background(name.isEmpty ? Color.white.opacity(0.15) : theme.accent)
-            .foregroundColor(name.isEmpty ? .white.opacity(0.3) : .white)
+            .foregroundColor(name.isEmpty ? .white.opacity(0.3) : theme.accentText)
             .cornerRadius(14)
             .disabled(name.isEmpty || loading)
             .padding(.horizontal, 40)
