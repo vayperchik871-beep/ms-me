@@ -61,43 +61,46 @@ struct OnboardingView: View {
     // MARK: - Step 0: Welcome
 
     private var welcomeStep: some View {
-        VStack(spacing: 36) {
-            Spacer()
+        VStack(spacing: 0) {
+            Spacer(minLength: 60)
             Image("Logo")
                 .resizable()
                 .scaledToFit()
-                .frame(width: 140, height: 140)
-                .cornerRadius(32)
+                .frame(width: 120, height: 120)
+                .cornerRadius(28)
                 .shadow(color: .black.opacity(0.4), radius: 16, x: 0, y: 8)
+                .padding(.bottom, 24)
 
             VStack(spacing: 10) {
                 Text("MS Messenger")
-                    .font(.system(size: 32, weight: .bold))
+                    .font(.system(size: 30, weight: .bold))
                     .foregroundColor(theme.textPrimary)
                 Text("Безопасный и быстрый мессенджер")
-                    .font(.system(size: 17))
+                    .font(.system(size: 16))
                     .foregroundColor(theme.textSecondary)
             }
+            .padding(.bottom, 40)
 
-            Spacer()
+            VStack(spacing: 14) {
+                Button(action: { step = 1 }) {
+                    Text("Начать")
+                        .font(.system(size: 17, weight: .semibold))
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 16)
+                        .background(theme.accent)
+                        .foregroundColor(theme.accentText)
+                        .cornerRadius(14)
+                }
 
-            Button(action: { step = 1 }) {
-                Text("Начать")
-                    .font(.system(size: 17, weight: .semibold))
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 16)
-                    .background(theme.accent)
-                    .foregroundColor(theme.accentText)
-                    .cornerRadius(14)
+                Button(action: { showLogin = true }) {
+                    Text("Уже есть аккаунт? Войти")
+                        .font(.system(size: 15))
+                        .foregroundColor(theme.accent)
+                }
             }
-            .padding(.horizontal, 40)
+            .padding(.horizontal, 16)
 
-            Button(action: { showLogin = true }) {
-                Text("Уже есть аккаунт? Войти")
-                    .font(.system(size: 15))
-                    .foregroundColor(theme.accent)
-            }
-            .padding(.bottom, 60)
+            Spacer(minLength: 40)
         }
     }
 
@@ -133,7 +136,7 @@ struct OnboardingView: View {
                     .cornerRadius(14)
             }
             .disabled(!phoneValid)
-            .padding(.horizontal, 40)
+            .padding(.horizontal, 16)
         }
     }
 
@@ -181,7 +184,7 @@ struct OnboardingView: View {
                     phoneLast = String(filtered.prefix(4))
                 }
         }
-        .padding(.horizontal, 40)
+        .padding(.horizontal, 16)
     }
 
     private var fullPhone: String { "+777\(phonePrefix)\(phoneLast)" }
@@ -204,7 +207,7 @@ struct OnboardingView: View {
                 simpleField(placeholder: "Уникальный ID", text: $userId, isSecure: false)
                 simpleField(placeholder: "Пароль (минимум 6 символов)", text: $password, isSecure: true)
             }
-            .padding(.horizontal, 40)
+            .padding(.horizontal, 16)
 
             if let error {
                 Text(error)
@@ -222,7 +225,7 @@ struct OnboardingView: View {
                     .cornerRadius(14)
             }
             .disabled(userId.isEmpty || password.count < 6)
-            .padding(.horizontal, 40)
+            .padding(.horizontal, 16)
         }
     }
 
@@ -265,7 +268,7 @@ struct OnboardingView: View {
                 simpleField(placeholder: "Как вас зовут?", text: $name, isSecure: false)
                 simpleField(placeholder: "О себе (необязательно)", text: $bio, isSecure: false)
             }
-            .padding(.horizontal, 40)
+            .padding(.horizontal, 16)
 
             if let error {
                 Text(error)
@@ -286,7 +289,7 @@ struct OnboardingView: View {
             .foregroundColor(name.isEmpty ? .white.opacity(0.3) : theme.accentText)
             .cornerRadius(14)
             .disabled(name.isEmpty || loading)
-            .padding(.horizontal, 40)
+            .padding(.horizontal, 16)
         }
     }
 
