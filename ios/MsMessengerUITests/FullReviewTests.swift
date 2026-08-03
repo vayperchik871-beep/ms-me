@@ -18,13 +18,13 @@ final class FullReviewTests: XCTestCase {
             sleep(2)
         }
 
-        let phonePrefix = app.textFields["XXXX"].firstMatch
+        let phonePrefix = app.textFields.element(boundBy: 0)
         if phonePrefix.waitForExistence(timeout: 5) {
             phonePrefix.tap()
             phonePrefix.typeText("7777")
         }
 
-        let phoneLast = app.textFields["XXXX"].element(boundBy: 1)
+        let phoneLast = app.textFields.element(boundBy: 1)
         if phoneLast.waitForExistence(timeout: 3) {
             phoneLast.tap()
             phoneLast.typeText("1234")
