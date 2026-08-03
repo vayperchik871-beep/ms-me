@@ -307,7 +307,6 @@ struct SubscriptionView: View {
         .background(theme.bgColor.ignoresSafeArea())
     }
 
-    @ViewBuilder
     private func sbpQRCode(order: APIClient.PurchaseOrder) -> some View {
         let phone = order.phone ?? ""
         let payload = "СТ111118\(phone.hashValue % 100000);\(order.amountRub ?? 0).00"
@@ -315,21 +314,23 @@ struct SubscriptionView: View {
         let filter = CIFilter.qrCodeGenerator()
         filter.setValue(data, forKey: "inputMessage")
         filter.setValue("M", forKey: "inputCorrectionLevel")
-        if let output = filter.outputImage {
-            let transformed = output.transformed(by: CGAffineTransform(scaleX: 12, y: 12))
-            Image(uiImage: UIImage(ciImage: transformed))
-                .interpolation(.none)
-                .resizable()
-                .scaledToFit()
-                .frame(width: 200, height: 200)
-                .padding(8)
-                .background(Color.white)
-                .cornerRadius(12)
-                .id(identity)
-        } else {
-            Image(systemName: "qrcode")
-                .font(.system(size: 100))
-                .foregroundColor(theme.textSecondary)
+        return Group {
+            if let output = filter.outputImage {
+                let transformed = output.transformed(by: CGAffineTransform(scaleX: 12, y: 12))
+                Image(uiImage: UIImage(ciImage: transformed))
+                    .interpolation(.none)
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: 200, height: 200)
+                    .padding(8)
+                    .background(Color.white)
+                    .cornerRadius(12)
+                    .id(identity)
+            } else {
+                Image(systemName: "qrcode")
+                    .font(.system(size: 100))
+                    .foregroundColor(theme.textSecondary)
+            }
         }
     }
 
