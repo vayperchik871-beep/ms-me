@@ -32,8 +32,8 @@ final class FullReviewTests: XCTestCase {
         idField.tap()
         idField.typeText(userId)
 
-        let passwordField = app.secureTextFields["passwordField"]
-        XCTAssertTrue(passwordField.waitForExistence(timeout: 5), "Поле пароля не найдено")
+        let passwordField = app.descendants(matching: .any).matching(identifier: "passwordField").firstMatch
+        XCTAssertTrue(passwordField.waitForExistence(timeout: 5), "Поле пароля не найдено. На экране: \(screenSummary())")
         passwordField.tap()
         passwordField.typeText("Test123!")
 
@@ -42,8 +42,8 @@ final class FullReviewTests: XCTestCase {
         XCTAssertTrue(nextButton.isEnabled, "«Далее» неактивна")
         nextButton.tap()
 
-        let nameField = app.textFields["nameField"]
-        XCTAssertTrue(nameField.waitForExistence(timeout: 10), "Поле имени не появилось")
+        let nameField = app.descendants(matching: .any).matching(identifier: "nameField").firstMatch
+        XCTAssertTrue(nameField.waitForExistence(timeout: 10), "Поле имени не появилось. На экране: \(screenSummary())")
         nameField.tap()
         nameField.typeText("Review User")
 
@@ -92,6 +92,7 @@ final class FullReviewTests: XCTestCase {
         let buttons = app.buttons.allElementsBoundByIndex.prefix(10).map { $0.label }
         let texts = app.staticTexts.allElementsBoundByIndex.prefix(8).map { $0.label }
         let fields = app.textFields.allElementsBoundByIndex.prefix(6).map { "\($0.identifier):\($0.placeholderValue ?? "")" }
-        return "btns=[\(buttons.joined(separator: ","))] texts=[\(texts.joined(separator: ","))] fields=[\(fields.joined(separator: ","))]"
+        let secures = app.secureTextFields.allElementsBoundByIndex.prefix(4).map { $0.identifier }
+        return "btns=[\(buttons.joined(separator: ","))] texts=[\(texts.joined(separator: ","))] fields=[\(fields.joined(separator: ","))] sec=[\(secures.joined(separator: ","))]"
     }
 }
