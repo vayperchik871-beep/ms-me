@@ -10,7 +10,7 @@ WORKDIR /app
 COPY server/package.json server/package-lock.json ./
 RUN npm install --omit=dev
 COPY server/ ./
-COPY --from=web /app/dist ./dist
+COPY --from=web /app/dist /dist
 ENV NODE_ENV=production PORT=3001 HOST=0.0.0.0
 RUN mkdir -p /data
 EXPOSE 3001
