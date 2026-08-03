@@ -67,6 +67,33 @@ jobs:
           path: MsMessenger-Simulator.zip
           retention-days: 14
 
+      - name: Simulator Screenshots
+        if: success()
+        run: |
+          set -e
+          APP=$(find build/Build/Products -name "MsMessenger.app" -type d -maxdepth 2 | head -1)
+          echo "App: $APP"
+          DEVICE=$(xcrun simctl list devices available -j | python3 -c \
+            "import json,sys; d=json.load(sys.stdin)['devices']; devs=[x for k in d for x in d[k] if x['isAvailable'] and 'iPhone' in x['name']]; print(devs[0]['udid'])")
+          echo "Device: $DEVICE"
+          xcrun simctl boot "$DEVICE" 2>/dev/null || true
+          xcrun simctl bootstatus "$DEVICE" -b
+          xcrun simctl install "$DEVICE" "$APP"
+          xcrun simctl launch "$DEVICE" com.ms.messenger
+          sleep 15
+          mkdir -p "$GITHUB_WORKSPACE/ios-screenshots"
+          xcrun simctl io "$DEVICE" screenshot "$GITHUB_WORKSPACE/ios-screenshots/launch.png"
+          sleep 3
+          xcrun simctl io "$DEVICE" screenshot "$GITHUB_WORKSPACE/ios-screenshots/3s-later.png"
+          xcrun simctl shutdown "$DEVICE" 2>/dev/null || true
+
+      - uses: actions/upload-artifact@v4
+        if: success()
+        with:
+          name: iOS-Screenshots
+          path: ios-screenshots
+          retention-days: 14
+
       - name: Build for Device
         if: success()
         run: |
