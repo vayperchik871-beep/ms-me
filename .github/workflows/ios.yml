@@ -135,13 +135,48 @@ jobs:
           mkdir -p "$GITHUB_WORKSPACE/crash-reports"
           cp ~/Library/Logs/DiagnosticReports/*.ips "$GITHUB_WORKSPACE/crash-reports/" 2>/dev/null || true
           cp ~/Library/Logs/DiagnosticReports/*.crash "$GITHUB_WORKSPACE/crash-reports/" 2>/dev/null || true
+          echo "=== App log (last 6m) ==="
+          xcrun simctl spawn "$DEVICE" log show --last 6m --predicate 'process == "MsMessenger"' --style compact 2>/dev/null | grep -iE "fatal|error|crash|exception|abort|signal|uncaught|precondition|trapped" | head -40 | while IFS= read -r line; do echo "::error::$line"; done || true
           ls -la "$GITHUB_WORKSPACE/crash-reports" || true
           for f in "$GITHUB_WORKSPACE"/crash-reports/*; do
             if [ -f "$f" ]; then
               echo "=== Crash file: $f ==="
               head -c 3000 "$f"
               echo ""
-              grep -oE '"exception":\{[^}]*\}|"termination":\{[^}]*\}|"faultingThread":[0-9]+|"frames":\[.*' "$f" | head -5 | while IFS= read -r line; do echo "::error::$line"; done || true
+              python3 - "$f" <<'PYEOF'
+import json, sys, re
+path = sys.argv[1]
+raw = open(path, encoding='utf-8', errors='replace').read()
+body = raw[raw.find('\n{')+1:] if '\n{' in raw else raw
+try:
+    data = json.loads(body)
+    print(f"proc: {data.get('procName') or data.get('proc') or '?'} pid={data.get('pid')}")
+    print(f"appinfo: {data.get('appinfo')}")
+    print(f"exception: {data.get('exception')} termination: {data.get('termination')}")
+    asi = data.get('asi') or data.get('applicationSpecificInformation')
+    if asi: print(f"asi: {asi}")
+except Exception as e:
+    print("parse failed:", e)
+    m = re.search(r'Terminating app[^\n]{0,400}', raw)
+    if m: print(m.group(0))
+    m2 = re.search(r'Exception Type[^\n]*|Exception Codes[^\n]*|Termination Reason[^\n]*', raw)
+    if m2: print(m2.group(0))
+PYEOF
+              python3 - "$f" <<'PYEOF' | while IFS= read -r line; do echo "::error::$line"; done || true
+import json, sys
+path = sys.argv[1]
+raw = open(path, encoding='utf-8', errors='replace').read()
+body = raw[raw.find('\n{')+1:] if '\n{' in raw else raw
+try:
+    data = json.loads(body)
+    proc = data.get('procName') or '?'
+    exc = data.get('exception') or {}
+    term = data.get('termination') or {}
+    asi = data.get('asi') or data.get('applicationSpecificInformation') or {}
+    print(f"CRASH proc={proc} exception={exc.get('type')} signal={exc.get('signal')} term={term.get('indicator')} reason={term.get('reason')} asi={asi.get('message', '')[:400]}")
+except Exception:
+    pass
+PYEOF
             fi
           done
           test -s "$GITHUB_WORKSPACE/ios-video/review.mp4"
