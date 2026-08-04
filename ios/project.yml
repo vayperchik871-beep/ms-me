@@ -15,8 +15,27 @@ targets:
     platform: iOS
     sources:
       - path: MsMessenger
+        excludes:
+          - Info.plist
     info:
       path: MsMessenger/Info.plist
+      properties:
+        CFBundleDevelopmentRegion: ru
+        CFBundleDisplayName: MS Messenger
+        CFBundleName: MS Messenger
+        CFBundleShortVersionString: 1.0.2
+        CFBundleVersion: 1
+        LSRequiresIPhoneOS: true
+        NSAppTransportSecurity:
+          NSAllowsArbitraryLoads: true
+        UILaunchScreen: {}
+        UISupportedInterfaceOrientations:
+          - UIInterfaceOrientationPortrait
+        UIUserInterfaceStyle: Dark
+        CFBundleURLTypes:
+          - CFBundleURLName: com.ms.messenger.google
+            CFBundleURLSchemes:
+              - com.googleusercontent.apps.202627330294-i3glf16hem9j85of1ma9gq9h5vg3cvl4
     settings:
       PRODUCT_BUNDLE_IDENTIFIER: com.ms.messenger
       INFOPLIST_FILE: MsMessenger/Info.plist
