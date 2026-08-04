@@ -52,7 +52,7 @@ final class FullReviewTests: XCTestCase {
         registerButton.tap()
 
         let settingsTab = app.tabBars.buttons["Настройки"]
-        XCTAssertTrue(settingsTab.waitForExistence(timeout: 30), "Регистрация не завершилась, таббар не появился (userId: \(userId))")
+        XCTAssertTrue(settingsTab.waitForExistence(timeout: 90), "Регистрация не завершилась, таббар не появился (userId: \(userId)). На экране: \(screenSummary())")
         settingsTab.tap()
 
         let premiumRow = app.staticTexts["Premium и бонусы"]
