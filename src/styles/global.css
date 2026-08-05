@@ -630,6 +630,23 @@ input, textarea { font-family: inherit; border: none; outline: none; background:
   background: var(--bg-chat);
 }
 
+[data-theme="dark"] .chat-window {
+  background-color: #111111;
+  background-image: url('/chat_wallpaper.png');
+  background-size: cover;
+  background-repeat: no-repeat;
+  background-position: center;
+}
+[data-theme="dark"] .messages-area.dark {
+  background: transparent;
+}
+[data-theme="dark"] .ig-bar-wrap {
+  background: transparent;
+}
+[data-theme="dark"] .ig-bar {
+  background: transparent;
+}
+
 .chat-empty {
   flex: 1; display: flex; flex-direction: column;
   align-items: center; justify-content: center; gap: 8px;
