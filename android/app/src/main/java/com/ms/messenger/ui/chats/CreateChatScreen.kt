@@ -521,6 +521,7 @@ private fun ThemedSwitchRow(
 
 @Composable
 private fun IOSSwitch(checked: Boolean, onCheckedChange: () -> Unit) {
+    val colors = AppColors.current()
     var isPressed by remember { mutableStateOf(false) }
     var wasDragged by remember { mutableStateOf(false) }
     var dragOffset by remember { mutableFloatStateOf(0f) }
@@ -540,8 +541,8 @@ private fun IOSSwitch(checked: Boolean, onCheckedChange: () -> Unit) {
         animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessMedium)
     )
 
-    val trackOn = Color(0xFF8E8E93)
-    val trackOff = Color(0xFF39393D)
+    val trackOn = if (colors.isDark) Color(0xFF8E8E93) else Color(0xFF34C759)
+    val trackOff = if (colors.isDark) Color(0xFF39393D) else Color(0xFFE9E9EA)
 
     val trackColor by animateColorAsState(
         targetValue = if (progress > 0.5f) trackOn else trackOff,

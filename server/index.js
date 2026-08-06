@@ -1836,8 +1836,34 @@ app.post('/api/chats/:chatId/messages', authMiddleware, async (req, res) => {
   const message = await formatMessage(msgId, req.user.id)
   await broadcastToChat(req.params.chatId, { type: 'new_message', chatId: req.params.chatId, message }, req.user.id)
 
-  // AI Assistant auto-reply
   const chatRow = await dbGet('SELECT * FROM chats WHERE id = ?', req.params.chatId)
+
+  // Auto-forward channel posts to linked discussion group
+  if (chatRow && chatRow.type === 'channel') {
+    const settings = tryParseJson(chatRow.settings, {})
+    const linkedChatId = settings.linkedChatId
+    if (linkedChatId) {
+      try {
+        const fwdEnc = encrypt(content)
+        const fwdId = uuidv4()
+        const fwdAttach = attachment
+        const fwdNow = Date.now()
+        await dbRun(
+          'INSERT INTO messages (id, chat_id, sender_id, content_enc, content_iv, content_tag, attachment, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+          fwdId, linkedChatId, req.user.id, fwdEnc.content_enc, fwdEnc.content_iv, fwdEnc.content_tag, fwdAttach, fwdNow
+        )
+        if (settings.pinPosts) {
+          await dbRun('UPDATE messages SET pinned = 1 WHERE id = ?', fwdId)
+        }
+        const fwdMessage = await formatMessage(fwdId, req.user.id)
+        await broadcastToChat(linkedChatId, { type: 'new_message', chatId: linkedChatId, message: fwdMessage })
+      } catch (e) {
+        console.error('Forward to discussion group failed:', e.message)
+      }
+    }
+  }
+
+  // AI Assistant auto-reply
   if (chatRow && chatRow.type === 'direct') {
     const otherParticipant = await dbGet(
       'SELECT user_id FROM chat_participants WHERE chat_id = ? AND user_id != ?',
