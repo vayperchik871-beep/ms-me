@@ -76,8 +76,16 @@ struct GiftCardView: View {
                     Circle()
                         .fill(rarityColor.opacity(0.2))
                         .frame(width: 56, height: 56)
-                    Text(gift.icon)
-                        .font(.system(size: 28))
+                    if let img = gift.imageName {
+                        Image(img)
+                            .resizable()
+                            .scaledToFill()
+                            .frame(width: 52, height: 52)
+                            .clipShape(Circle())
+                    } else {
+                        Text(gift.icon)
+                            .font(.system(size: 28))
+                    }
                 }
 
                 Text(gift.name)

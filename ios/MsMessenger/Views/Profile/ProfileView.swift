@@ -323,8 +323,16 @@ struct ProfileView: View {
                                     showGiftDetail = true
                                 }) {
                                     VStack(spacing: 4) {
-                                        Text(gift.icon)
-                                            .font(.system(size: 32))
+                                        if let img = gift.imageName {
+                                            Image(img)
+                                                .resizable()
+                                                .scaledToFill()
+                                                .frame(width: 44, height: 44)
+                                                .clipShape(Circle())
+                                        } else {
+                                            Text(gift.icon)
+                                                .font(.system(size: 32))
+                                        }
                                         Text(gift.name)
                                             .font(.system(size: 11))
                                             .foregroundColor(theme.textPrimary)

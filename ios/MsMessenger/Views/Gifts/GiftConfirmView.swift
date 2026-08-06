@@ -22,8 +22,16 @@ struct GiftConfirmView: View {
                             Circle()
                                 .fill(rarityColor.opacity(0.2))
                                 .frame(width: 80, height: 80)
-                            Text(gift.icon)
-                                .font(.system(size: 44))
+                            if let img = gift.imageName {
+                                Image(img)
+                                    .resizable()
+                                    .scaledToFill()
+                                    .frame(width: 76, height: 76)
+                                    .clipShape(Circle())
+                            } else {
+                                Text(gift.icon)
+                                    .font(.system(size: 44))
+                            }
                         }
                         .padding(.top, 20)
 

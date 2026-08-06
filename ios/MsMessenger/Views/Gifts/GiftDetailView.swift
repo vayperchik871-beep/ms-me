@@ -18,8 +18,16 @@ struct GiftDetailView: View {
                     Circle()
                         .fill(rarityColor.opacity(0.2))
                         .frame(width: 120, height: 120)
-                    Text(gift.icon)
-                        .font(.system(size: 70))
+                    if let img = gift.imageName {
+                        Image(img)
+                            .resizable()
+                            .scaledToFill()
+                            .frame(width: 114, height: 114)
+                            .clipShape(Circle())
+                    } else {
+                        Text(gift.icon)
+                            .font(.system(size: 70))
+                    }
                 }
                 .padding(.top, 20)
 

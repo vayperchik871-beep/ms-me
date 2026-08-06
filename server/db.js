@@ -125,6 +125,12 @@ await dbExec(`
   )
 `)
 
+try { await dbExec(`ALTER TABLE chats ADD COLUMN name TEXT`) } catch {}
+try { await dbExec(`ALTER TABLE chats ADD COLUMN about TEXT`) } catch {}
+try { await dbExec(`ALTER TABLE chats ADD COLUMN avatar TEXT`) } catch {}
+try { await dbExec(`ALTER TABLE chats ADD COLUMN created_by TEXT`) } catch {}
+try { await dbExec(`ALTER TABLE chats ADD COLUMN settings TEXT DEFAULT '{}'`) } catch {}
+
 await dbExec(`
   CREATE TABLE IF NOT EXISTS chat_participants (
     chat_id TEXT NOT NULL REFERENCES chats(id),

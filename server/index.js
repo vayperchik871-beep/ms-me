@@ -1382,20 +1382,67 @@ app.post('/api/groups', authMiddleware, async (req, res) => {
 // ─── Channels ───
 
 app.post('/api/channels', authMiddleware, async (req, res) => {
-  const { name, about } = req.body
+  const { name, about, settings } = req.body
   if (!name?.trim()) return res.status(400).json({ error: 'Укажите название канала' })
   const id = uuidv4()
   const now = Date.now()
-  await dbRun('INSERT INTO chats (id, type, name, about, created_by, created_at) VALUES (?, ?, ?, ?, ?, ?)',
-    id, 'channel', name.trim(), about || null, req.user.id, now
+  const settingsJson = settings ? JSON.stringify(settings) : '{}'
+  await dbRun('INSERT INTO chats (id, type, name, about, created_by, settings, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)',
+    id, 'channel', name.trim(), about || null, req.user.id, settingsJson, now
   )
   await dbRun('INSERT INTO chat_participants (chat_id, user_id, role, joined_at) VALUES (?, ?, ?, ?)',
     id, req.user.id, 'creator', now
   )
-  res.json({ id, name: name.trim(), type: 'channel' })
+  res.json({ id, name: name.trim(), type: 'channel', settings: settings || {} })
+})
+
+app.get('/api/user/groups', authMiddleware, async (req, res) => {
+  const rows = await dbAll(`
+    SELECT c.id, c.name, c.about, c.avatar, c.created_by, c.settings
+    FROM chats c
+    JOIN chat_participants cp ON cp.chat_id = c.id
+    WHERE cp.user_id = ? AND c.type = 'group'
+    ORDER BY c.name
+  `, req.user.id)
+  const groups = rows.map(r => ({
+    id: r.id,
+    name: r.name,
+    about: r.about,
+    avatar: resolveMediaUrl(req, r.avatar),
+    createdBy: r.created_by,
+    settings: tryParseJson(r.settings, {}),
+    isLinked: !!(tryParseJson(r.settings, {}).linkedChannelId),
+  }))
+  res.json({ groups })
+})
+
+app.patch('/api/channels/:id/link-group', authMiddleware, async (req, res) => {
+  const { id } = req.params
+  const { groupId } = req.body
+  const chat = await dbGet('SELECT id, created_by, settings FROM chats WHERE id = ? AND type = \'channel\'', id)
+  if (!chat) return res.status(404).json({ error: 'Канал не найден' })
+  if (chat.created_by !== req.user.id) return res.status(403).json({ error: 'Нет доступа' })
+
+  let settings = tryParseJson(chat.settings, {})
+  settings.linkedChatId = groupId || null
+  await dbRun('UPDATE chats SET settings = ? WHERE id = ?', JSON.stringify(settings), id)
+
+  if (groupId) {
+    let groupSettings = {}
+    const group = await dbGet('SELECT settings FROM chats WHERE id = ?', groupId)
+    if (group) groupSettings = tryParseJson(group.settings, {})
+    groupSettings.linkedChannelId = id
+    await dbRun('UPDATE chats SET settings = ? WHERE id = ?', JSON.stringify(groupSettings), groupId)
+  }
+
+  res.json({ ok: true, settings })
 })
 
 // ─── Uploads ───
+
+function tryParseJson(str, fallback) {
+  try { return JSON.parse(str) } catch { return fallback }
+}
 
 function fullUrl(req, path) {
   if (PUBLIC_URL) return `${PUBLIC_URL.replace(/\/$/, '')}${path}`
@@ -1461,6 +1508,17 @@ app.patch('/api/users/avatar', authMiddleware, async (req, res) => {
   const { avatar } = req.body
   await dbRun('UPDATE users SET avatar = ? WHERE id = ?', avatar || null, req.user.id)
   res.json({ avatar })
+})
+
+app.post('/api/chats/:chatId/avatar', authMiddleware, upload.single('avatar'), async (req, res) => {
+  const { chatId } = req.params
+  if (!req.file) return res.status(400).json({ error: 'Файл не загружен' })
+  const chat = await dbGet('SELECT id, created_by FROM chats WHERE id = ?', chatId)
+  if (!chat) return res.status(404).json({ error: 'Чат не найден' })
+  if (chat.created_by !== req.user.id) return res.status(403).json({ error: 'Нет доступа' })
+  const url = fullUrl(req, `/uploads/${req.file.filename}`)
+  await dbRun('UPDATE chats SET avatar = ? WHERE id = ?', url, chatId)
+  res.json({ avatar: url })
 })
 
 // ─── Music Distribution ───

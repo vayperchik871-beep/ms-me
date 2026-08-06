@@ -17,8 +17,16 @@ struct GiftAnimationView: View {
                     Circle()
                         .fill(Color(hex: rarityColors[gift.rarity] ?? "#8e8e93").opacity(0.3))
                         .frame(width: 100, height: 100)
-                    Text(gift.icon)
-                        .font(.system(size: 60))
+                    if let img = gift.imageName {
+                        Image(img)
+                            .resizable()
+                            .scaledToFill()
+                            .frame(width: 94, height: 94)
+                            .clipShape(Circle())
+                    } else {
+                        Text(gift.icon)
+                            .font(.system(size: 60))
+                    }
                 }
 
                 Text(gift.name)
