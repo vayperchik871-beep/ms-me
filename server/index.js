@@ -229,6 +229,7 @@ async function formatMessage(msgId, viewerId) {
     reactions,
     attachment,
     read,
+    channelPostId: m.channel_post_id || null,
   }
 }
 
@@ -1807,6 +1808,7 @@ app.get('/api/chats/:chatId/messages', authMiddleware, async (req, res) => {
       reactions: reactionsMap.get(m.id) || [],
       attachment,
       read,
+      channelPostId: m.channel_post_id || null,
     }
   })
   res.json({ messages })
@@ -1849,8 +1851,8 @@ app.post('/api/chats/:chatId/messages', authMiddleware, async (req, res) => {
         const fwdAttach = attachment
         const fwdNow = Date.now()
         await dbRun(
-          'INSERT INTO messages (id, chat_id, sender_id, content_enc, content_iv, content_tag, attachment, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
-          fwdId, linkedChatId, req.user.id, fwdEnc.content_enc, fwdEnc.content_iv, fwdEnc.content_tag, fwdAttach, fwdNow
+          'INSERT INTO messages (id, chat_id, sender_id, content_enc, content_iv, content_tag, attachment, channel_post_id, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+          fwdId, linkedChatId, req.user.id, fwdEnc.content_enc, fwdEnc.content_iv, fwdEnc.content_tag, fwdAttach, msgId, fwdNow
         )
         if (settings.pinPosts) {
           await dbRun('UPDATE messages SET pinned = 1 WHERE id = ?', fwdId)
@@ -1879,6 +1881,80 @@ app.post('/api/chats/:chatId/messages', authMiddleware, async (req, res) => {
   }
 
   res.json({ message })
+})
+
+// Get comments (replies in discussion group) for a channel post
+app.get('/api/channels/:channelId/comments/:postId', authMiddleware, async (req, res) => {
+  const { channelId, postId } = req.params
+  const chat = await dbGet('SELECT id, settings FROM chats WHERE id = ?', channelId)
+  if (!chat) return res.status(404).json({ error: 'Канал не найден' })
+  const settings = tryParseJson(chat.settings, {})
+  const linkedChatId = settings.linkedChatId
+  if (!linkedChatId) return res.json({ comments: [] })
+
+  // Find the forwarded message in discussion group (channel_post_id = postId)
+  const fwdMsg = await dbGet(
+    'SELECT id FROM messages WHERE chat_id = ? AND channel_post_id = ? AND deleted = 0',
+    linkedChatId, postId
+  )
+  if (!fwdMsg) return res.json({ comments: [] })
+
+  // Get replies to the forwarded message
+  const rows = await dbAll(
+    'SELECT * FROM messages WHERE chat_id = ? AND reply_to = ? AND deleted = 0 ORDER BY created_at ASC',
+    linkedChatId, fwdMsg.id
+  )
+  const senderIds = [...new Set(rows.map(m => m.sender_id))]
+  const senders = senderIds.length > 0 ? await dbAll(
+    `SELECT id, user_id, name FROM users WHERE id IN (${senderIds.map(() => '?').join(',')})`,
+    ...senderIds
+  ) : []
+  const senderMap = new Map(senders.map(s => [s.id, s]))
+
+  const comments = rows.map(m => {
+    const sender = senderMap.get(m.sender_id)
+    return {
+      id: m.id,
+      senderId: m.sender_id,
+      senderUserId: sender?.user_id,
+      senderName: sender?.name,
+      text: decrypt(m.content_enc, m.content_iv, m.content_tag),
+      time: formatTime(m.created_at),
+      createdAt: m.created_at,
+    }
+  })
+  res.json({ comments })
+})
+
+// Get comment counts for all posts in a channel
+app.get('/api/channels/:channelId/comment-counts', authMiddleware, async (req, res) => {
+  const { channelId } = req.params
+  const chat = await dbGet('SELECT id, settings FROM chats WHERE id = ?', channelId)
+  if (!chat) return res.status(404).json({ error: 'Канал не найден' })
+  const settings = tryParseJson(chat.settings, {})
+  const linkedChatId = settings.linkedChatId
+  if (!linkedChatId) return res.json({ counts: {} })
+
+  // Get all forwarded messages in the discussion group
+  const fwdRows = await dbAll(
+    'SELECT id, channel_post_id FROM messages WHERE chat_id = ? AND channel_post_id IS NOT NULL AND deleted = 0',
+    linkedChatId
+  )
+  const fwdIds = fwdRows.map(r => r.id)
+  const fwdMap = new Map(fwdRows.map(r => [r.channel_post_id, r.id]))
+
+  if (fwdIds.length === 0) return res.json({ counts: {} })
+
+  // Count replies for each forwarded message
+  const counts = {}
+  for (const fwd of fwdRows) {
+    const result = await dbGet(
+      'SELECT COUNT(*) as cnt FROM messages WHERE chat_id = ? AND reply_to = ? AND deleted = 0',
+      linkedChatId, fwd.id
+    )
+    counts[fwd.channel_post_id] = result?.cnt || 0
+  }
+  res.json({ counts })
 })
 
 app.patch('/api/messages/:id', authMiddleware, async (req, res) => {
