@@ -1215,9 +1215,9 @@ app.get('/api/users/search', authMiddleware, async (req, res) => {
 
   const users = await dbAll(`
     SELECT id, user_id, name, phone, avatar FROM users
-    WHERE (user_id LIKE ? OR phone LIKE ?) AND is_system = 0 AND id != ?
+    WHERE (user_id LIKE ? OR name LIKE ?) AND is_system = 0
     LIMIT 20
-  `, `${q}%`, `${q}%`, req.user.id)
+  `, `%${q}%`, `%${q}%`)
 
   res.json({ users: users.map((u) => ({ id: u.id, userId: u.user_id, name: u.name, phone: u.phone, avatar: resolveMediaUrl(req, u.avatar) })) })
 })
