@@ -214,14 +214,14 @@ async function formatMessage(msgId, viewerId) {
     }
   }
   return {
-    id: m.id,
-    chatId: m.chat_id,
-    senderId: m.sender_id,
+    id: String(m.id),
+    chatId: String(m.chat_id),
+    senderId: String(m.sender_id),
     senderUserId: sender?.user_id,
     senderName: sender?.name,
     text: decrypt(m.content_enc, m.content_iv, m.content_tag),
-    replyTo: m.reply_to,
-    reply,
+    replyTo: m.reply_to ? String(m.reply_to) : null,
+    reply: reply ? { ...reply, id: String(reply.id) } : null,
     pinned: !!m.pinned,
     edited: !!m.edited_at,
     time: formatTime(m.created_at),
