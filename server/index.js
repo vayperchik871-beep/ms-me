@@ -9,7 +9,7 @@ import http from 'http'
 import path from 'path'
 import fs from 'fs'
 import { fileURLToPath } from 'url'
-import { dbGet, dbAll, dbRun, dbExec, SYSTEM_BOT, AI_ASSISTANT } from './db.js'
+import { dbGet, dbAll, dbRun, dbExec, SYSTEM_BOT } from './db.js'
 import multer from 'multer'
 import { encrypt, decrypt, generateCode, hashDevice } from './crypto.js'
 import { OAuth2Client } from 'google-auth-library'
@@ -349,18 +349,13 @@ app.post('/api/auth/register', async (req, res) => {
   // Create chats in parallel (no extra SELECTs - fresh user, chats don't exist yet)
   const token = await createToken(id, devId)
   const sysChatId = uuidv4()
-  const aiChatId = uuidv4()
   await Promise.all([
     dbRun('INSERT INTO chats (id, type, created_at) VALUES (?, ?, ?)', sysChatId, 'direct', now),
-    dbRun('INSERT INTO chats (id, type, created_at) VALUES (?, ?, ?)', aiChatId, 'direct', now),
     dbRun('INSERT INTO chat_participants (chat_id, user_id) VALUES (?, ?)', sysChatId, id),
     dbRun('INSERT INTO chat_participants (chat_id, user_id) VALUES (?, ?)', sysChatId, SYSTEM_BOT.id),
-    dbRun('INSERT INTO chat_participants (chat_id, user_id) VALUES (?, ?)', aiChatId, id),
-    dbRun('INSERT INTO chat_participants (chat_id, user_id) VALUES (?, ?)', aiChatId, AI_ASSISTANT.id),
   ])
   await sendBotMessage(id, `Добро пожаловать в MS Messenger, ${name.trim()}!\n\nВаш ID: @${cleanId}\nНомер: ${phone || 'не указан'}\n\nДругие пользователи могут найти вас по ID или номеру.`, sysChatId)
   await sendBotMessage(id, `Политика конфиденциальности обновилась. Ознакомиться с ней можно в настройках приложения.`, sysChatId)
-  await sendAiMessage(aiChatId, AI_ASSISTANT.id, id, `Привет! Я MSM Assistant — твой AI-помощник. Спрашивай что угодно о мессенджере, функциях или настройках.\n\nДоступные модели: Lite (всегда) и Pro (Premium). Выбрать можно в шапке чата.`)
 
   res.json({
     token,
@@ -1867,20 +1862,6 @@ app.post('/api/chats/:chatId/messages', authMiddleware, async (req, res) => {
   }
 
   // AI Assistant auto-reply
-  if (chatRow && chatRow.type === 'direct') {
-    const otherParticipant = await dbGet(
-      'SELECT user_id FROM chat_participants WHERE chat_id = ? AND user_id != ?',
-      req.params.chatId, req.user.id
-    )
-    if (otherParticipant && (otherParticipant.user_id === AI_ASSISTANT.id || otherParticipant.user_id === AI_ASSISTANT.user_id)) {
-      // Don't reply to empty/attachment-only messages
-      if (text?.trim()) {
-        const aiResponse = await callAiApi(content, req.user.id)
-        await sendAiMessage(req.params.chatId, AI_ASSISTANT.id, req.user.id, aiResponse)
-      }
-    }
-  }
-
   res.json({ message })
 })
 

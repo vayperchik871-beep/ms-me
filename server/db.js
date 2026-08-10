@@ -346,29 +346,19 @@ const SYSTEM_BOT = {
   user_id: 'ms-messenger',
   name: 'MS-Мессенджер',
   is_system: 1,
+  avatar: '/logo.png',
 }
 
 const existingBot = await dbGet('SELECT id FROM users WHERE user_id = ?', SYSTEM_BOT.user_id)
 if (!existingBot) {
   await dbRun(
-    'INSERT INTO users (id, user_id, name, password_hash, is_system, created_at) VALUES (?, ?, ?, ?, ?, ?)',
-    SYSTEM_BOT.id, SYSTEM_BOT.user_id, SYSTEM_BOT.name, '', 1, Date.now()
+    'INSERT INTO users (id, user_id, name, avatar, password_hash, is_system, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)',
+    SYSTEM_BOT.id, SYSTEM_BOT.user_id, SYSTEM_BOT.name, SYSTEM_BOT.avatar, '', 1, Date.now()
   )
+} else {
+  await dbRun('UPDATE users SET avatar = ? WHERE user_id = ? AND (avatar IS NULL OR avatar = \'\')', SYSTEM_BOT.avatar, SYSTEM_BOT.user_id)
 }
 
-const AI_ASSISTANT = {
-  id: 'ai-msm-assistant',
-  user_id: 'msm-assistant-bot',
-  name: 'MSM Assistant',
-  is_system: 1,
-}
 
-const existingAi = await dbGet('SELECT id FROM users WHERE user_id = ?', AI_ASSISTANT.user_id)
-if (!existingAi) {
-  await dbRun(
-    'INSERT INTO users (id, user_id, name, password_hash, is_system, created_at) VALUES (?, ?, ?, ?, ?, ?)',
-    AI_ASSISTANT.id, AI_ASSISTANT.user_id, AI_ASSISTANT.name, '', 1, Date.now()
-  )
-}
 
-export { dbGet, dbAll, dbRun, dbExec, SYSTEM_BOT, AI_ASSISTANT }
+export { dbGet, dbAll, dbRun, dbExec, SYSTEM_BOT }
