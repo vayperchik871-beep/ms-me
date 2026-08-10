@@ -1224,7 +1224,7 @@ app.get('/api/users/search', authMiddleware, async (req, res) => {
 
 app.get('/api/users/:userId', authMiddleware, async (req, res) => {
   const cleanId = sanitizeUserId(req.params.userId)
-  const user = await dbGet('SELECT id, user_id, name, is_system, avatar, birthday, gender, profile_color, profile_banner, subscription_plan, subscription_until, is_verified, verify_type, music FROM users WHERE user_id = ?', cleanId)
+  const user = await dbGet('SELECT id, user_id, name, is_system, avatar, phone, bio, birthday, gender, profile_color, profile_banner, subscription_plan, subscription_until, is_verified, verify_type, music FROM users WHERE user_id = ?', cleanId)
   if (!user) return res.status(404).json({ error: 'Не найден' })
   const mutual = await dbAll(`
     SELECT cp.chat_id FROM chat_participants cp
@@ -1236,7 +1236,8 @@ app.get('/api/users/:userId', authMiddleware, async (req, res) => {
   res.json({
     user: {
       id: user.id, userId: user.user_id, name: user.name, isSystem: !!user.is_system,
-      avatar: resolveMediaUrl(req, user.avatar), birthday: user.birthday, gender: user.gender,
+      avatar: resolveMediaUrl(req, user.avatar), phone: user.phone || null, bio: user.bio || null,
+      birthday: user.birthday, gender: user.gender,
       profileColor: user.profile_color, banner: resolveMediaUrl(req, user.profile_banner),
       verified: !!user.is_verified, verifyType: user.verify_type,
       plus: hasPlus,
