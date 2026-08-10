@@ -343,7 +343,7 @@ try { await dbExec('ALTER TABLE messages ADD COLUMN channel_post_id TEXT DEFAULT
 
 const SYSTEM_BOT = {
   id: 'system-ms-messenger',
-  user_id: 'ms-messenger',
+  user_id: 'msmessenger',
   name: 'MS-Мессенджер',
   is_system: 1,
   avatar: '/logo.png',

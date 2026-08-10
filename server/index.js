@@ -1235,6 +1235,8 @@ app.get('/api/users/:userId', authMiddleware, async (req, res) => {
       birthday: user.birthday, gender: user.gender,
       profileColor: user.profile_color, banner: resolveMediaUrl(req, user.profile_banner),
       verified: !!user.is_verified, verifyType: user.verify_type,
+      isOnline: isUserOnline(user.id),
+      lastSeen: null,
       plus: hasPlus,
       music: user.music || null,
     },
