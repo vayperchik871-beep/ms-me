@@ -349,14 +349,17 @@ const SYSTEM_BOT = {
   avatar: '/logo.png',
 }
 
-const existingBot = await dbGet('SELECT id FROM users WHERE user_id = ?', SYSTEM_BOT.user_id)
+const existingBot = await dbGet('SELECT id, user_id FROM users WHERE id = ? OR user_id = ?', SYSTEM_BOT.id, SYSTEM_BOT.user_id)
 if (!existingBot) {
   await dbRun(
     'INSERT INTO users (id, user_id, name, avatar, password_hash, is_system, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)',
     SYSTEM_BOT.id, SYSTEM_BOT.user_id, SYSTEM_BOT.name, SYSTEM_BOT.avatar, '', 1, Date.now()
   )
 } else {
-  await dbRun('UPDATE users SET avatar = ? WHERE user_id = ? AND (avatar IS NULL OR avatar = \'\')', SYSTEM_BOT.avatar, SYSTEM_BOT.user_id)
+  if (existingBot.user_id !== SYSTEM_BOT.user_id) {
+    await dbRun('UPDATE users SET user_id = ? WHERE id = ?', SYSTEM_BOT.user_id, SYSTEM_BOT.id)
+  }
+  await dbRun('UPDATE users SET avatar = ?, name = ?, is_system = 1 WHERE id = ?', SYSTEM_BOT.avatar, SYSTEM_BOT.name, SYSTEM_BOT.id)
 }
 
 
