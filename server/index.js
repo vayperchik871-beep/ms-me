@@ -2104,6 +2104,18 @@ app.post('/api/mcoins/earn', authMiddleware, async (req, res) => {
   res.json({ earned, mcoins: row?.mcoins || 0 })
 })
 
+app.post('/api/mcoins/promo', authMiddleware, async (req, res) => {
+  const { code } = req.body
+  if (!code || typeof code !== 'string') return res.status(400).json({ error: 'Введите промокод' })
+  const promo = await dbGet('SELECT * FROM promo_codes WHERE code = ?', code.trim().toUpperCase())
+  if (!promo) return res.status(404).json({ error: 'Промокод не найден' })
+  if (promo.uses >= promo.max_uses) return res.status(400).json({ error: 'Промокод уже использован' })
+  await dbRun('UPDATE promo_codes SET uses = uses + 1 WHERE code = ?', promo.code)
+  await dbRun('UPDATE users SET mcoins = mcoins + ? WHERE id = ?', promo.mcoins, req.user.id)
+  const row = await dbGet('SELECT mcoins FROM users WHERE id = ?', req.user.id)
+  res.json({ earned: promo.mcoins, mcoins: row?.mcoins || 0 })
+})
+
 // ─── Subscriptions (Plus/Premium) ───
 
 function formatSubscription(user) {

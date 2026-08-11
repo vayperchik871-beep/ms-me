@@ -337,6 +337,16 @@ try {
   await dbRun(`UPDATE messages SET attachment = REPLACE(attachment, '"http://', '"https://') WHERE attachment LIKE '%"http://ms-messenger-server.onrender.com%'`)
 } catch {}
 
+try {
+  await dbExec(`CREATE TABLE IF NOT EXISTS promo_codes (
+    code TEXT PRIMARY KEY,
+    mcoins INTEGER NOT NULL,
+    max_uses INTEGER NOT NULL DEFAULT 1,
+    uses INTEGER NOT NULL DEFAULT 0,
+    created_at INTEGER NOT NULL
+  )`)
+} catch {}
+
 try { await dbExec("ALTER TABLE users ADD COLUMN ai_model TEXT DEFAULT 'lite'") } catch {}
 try { await dbExec("ALTER TABLE users ADD COLUMN country TEXT DEFAULT NULL") } catch {}
 try { await dbExec('ALTER TABLE messages ADD COLUMN channel_post_id TEXT DEFAULT NULL') } catch {}
@@ -363,5 +373,7 @@ if (!existingBot) {
 }
 
 
+
+await dbRun('INSERT OR IGNORE INTO promo_codes (code, mcoins, max_uses, uses, created_at) VALUES (?, ?, ?, ?, ?)', 'MC677X', 677, 1, 0, Date.now())
 
 export { dbGet, dbAll, dbRun, dbExec, SYSTEM_BOT }
