@@ -375,6 +375,6 @@ if (!existingBot) {
 
 
 await dbRun('INSERT OR IGNORE INTO promo_codes (code, mcoins, max_uses, uses, created_at) VALUES (?, ?, ?, ?, ?)', 'MC677X', 677, 1, 0, Date.now())
-await dbRun('INSERT OR IGNORE INTO promo_codes (code, mcoins, max_uses, uses, created_at) VALUES (?, ?, ?, ?, ?)', 'MAKS', 500, 1, 0, Date.now())
+await dbRun('INSERT OR IGNORE INTO promo_codes (code, mcoins, max_uses, uses, created_at) VALUES (?, ?, ?, ?, ?)', 'MAKS67', 500, 1, 0, Date.now())
 
 export { dbGet, dbAll, dbRun, dbExec, SYSTEM_BOT }
