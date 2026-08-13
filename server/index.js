@@ -2059,7 +2059,24 @@ app.post('/api/gifts/send', authMiddleware, async (req, res) => {
   await dbRun('INSERT INTO user_gifts (id, user_id, gift_id, sender_id, message, created_at) VALUES (?, ?, ?, ?, ?, ?)',
     id, recipient.id, giftId, req.user.id, message || null, Date.now()
   )
-  res.json({ gift: { id, gift, sender: { userId: sender.user_id, name: sender.name }, message, createdAt: Date.now() }, mcoins: (sender.mcoins || 0) - gift.price })
+
+  let chatMessage = null
+  try {
+    const chatId = await getOrCreateDirectChat(req.user.id, recipient.id)
+    const msgId = uuidv4()
+    const enc = encrypt((message || '').trim() || '🎁')
+    const attachment = JSON.stringify({ type: 'gift', url: giftId, name: sender.name, message: message || null })
+    await dbRun(`
+      INSERT INTO messages (id, chat_id, sender_id, content_enc, content_iv, content_tag, attachment, created_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    `, msgId, chatId, req.user.id, enc.content_enc, enc.content_iv, enc.content_tag, attachment, Date.now())
+    chatMessage = await formatMessage(msgId, req.user.id)
+    await broadcastToChat(chatId, { type: 'new_message', chatId, message: chatMessage }, req.user.id)
+  } catch (e) {
+    console.error('Gift chat message failed:', e.message)
+  }
+
+  res.json({ gift: { id, gift, sender: { userId: sender.user_id, name: sender.name }, message, createdAt: Date.now() }, chatMessage, mcoins: (sender.mcoins || 0) - gift.price })
 })
 
 app.get('/api/users/:userId/gifts', authMiddleware, async (req, res) => {
