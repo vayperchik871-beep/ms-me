@@ -321,6 +321,11 @@ const GIFTS = [
   { id: 'candle', emoji: '🕯️', title: 'Свеча', price: 5 },
   { id: 'hibiscus', emoji: '🌺', title: 'Гибискус', price: 10 },
   { id: 'ribbon', emoji: '🎀', title: 'Лента', price: 5 },
+  { id: 'mango', emoji: '🥭', title: 'Манго', price: 50 },
+  { id: 'parrot', emoji: '🦜', title: 'Попугай', price: 65 },
+  { id: 'rainbow_flag', emoji: '🌈', title: 'Радуга', price: 35 },
+  { id: 'moai', emoji: '🗿', title: 'Моаи', price: 25 },
+  { id: 'distorted_face', emoji: '🤪', title: 'Морда', price: 67 },
 ]
 for (const g of GIFTS) {
   try { await dbRun('INSERT OR REPLACE INTO gifts (id, emoji, title, price) VALUES (?, ?, ?, ?)', g.id, g.emoji, g.title, g.price) } catch {}
