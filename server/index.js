@@ -1086,6 +1086,23 @@ app.post('/api/admin/command', authMiddleware, adminMiddleware, async (req, res)
         await dbRun('UPDATE verification_requests SET status = ?, reviewed_at = ?, reviewed_by = ? WHERE id = ?', 'rejected', Date.now(), req.user.id, id)
         return res.json(say(`Заявка #${id} отклонена`))
       }
+      case 'setverify': {
+        const id = args[0]
+        const type = args[1] || 'msm'
+        if (!id) return res.json(say('Укажите userId: setverify <id> [msm|dev]'))
+        const u = await dbGet('SELECT id, user_id FROM users WHERE user_id = ?', [id])
+        if (!u) return res.json(say('Пользователь не найден'))
+        await dbRun('UPDATE users SET is_verified = 1, verify_type = ? WHERE id = ?', type, u.id)
+        return res.json(say(`@${id} получил галочку (${type})`))
+      }
+      case 'unverify': {
+        const id = args[0]
+        if (!id) return res.json(say('Укажите userId: unverify <id>'))
+        const u = await dbGet('SELECT id, user_id FROM users WHERE user_id = ?', [id])
+        if (!u) return res.json(say('Пользователь не найден'))
+        await dbRun('UPDATE users SET is_verified = 0, verify_type = NULL WHERE id = ?', u.id)
+        return res.json(say(`@${id} галочка снята`))
+      }
       case 'music': {
         const rows = await dbAll(`SELECT mt.*, u.user_id as submitter FROM music_tracks mt LEFT JOIN users u ON u.id = mt.user_id WHERE mt.status = 'moderation' ORDER BY mt.created_at DESC`)
         if (rows.length === 0) return res.json(say('Нет треков на модерации'))
