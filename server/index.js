@@ -460,12 +460,14 @@ app.post('/api/auth/verify-device', async (req, res) => {
 })
 
 app.get('/api/auth/me', authMiddleware, async (req, res) => {
-  const u = await dbGet('SELECT id, user_id, name, phone, bio, is_system, avatar, birthday, gender, profile_color, mcoins, subscription_plan, subscription_until, ai_model, music FROM users WHERE id = ?', req.user.id)
+  const u = await dbGet('SELECT id, user_id, name, phone, bio, is_system, avatar, birthday, gender, profile_color, mcoins, subscription_plan, subscription_until, ai_model, music, is_verified, verify_type FROM users WHERE id = ?', req.user.id)
   const extra = await dbGet('SELECT is_admin, banned FROM users WHERE id = ?', req.user.id)
   res.json({ user: {
     ...serializeUser(u, { req, extra }),
     subscriptionPlan: u?.subscription_plan || null,
     subscriptionUntil: u?.subscription_until || null,
+    verified: !!u?.is_verified,
+    verifyType: u?.verify_type || 'msm',
   } })
 })
 
