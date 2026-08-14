@@ -4,6 +4,8 @@ import com.ms.messenger.models.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.MultipartBody
@@ -22,6 +24,7 @@ object ApiClient {
     val json = Json {
         ignoreUnknownKeys = true
         explicitNulls = false
+        coerceInputValues = true
     }
 
     private val client = OkHttpClient.Builder()
@@ -144,9 +147,10 @@ object ApiClient {
     suspend fun getMessages(chatId: String): MessagesResponse =
         execute(buildRequest("/chats/$chatId/messages"), MessagesResponse.serializer())
 
-    suspend fun sendMessage(chatId: String, text: String, replyTo: String? = null): Message {
+    suspend fun sendMessage(chatId: String, text: String, replyTo: String? = null, attachment: Map<String, String>? = null): Message {
         val body = mutableMapOf<String, Any>("text" to text)
         replyTo?.let { body["replyTo"] = it }
+        attachment?.let { body["attachment"] = it }
         val resp = execute(buildRequest("/chats/$chatId/messages", "POST", body), SendMessageResponse.serializer())
         return resp.message ?: throw ApiException(500, "Нет сообщения в ответе")
     }
@@ -157,6 +161,10 @@ object ApiClient {
 
     suspend fun deleteMessage(id: String) {
         execute(buildRequest("/messages/$id", "DELETE"), EmptyResponse.serializer())
+    }
+
+    suspend fun reportMessage(id: String) {
+        execute(buildRequest("/messages/$id/report", "POST"), EmptyResponse.serializer())
     }
 
     suspend fun reactMessage(id: String, emoji: String) {
@@ -200,6 +208,22 @@ object ApiClient {
         )
     }
 
+    suspend fun getChannelCommentCounts(channelId: String): Map<String, Int> {
+        val resp = execute(
+            buildRequest("/channels/$channelId/comment-counts"),
+            CommentCountsResponse.serializer()
+        )
+        return resp.counts
+    }
+
+    suspend fun getChannelPostComments(channelId: String, postId: String): List<ChannelPostComment> {
+        val resp = execute(
+            buildRequest("/channels/$channelId/comments/$postId"),
+            ChannelCommentsResponse.serializer()
+        )
+        return resp.comments
+    }
+
     suspend fun toggleFavorite(id: String) {
         execute(buildRequest("/messages/$id/favorite", "POST"), EmptyResponse.serializer())
     }
@@ -220,6 +244,10 @@ object ApiClient {
 
     suspend fun updateProfile(body: Map<String, Any?>): UserResponse =
         execute(buildRequest("/user/profile", "PATCH", body), UserResponse.serializer())
+
+    suspend fun deleteAccount() {
+        execute(buildRequest("/user/delete", "DELETE"), EmptyResponse.serializer())
+    }
 
     suspend fun checkUserId(id: String): CheckIdResponse =
         execute(buildRequest("/users/check-id/$id"), CheckIdResponse.serializer())
@@ -242,12 +270,26 @@ object ApiClient {
     suspend fun getMCoins(): MCoinsResponse =
         execute(buildRequest("/user/mcoins"), MCoinsResponse.serializer())
 
+    suspend fun redeemPromoCode(code: String): PromoCodeResponse {
+        val body = mapOf("code" to code)
+        return execute(buildRequest("/mcoins/promo", "POST", body), PromoCodeResponse.serializer())
+    }
+
     // ─── Uploads ───
 
-    suspend fun uploadAvatar(imageData: ByteArray): String = withContext(Dispatchers.IO) {
+    suspend fun uploadAvatar(imageData: ByteArray, mimeType: String = "image/jpeg"): String = withContext(Dispatchers.IO) {
+        val ext = when {
+            mimeType.contains("mp4") -> "mp4"
+            mimeType.contains("webm") -> "webm"
+            mimeType.contains("mov") -> "mov"
+            mimeType.contains("gif") -> "gif"
+            mimeType.contains("png") -> "png"
+            mimeType.contains("webp") -> "webp"
+            else -> "jpg"
+        }
         val body = MultipartBody.Builder()
             .setType(MultipartBody.FORM)
-            .addFormDataPart("avatar", "avatar.jpg", imageData.toRequestBody("image/jpeg".toMediaType()))
+            .addFormDataPart("avatar", "avatar.$ext", imageData.toRequestBody(mimeType.toMediaType()))
             .build()
         val request = Request.Builder()
             .url("$BASE_URL/upload/avatar")
@@ -265,6 +307,45 @@ object ApiClient {
         }
     }
 
+    suspend fun uploadAttachment(data: ByteArray, mimeType: String): Map<String, String> = withContext(Dispatchers.IO) {
+        val ext = when {
+            mimeType.contains("mp4") -> "mp4"
+            mimeType.contains("webm") -> "webm"
+            mimeType.contains("mov") -> "mov"
+            mimeType.contains("png") -> "png"
+            mimeType.contains("webp") -> "webp"
+            mimeType.contains("ogg") -> "ogg"
+            mimeType.contains("aac") -> "aac"
+            mimeType.contains("wav") -> "wav"
+            else -> "jpg"
+        }
+        val type = when {
+            mimeType.startsWith("image/") -> "image"
+            mimeType.startsWith("video/") -> "video"
+            mimeType.startsWith("audio/") -> "voice"
+            else -> "file"
+        }
+        val body = MultipartBody.Builder()
+            .setType(MultipartBody.FORM)
+            .addFormDataPart("file", "file.$ext", data.toRequestBody(mimeType.toMediaType()))
+            .build()
+        val request = Request.Builder()
+            .url("$BASE_URL/upload/attachment")
+            .post(body)
+            .apply { token?.let { header("Authorization", "Bearer $it") } }
+            .build()
+        client.newCall(request).execute().use { resp ->
+            val bodyStr = resp.body?.string().orEmpty()
+            if (!resp.isSuccessful) {
+                val err = try { json.decodeFromString(ErrorResponse.serializer(), bodyStr).error } catch (e: Exception) { null }
+                throw ApiException(resp.code, err ?: "Ошибка ${resp.code}")
+            }
+            try {
+                val obj = json.parseToJsonElement(bodyStr).jsonObject
+                mapOf("type" to (obj["type"]?.toString()?.trim('"') ?: type), "url" to (obj["url"]?.toString()?.trim('"') ?: ""))
+            } catch (e: Exception) { throw ApiException(500, "Ошибка данных") }
+        }
+    }
     suspend fun uploadChatAvatar(chatId: String, imageData: ByteArray): String = withContext(Dispatchers.IO) {
         val body = MultipartBody.Builder()
             .setType(MultipartBody.FORM)

@@ -1984,6 +1984,14 @@ app.delete('/api/messages/:id', authMiddleware, async (req, res) => {
   res.json({ ok: true })
 })
 
+app.post('/api/messages/:id/report', authMiddleware, async (req, res) => {
+  const msg = await dbGet('SELECT id FROM messages WHERE id = ?', req.params.id)
+  if (!msg) return res.status(404).json({ error: 'Сообщение не найдено' })
+  await dbRun('INSERT INTO reports (id, message_id, user_id, created_at) VALUES (?, ?, ?, ?)',
+    uuidv4(), req.params.id, req.user.id, Date.now())
+  res.json({ ok: true })
+})
+
 app.post('/api/messages/:id/pin', authMiddleware, async (req, res) => {
   const msg = await dbGet('SELECT * FROM messages WHERE id = ?', req.params.id)
   if (!msg) return res.status(404).json({ error: 'Не найдено' })

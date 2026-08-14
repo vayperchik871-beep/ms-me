@@ -217,6 +217,8 @@ try {
 
 try { await dbExec('CREATE TABLE IF NOT EXISTS gifts (id TEXT PRIMARY KEY, emoji TEXT NOT NULL, title TEXT NOT NULL, price INTEGER DEFAULT 10)') } catch {}
 
+try { await dbExec('CREATE TABLE IF NOT EXISTS reports (id TEXT PRIMARY KEY, message_id TEXT NOT NULL, user_id TEXT NOT NULL, created_at INTEGER NOT NULL)') } catch {}
+
 // Subscription system
 try { await dbExec('ALTER TABLE users ADD COLUMN subscription_plan TEXT DEFAULT NULL') } catch {}
 try { await dbExec("ALTER TABLE users ADD COLUMN platform TEXT DEFAULT 'web'") } catch {}
