@@ -24,7 +24,7 @@ import com.ms.messenger.ui.Avatar48
 import kotlinx.coroutines.launch
 
 @Composable
-fun ContactsScreen() {
+fun ContactsScreen(onOpenProfile: (String) -> Unit = {}) {
     val colors = AppColors.current()
     val scope = rememberCoroutineScope()
     var contacts by remember { mutableStateOf<List<User>>(emptyList()) }
@@ -105,20 +105,20 @@ fun ContactsScreen() {
             contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp)
         ) {
             items(list, key = { it.id }) { user ->
-                ContactRow(user, colors)
+                ContactRow(user, colors, onProfile = { onOpenProfile(user.userId) })
             }
         }
     }
 }
 
 @Composable
-fun ContactRow(user: User, colors: com.ms.messenger.theme.AppThemeColors) {
+fun ContactRow(user: User, colors: com.ms.messenger.theme.AppThemeColors, onProfile: () -> Unit = {}) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .padding(vertical = 4.dp)
             .clip(RoundedCornerShape(16.dp))
-            .clickable { }
+            .clickable { onProfile() }
             .padding(vertical = 8.dp, horizontal = 12.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {

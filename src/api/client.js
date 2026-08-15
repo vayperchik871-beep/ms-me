@@ -142,6 +142,12 @@ export const api = {
   uploadAttachment: (file, duration) => upload('/upload/attachment', 'file', file, duration ? { duration } : {}),
   updateAvatar: (url) => request('/users/avatar', { method: 'PATCH', body: JSON.stringify({ avatar: url }) }),
 
+  // Gifts
+  getGifts: () => request('/gifts'),
+  sendGift: (userId, giftId, message) =>
+    request('/gifts/send', { method: 'POST', body: JSON.stringify({ userId, giftId, message }) }),
+  getUserGifts: (userId) => request(`/users/${userId}/gifts`),
+
   // Admin
   adminStats: () => request('/admin/stats'),
   adminUsers: () => request('/admin/users'),

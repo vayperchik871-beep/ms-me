@@ -64,6 +64,8 @@ data class Attachment(
     val name: String? = null,
     val size: Long? = null,
     val duration: Int? = null,
+    val message: String? = null,
+    @SerialName("senderName") val senderName: String? = null,
 )
 
 @Serializable
@@ -89,6 +91,8 @@ data class Message(
     val reactions: List<Reaction> = emptyList(),
     val attachment: Attachment? = null,
     val read: Boolean = false,
+    @SerialName("channelPostId") val channelPostId: String? = null,
+    @SerialName("commentCount") val commentCount: Int = 0,
 )
 
 @Serializable
@@ -104,10 +108,26 @@ data class UserResponse(val user: User)
 data class UsersResponse(val users: List<User>)
 
 @Serializable
-data class AddContactResponse(val ok: Boolean = true, val userId: String? = null)
+data class AddContactResponse(val ok: Boolean = true, val userId: String? = null, val chatId: String? = null)
 
 @Serializable
 data class ErrorResponse(val error: String = "")
+
+@Serializable
+data class ChannelPostComment(
+    val id: String,
+    @SerialName("senderId") val senderId: String,
+    @SerialName("senderName") val senderName: String? = null,
+    val text: String = "",
+    val time: String = "",
+    @SerialName("createdAt") val createdAt: Long = 0,
+)
+
+@Serializable
+data class ChannelCommentsResponse(val comments: List<ChannelPostComment> = emptyList())
+
+@Serializable
+data class CommentCountsResponse(val counts: Map<String, Int> = emptyMap())
 
 @Serializable
 data class AuthResponse(

@@ -25,6 +25,10 @@ class SessionStore(context: Context) {
         get() = prefs.getString("myUserId", null)
         set(value) = prefs.edit().putString("myUserId", value).apply()
 
+    var myShortId: String?
+        get() = prefs.getString("myShortId", null)
+        set(value) = prefs.edit().putString("myShortId", value).apply()
+
     var themeMode: String
         get() = prefs.getString("theme_mode", "dark") ?: "dark"
         set(value) = prefs.edit().putString("theme_mode", value).apply()
@@ -40,6 +44,18 @@ class SessionStore(context: Context) {
     var myName: String?
         get() = prefs.getString("my_name", null)
         set(value) = prefs.edit().putString("my_name", value).apply()
+
+    var myPhone: String?
+        get() = prefs.getString("my_phone", null)
+        set(value) = prefs.edit().putString("my_phone", value).apply()
+
+    var myBio: String?
+        get() = prefs.getString("my_bio", null)
+        set(value) = prefs.edit().putString("my_bio", value).apply()
+
+    var language: String
+        get() = prefs.getString("language", "ru") ?: "ru"
+        set(value) = prefs.edit().putString("language", value).apply()
 
     var deviceId: String
         get() = prefs.getString("device_id", null) ?: generateDeviceId().also { deviceId = it }
@@ -63,6 +79,18 @@ class SessionStore(context: Context) {
         get() = true
         set(value) = prefs.edit().putBoolean("nav_settings", value).apply()
 
+    var is60fps: Boolean
+        get() = prefs.getBoolean("is_60fps", false)
+        set(value) = prefs.edit().putBoolean("is_60fps", value).apply()
+
+    var isLiteMode: Boolean
+        get() = prefs.getBoolean("is_lite_mode", false)
+        set(value) = prefs.edit().putBoolean("is_lite_mode", value).apply()
+
+    var mcoins: Int
+        get() = prefs.getInt("mcoins", 0)
+        set(value) = prefs.edit().putInt("mcoins", value).apply()
+
     fun logout() {
         prefs.edit().clear().apply()
         ApiClient.token = null
@@ -74,6 +102,7 @@ class SessionStore(context: Context) {
         ThemeManagerStore.accentHex = accentHex
         com.ms.messenger.theme.ThemeManager.themeMode = themeMode
         com.ms.messenger.theme.ThemeManager.accentHex = accentHex
+        com.ms.messenger.theme.ThemeManager.language = language
     }
 
     private fun generateDeviceId(): String {

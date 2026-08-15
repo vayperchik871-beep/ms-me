@@ -17,6 +17,7 @@ import com.ms.messenger.ui.auth.RegisterScreen
 import com.ms.messenger.ui.chats.ChatDetailScreen
 import com.ms.messenger.ui.main.MainTabsScreen
 import com.ms.messenger.ui.onboarding.WelcomeScreen
+import com.ms.messenger.ui.profile.ProfileScreen
 
 object Routes {
     const val WELCOME = "welcome"
@@ -24,7 +25,9 @@ object Routes {
     const val REGISTER = "register"
     const val MAIN = "main"
     const val CHAT = "chat/{chatId}"
+    const val PROFILE = "profile?userId={userId}"
     fun chat(chatId: String) = "chat/$chatId"
+    fun profile(userId: String? = null) = if (userId != null) "profile?userId=$userId" else "profile"
 }
 
 private val slideIn = slideInHorizontally(tween(300)) { it }
@@ -52,6 +55,9 @@ fun AppRoot(
                         onOpenChat = { chatId ->
                             navController.navigate(Routes.chat(chatId))
                         },
+                        onOpenProfile = { userId ->
+                            navController.navigate(Routes.profile(userId))
+                        },
                         onLogout = {
                             PrefsHolder.session.logout()
                             onSessionChanged(false)
@@ -68,6 +74,20 @@ fun AppRoot(
                     val chatId = backStackEntry.arguments?.getString("chatId") ?: ""
                     ChatDetailScreen(
                         chatId = chatId,
+                        onBack = { navController.popBackStack() },
+                        onOpenProfile = { userId -> navController.navigate(Routes.profile(userId)) }
+                    )
+                }
+                composable(
+                    Routes.PROFILE,
+                    enterTransition = { slideIn + fadeIn(tween(300)) },
+                    exitTransition = { slideOut + fadeOut(tween(200)) },
+                    popEnterTransition = { slideInPop + fadeIn(tween(300)) },
+                    popExitTransition = { slideOutPop + fadeOut(tween(200)) }
+                ) { backStackEntry ->
+                    val userId = backStackEntry.arguments?.getString("userId")
+                    ProfileScreen(
+                        userId = userId,
                         onBack = { navController.popBackStack() }
                     )
                 }

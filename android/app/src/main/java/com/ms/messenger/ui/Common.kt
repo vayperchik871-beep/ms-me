@@ -21,11 +21,14 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
+import coil.compose.SubcomposeAsyncImage
+import coil.request.ImageRequest
 import com.ms.messenger.theme.AppColors
 import com.ms.messenger.theme.parseHex
 
@@ -39,29 +42,51 @@ fun Avatar(
     fontSize: Int = 20,
 ) {
     val colors = AppColors.current()
+    val bgColor = parseHex(profileColor)
+    val letter = name?.trim()?.firstOrNull()?.uppercase() ?: "?"
     Box(
         modifier = modifier
             .size(size.dp)
             .clip(CircleShape)
             .background(
-                parseHex(profileColor) ?: colors.card
+                bgColor ?: colors.card
             )
     ) {
         if (avatarUrl.isNullOrBlank()) {
-            val letter = name?.trim()?.firstOrNull()?.uppercase() ?: "?"
             Text(
                 text = letter,
-                color = colors.accent,
+                color = if (bgColor != null) Color.White else colors.accent,
                 fontSize = fontSize.sp,
                 fontWeight = FontWeight.SemiBold,
                 modifier = Modifier.align(Alignment.Center)
             )
         } else {
-            AsyncImage(
-                model = avatarUrl,
+            SubcomposeAsyncImage(
+                model = ImageRequest.Builder(LocalContext.current)
+                    .data(avatarUrl)
+                    .size(size * 3)
+                    .build(),
                 contentDescription = null,
                 contentScale = ContentScale.Crop,
-                modifier = Modifier.fillMaxSize()
+                modifier = Modifier.fillMaxSize(),
+                loading = {
+                    Text(
+                        text = letter,
+                        color = if (bgColor != null) Color.White else colors.accent,
+                        fontSize = fontSize.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        modifier = Modifier.align(Alignment.Center)
+                    )
+                },
+                error = {
+                    Text(
+                        text = letter,
+                        color = if (bgColor != null) Color.White else colors.accent,
+                        fontSize = fontSize.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        modifier = Modifier.align(Alignment.Center)
+                    )
+                }
             )
         }
     }

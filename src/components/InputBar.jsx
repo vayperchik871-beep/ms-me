@@ -5,8 +5,9 @@ import { t } from '../i18n'
 import EmojiPicker from './EmojiPicker'
 import StickerPicker from './StickerPicker'
 import GiftPicker from './GiftPicker'
+import GiftConfirm from './GiftConfirm'
 
-export default function InputBar({ onSend, editText, onCancelEdit, chatId }) {
+export default function InputBar({ onSend, editText, onCancelEdit, chatId, peerName, peerUserId, onGiftSent }) {
   const [text, setText] = useState('')
   const [attachPreview, setAttachPreview] = useState(null)
   const [attachFile, setAttachFile] = useState(null)
@@ -16,6 +17,7 @@ export default function InputBar({ onSend, editText, onCancelEdit, chatId }) {
   const [showEmoji, setShowEmoji] = useState(false)
   const [showStickers, setShowStickers] = useState(false)
   const [showGifts, setShowGifts] = useState(false)
+  const [selectedGift, setSelectedGift] = useState(null)
   const [error, setError] = useState(null)
   const textareaRef = useRef(null)
   const fileInputRef = useRef(null)
@@ -274,8 +276,19 @@ export default function InputBar({ onSend, editText, onCancelEdit, chatId }) {
         <div className="ig-picker-wrap">
           {showEmoji && <EmojiPicker onSelect={handleEmojiSelect} onClose={() => setShowEmoji(false)} />}
           {showStickers && <StickerPicker onSelect={handleStickerSelect} onClose={() => setShowStickers(false)} />}
-          {showGifts && <GiftPicker onClose={() => setShowGifts(false)} />}
+          {showGifts && <GiftPicker
+            onSelect={(gift) => { setSelectedGift(gift); setShowGifts(false) }}
+            onClose={() => setShowGifts(false)}
+          />}
         </div>
+      )}
+      {selectedGift && (
+        <GiftConfirm
+          gift={selectedGift}
+          recipient={peerUserId ? { userId: peerUserId, name: peerName } : null}
+          onSent={() => { setSelectedGift(null); onGiftSent?.() }}
+          onClose={() => setSelectedGift(null)}
+        />
       )}
       <form className="ig-bar" onSubmit={handleSubmit}>
         <input ref={fileInputRef} type="file" accept="image/*,video/*" hidden onChange={handleAttach} />

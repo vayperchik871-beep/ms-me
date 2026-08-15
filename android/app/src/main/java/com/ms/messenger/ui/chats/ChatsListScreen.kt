@@ -25,6 +25,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
@@ -36,7 +37,10 @@ import androidx.lifecycle.LifecycleEventObserver
 import com.kyant.backdrop.backdrops.rememberLayerBackdrop
 import com.ms.messenger.R
 import com.ms.messenger.backdrop.components.LiquidBackButton
+import com.ms.messenger.backdrop.components.LiquidButton
+import com.ms.messenger.backdrop.components.LiquidCircleButton
 import com.ms.messenger.data.ApiClient
+import com.ms.messenger.data.ChatCache
 import com.ms.messenger.data.PrefsHolder
 import com.ms.messenger.data.WebSocketService
 import com.ms.messenger.data.WsEvent
@@ -45,6 +49,7 @@ import com.ms.messenger.models.User
 import com.ms.messenger.theme.AppColors
 import com.ms.messenger.ui.Avatar
 import com.ms.messenger.ui.Avatar48
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 @Composable
@@ -54,6 +59,8 @@ fun ChatsListScreen(
 ) {
     val colors = AppColors.current()
     val scope = rememberCoroutineScope()
+    val context = LocalContext.current
+    val backdrop = rememberLayerBackdrop()
     var chats by remember { mutableStateOf<List<Chat>>(emptyList()) }
     var loading by remember { mutableStateOf(true) }
     var error by remember { mutableStateOf<String?>(null) }
@@ -80,10 +87,14 @@ fun ChatsListScreen(
             when (event) {
                 is WsEvent.NewMessage -> {
                     scope.launch {
-                        try {
-                            val resp = ApiClient.getChats()
-                            chats = resp.chats
-                        } catch (e: Exception) { }
+                        val msg = event.message
+                        chats = chats.map { chat ->
+                            if (chat.id == event.chatId) chat.copy(
+                                lastMessage = msg.text ?: "",
+                                lastTime = msg.time,
+                                unread = chat.unread + 1
+                            ) else chat
+                        }.sortedByDescending { it.lastTime }
                     }
                 }
                 else -> { }
@@ -97,6 +108,13 @@ fun ChatsListScreen(
         onDispose { WebSocketService.removeListener(listener) }
     }
 
+    LaunchedEffect(Unit) {
+        while (true) {
+            delay(5000)
+            if (!WebSocketService.isConnected) refresh()
+        }
+    }
+
     val lifecycleOwner = LocalLifecycleOwner.current
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
@@ -106,10 +124,12 @@ fun ChatsListScreen(
         onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
     }
 
-    val filteredChats = if (searchQuery.isBlank()) chats
-    else chats.filter {
-        it.name.contains(searchQuery, ignoreCase = true) ||
-        it.lastMessage.contains(searchQuery, ignoreCase = true)
+    val filteredChats = remember(searchQuery, chats) {
+        if (searchQuery.isBlank()) chats
+        else chats.filter {
+            it.name.contains(searchQuery, ignoreCase = true) ||
+            it.lastMessage.contains(searchQuery, ignoreCase = true)
+        }
     }
 
     Box(Modifier.fillMaxSize().background(colors.bg)) {
@@ -126,19 +146,26 @@ fun ChatsListScreen(
                 Text("Чаты", fontSize = 17.sp, fontWeight = FontWeight.SemiBold, color = colors.textPrimary)
                 Box(
                     modifier = Modifier
-                        .align(Alignment.CenterEnd)
-                        .size(40.dp)
-                        .clip(CircleShape)
-                        .background(if (colors.isDark) Color(0xFF2A2A2A) else Color(0xFFE0E0E0))
-                        .clickable { showNewChat = true },
+                        .align(Alignment.CenterEnd),
                     contentAlignment = Alignment.Center
                 ) {
-                    Icon(
-                        Icons.Filled.Edit,
-                        contentDescription = "Составить",
-                        tint = if (colors.isDark) Color.White.copy(alpha = 0.8f) else Color.Black.copy(alpha = 0.6f),
-                        modifier = Modifier.size(20.dp)
-                    )
+                    LiquidButton(
+                        onClick = { showNewChat = true },
+                        backdrop = backdrop,
+                        modifier = Modifier.height(40.dp),
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.padding(horizontal = 12.dp)
+                        ) {
+                            Icon(
+                                Icons.Filled.Edit,
+                                contentDescription = "Составить",
+                                tint = if (colors.isDark) Color.White.copy(alpha = 0.8f) else Color.Black.copy(alpha = 0.6f),
+                                modifier = Modifier.size(18.dp)
+                            )
+                        }
+                    }
                 }
             }
 
@@ -151,11 +178,11 @@ fun ChatsListScreen(
                     .height(50.dp)
                     .clip(RoundedCornerShape(25.dp))
                     .background(if (colors.isDark) Color(0xFF2A2A2A) else Color(0xFFE0E0E0)),
-                contentAlignment = Alignment.Center
+                contentAlignment = Alignment.CenterStart
             ) {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.Center
+                    modifier = Modifier.padding(horizontal = 16.dp)
                 ) {
                     Icon(
                         Icons.Filled.Search,
@@ -165,12 +192,27 @@ fun ChatsListScreen(
                         modifier = Modifier.size(20.dp)
                     )
                     Spacer(Modifier.width(8.dp))
-                    Text(
-                        "Поиск",
-                        color = if (colors.isDark) Color.White.copy(alpha = 0.45f)
-                        else Color.Black.copy(alpha = 0.4f),
-                        fontSize = 16.sp
-                    )
+                    Box(modifier = Modifier.weight(1f)) {
+                        if (searchQuery.isEmpty()) {
+                            Text(
+                                "Поиск",
+                                color = if (colors.isDark) Color.White.copy(alpha = 0.45f)
+                                else Color.Black.copy(alpha = 0.4f),
+                                fontSize = 16.sp
+                            )
+                        }
+                        androidx.compose.foundation.text.BasicTextField(
+                            value = searchQuery,
+                            onValueChange = { searchQuery = it },
+                            singleLine = true,
+                            textStyle = androidx.compose.ui.text.TextStyle(
+                                color = if (colors.isDark) Color.White else Color.Black,
+                                fontSize = 16.sp
+                            ),
+                            cursorBrush = androidx.compose.ui.graphics.SolidColor(colors.accent),
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    }
                 }
             }
 
@@ -200,7 +242,11 @@ fun ChatsListScreen(
                     contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp)
                 ) {
                     itemsIndexed(filteredChats, key = { _, chat -> chat.id }) { index, chat ->
-                        ChatRow(chat, colors, onClick = { onOpenChat(chat.id) })
+                        ChatRow(chat, colors, onClick = {
+                            ChatCache.put(chat.id, ChatCache.PeerInfo(chat.name, chat.peer?.avatar, chat.peer?.online ?: false))
+                            chat.peer?.userId?.let { ChatCache.putUser(it, ChatCache.PeerInfo(chat.name, chat.peer?.avatar, chat.peer?.online ?: false)) }
+                            onOpenChat(chat.id)
+                        })
                         if (index < filteredChats.lastIndex) {
                             HorizontalDivider(
                                 modifier = Modifier.padding(horizontal = 16.dp),
@@ -226,7 +272,17 @@ fun ChatsListScreen(
         ) {
             NewChatScreen(
                 onBack = { showNewChat = false },
-                onInvite = { showNewChat = false },
+                onInvite = {
+                    showNewChat = false
+                    val uid = PrefsHolder.session.myUserId
+                    if (uid != null) {
+                        val link = "https://ms-messenger.onrender.com/invite/$uid"
+                        val clipboard = context.getSystemService(android.content.Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
+                        val clip = android.content.ClipData.newPlainText("invite", link)
+                        clipboard.setPrimaryClip(clip)
+                        android.widget.Toast.makeText(context, "Ссылка скопирована", android.widget.Toast.LENGTH_SHORT).show()
+                    }
+                },
                 onNewGroup = { showNewChat = false; createType = "group"; onCreateTypeChanged("group") },
                 onNewChannel = { showNewChat = false; createType = "channel"; onCreateTypeChanged("channel") },
                 onSelectContact = { user ->
@@ -237,7 +293,6 @@ fun ChatsListScreen(
         }
 
         createType?.let { type ->
-            val createBackdrop = rememberLayerBackdrop()
             CreateChatScreen(
                 type = type,
                 onBack = { createType = null; onCreateTypeChanged(null) },
@@ -246,8 +301,7 @@ fun ChatsListScreen(
                     onCreateTypeChanged(null)
                     refresh()
                     onOpenChat(chatId)
-                },
-                backdrop = createBackdrop
+                }
             )
         }
     }
@@ -263,7 +317,6 @@ fun NewChatScreen(
 ) {
     val colors = AppColors.current()
     val scope = rememberCoroutineScope()
-    val backdrop = rememberLayerBackdrop()
     var contacts by remember { mutableStateOf<List<User>>(emptyList()) }
     var loading by remember { mutableStateOf(true) }
 
@@ -289,7 +342,6 @@ fun NewChatScreen(
             Spacer(Modifier.width(8.dp))
             LiquidBackButton(
                 onClick = onBack,
-                backdrop = backdrop,
                 tint = colors.textPrimary,
                 isDark = colors.isDark
             )
@@ -403,12 +455,10 @@ private fun NewChatMenuItem(
             .padding(horizontal = 16.dp, vertical = 14.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Box(
-            modifier = Modifier
-                .size(42.dp)
-                .clip(CircleShape)
-                .background(iconBg),
-            contentAlignment = Alignment.Center
+        LiquidCircleButton(
+            onClick = onClick,
+            size = 42.dp,
+            surfaceColor = iconBg,
         ) {
             Icon(
                 painterResource(iconRes),

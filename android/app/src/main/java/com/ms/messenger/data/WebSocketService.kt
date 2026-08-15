@@ -29,7 +29,7 @@ object WebSocketService {
     private var reconnectJob: Job? = null
     private var currentToken = ""
 
-    val listeners = mutableListOf<(WsEvent) -> Unit>()
+    val listeners = java.util.concurrent.CopyOnWriteArrayList<(WsEvent) -> Unit>()
     var isConnected = false
         private set
 

@@ -2112,7 +2112,7 @@ app.get('/api/users/:userId/gifts', authMiddleware, async (req, res) => {
   if (!user) return res.status(404).json({ error: 'Не найден' })
   const rows = await dbAll(`
     SELECT ug.id, ug.gift_id, ug.message, ug.created_at,
-      g.emoji, g.title,
+      g.emoji, g.title, g.price,
       s.user_id as sender_user_id, s.name as sender_name
     FROM user_gifts ug
     JOIN gifts g ON g.id = ug.gift_id
@@ -2123,12 +2123,32 @@ app.get('/api/users/:userId/gifts', authMiddleware, async (req, res) => {
   res.json({
     gifts: rows.map((r) => ({
       id: r.id,
-      gift: { id: r.gift_id, emoji: r.emoji, title: r.title },
+      gift: { id: r.gift_id, emoji: r.emoji, title: r.title, price: r.price },
       sender: r.sender_user_id ? { userId: r.sender_user_id, name: r.sender_name } : null,
       message: r.message,
       createdAt: r.created_at,
     })),
   })
+})
+
+app.post('/api/gifts/sell', authMiddleware, async (req, res) => {
+  const { giftInstanceId } = req.body
+  if (!giftInstanceId || typeof giftInstanceId !== 'string') {
+    return res.status(400).json({ error: 'Не указан подарок' })
+  }
+  const ug = await dbGet('SELECT id, user_id, gift_id, created_at FROM user_gifts WHERE id = ?', giftInstanceId)
+  if (!ug) return res.status(404).json({ error: 'Подарок не найден' })
+  if (ug.user_id !== req.user.id) return res.status(403).json({ error: 'Это не ваш подарок' })
+  const THREE_DAYS = 3 * 24 * 60 * 60 * 1000
+  if (Date.now() - ug.created_at > THREE_DAYS) {
+    return res.status(400).json({ error: 'Продать можно только в течение 3 дней после получения' })
+  }
+  const gift = await dbGet('SELECT price FROM gifts WHERE id = ?', ug.gift_id)
+  const refunded = Math.max(0, (gift?.price || 0) - 6)
+  await dbRun('DELETE FROM user_gifts WHERE id = ?', ug.id)
+  await dbRun('UPDATE users SET mcoins = mcoins + ? WHERE id = ?', refunded, req.user.id)
+  const row = await dbGet('SELECT mcoins FROM users WHERE id = ?', req.user.id)
+  res.json({ refunded, mcoins: row?.mcoins || 0 })
 })
 
 // ─── McoinS ───

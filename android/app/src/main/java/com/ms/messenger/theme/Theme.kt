@@ -11,6 +11,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontFamily
 import com.ms.messenger.data.ThemeManagerStore
 
 data class AppThemeColors(
@@ -30,11 +31,15 @@ data class AppThemeColors(
     val bubbleOtherText: Color,
     val inputBg: Color,
     val error: Color,
+    val bottomBarBg: Color,
+    val bottomBarIcon: Color,
+    val bottomBarLabel: Color,
 )
 
 object ThemeManager {
     var accentHex by mutableStateOf(ThemeManagerStore.accentHex)
     var themeMode by mutableStateOf(ThemeManagerStore.themeMode)
+    var language by mutableStateOf("ru")
 
     fun applyAccent(hex: String) {
         accentHex = hex
@@ -43,6 +48,9 @@ object ThemeManager {
     fun applyThemeMode(mode: String) {
         themeMode = mode
         ThemeManagerStore.themeMode = mode
+    }
+    fun applyLanguage(lang: String) {
+        language = lang
     }
 }
 
@@ -83,6 +91,9 @@ fun AppTheme(
             bubbleOtherText = TextPrimaryDark,
             inputBg = InputBgDark,
             error = ErrorRed,
+            bottomBarBg = Color.White.copy(alpha = 0.25f),
+            bottomBarIcon = Color.Black.copy(alpha = 0.8f),
+            bottomBarLabel = Color.Black.copy(alpha = 0.65f),
         ) else AppThemeColors(
             isDark = false,
             bg = BgLight,
@@ -100,6 +111,9 @@ fun AppTheme(
             bubbleOtherText = TextPrimaryLight,
             inputBg = InputBgLight,
             error = ErrorRed,
+            bottomBarBg = Color.Black.copy(alpha = 0.15f),
+            bottomBarIcon = Color.Black.copy(alpha = 0.7f),
+            bottomBarLabel = Color.Black.copy(alpha = 0.55f),
         )
     }
 
@@ -117,9 +131,30 @@ fun AppTheme(
         onSurface = TextPrimaryLight,
     )
 
+    val lang = ThemeManager.language
+    val fontFamily = if (lang == "en") SfProTextFamily else InterFamily
+
+    val localizedTypography = androidx.compose.material3.Typography(
+        bodyLarge = Typography.bodyLarge.copy(fontFamily = fontFamily),
+        bodyMedium = Typography.bodyMedium.copy(fontFamily = fontFamily),
+        bodySmall = Typography.bodySmall.copy(fontFamily = fontFamily),
+        titleLarge = Typography.titleLarge.copy(fontFamily = fontFamily),
+        titleMedium = Typography.titleMedium.copy(fontFamily = fontFamily),
+        titleSmall = Typography.titleSmall.copy(fontFamily = fontFamily),
+        labelLarge = Typography.labelLarge.copy(fontFamily = fontFamily),
+        labelMedium = Typography.labelMedium.copy(fontFamily = fontFamily),
+        labelSmall = Typography.labelSmall.copy(fontFamily = fontFamily),
+        headlineLarge = Typography.headlineLarge.copy(fontFamily = fontFamily),
+        headlineMedium = Typography.headlineMedium.copy(fontFamily = fontFamily),
+        headlineSmall = Typography.headlineSmall.copy(fontFamily = fontFamily),
+        displayLarge = Typography.displayLarge.copy(fontFamily = fontFamily),
+        displayMedium = Typography.displayMedium.copy(fontFamily = fontFamily),
+        displaySmall = Typography.displaySmall.copy(fontFamily = fontFamily),
+    )
+
     MaterialTheme(
         colorScheme = scheme,
-        typography = Typography,
+        typography = localizedTypography,
         content = {
             CompositionLocalProvider(LocalAppColors provides colors, content = content)
         },

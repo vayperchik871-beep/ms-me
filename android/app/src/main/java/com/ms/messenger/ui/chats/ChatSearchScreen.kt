@@ -20,12 +20,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.ms.messenger.data.ApiClient
 import com.ms.messenger.models.Chat
+import com.ms.messenger.models.User
 import com.ms.messenger.theme.AppColors
 import com.ms.messenger.ui.Avatar
 import kotlinx.coroutines.launch
@@ -39,6 +41,8 @@ fun ChatSearchScreen(
     val scope = rememberCoroutineScope()
     var query by remember { mutableStateOf("") }
     var chats by remember { mutableStateOf<List<Chat>>(emptyList()) }
+    var users by remember { mutableStateOf<List<User>>(emptyList()) }
+    var userSearching by remember { mutableStateOf(false) }
     var loading by remember { mutableStateOf(true) }
 
     LaunchedEffect(Unit) {
@@ -47,6 +51,18 @@ fun ChatSearchScreen(
             chats = resp.chats
         } catch (_: Exception) { }
         loading = false
+    }
+
+    val q = query.trim()
+
+    LaunchedEffect(q) {
+        if (q.length >= 2) {
+            userSearching = true
+            users = runCatching { ApiClient.searchUsers(q).users }.getOrDefault(emptyList())
+            userSearching = false
+        } else {
+            users = emptyList()
+        }
     }
 
     val filtered = remember(query, chats) {
@@ -80,7 +96,7 @@ fun ChatSearchScreen(
             TextField(
                 value = query,
                 onValueChange = { query = it },
-                placeholder = { Text("Поиск чатов...", color = colors.textSecondary) },
+                placeholder = { Text("Поиск чатов и людей...", color = colors.textSecondary) },
                 leadingIcon = {
                     Icon(Icons.Filled.Search, null, tint = colors.textSecondary, modifier = Modifier.size(20.dp))
                 },
@@ -120,12 +136,22 @@ fun ChatSearchScreen(
             loading -> Box(Modifier.fillMaxWidth().padding(40.dp), contentAlignment = Alignment.Center) {
                 androidx.compose.material3.CircularProgressIndicator(color = colors.accent)
             }
-            filtered.isEmpty() -> Box(
+            query.isBlank() && filtered.isEmpty() -> Box(
                 Modifier.fillMaxSize(),
                 contentAlignment = Alignment.Center
             ) {
                 Text(
-                    if (query.isBlank()) "Нет чатов" else "Ничего не найдено",
+                    "Нет чатов",
+                    fontSize = 16.sp,
+                    color = colors.textSecondary
+                )
+            }
+            query.isNotBlank() && users.isEmpty() && filtered.isEmpty() && !userSearching -> Box(
+                Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    "Ничего не найдено",
                     fontSize = 16.sp,
                     color = colors.textSecondary
                 )
@@ -133,8 +159,73 @@ fun ChatSearchScreen(
             else -> LazyColumn(
                 contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp)
             ) {
-                items(filtered, key = { it.id }) { chat ->
-                    ChatRow(chat, colors, onClick = { onOpenChat(chat.id) })
+                if (users.isNotEmpty()) {
+                    item(key = "users_header") {
+                        Text(
+                            "Люди",
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = colors.textSecondary,
+                            modifier = Modifier.padding(start = 8.dp, top = 8.dp, bottom = 4.dp)
+                        )
+                    }
+                    items(users, key = { "user_${it.userId}" }) { user ->
+                        Row(
+                            Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(14.dp))
+                                .clickable {
+                                    scope.launch {
+                                        try {
+                                            val resp = ApiClient.addContact(user.userId)
+                                            resp.chatId?.let { onOpenChat(it) }
+                                        } catch (_: Exception) { }
+                                    }
+                                }
+                                .padding(horizontal = 8.dp, vertical = 8.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Avatar(size = 44, name = user.name, avatarUrl = user.avatar)
+                            Spacer(Modifier.width(12.dp))
+                            Column(Modifier.weight(1f)) {
+                                Text(
+                                    user.name,
+                                    fontSize = 15.sp,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = colors.textPrimary,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis
+                                )
+                                Text(
+                                    "@${user.userId}",
+                                    fontSize = 13.sp,
+                                    color = colors.textSecondary,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis
+                                )
+                            }
+                            Icon(
+                                Icons.AutoMirrored.Filled.ArrowBack,
+                                contentDescription = null,
+                                tint = colors.textSecondary,
+                                modifier = Modifier.size(18.dp).graphicsLayer { rotationZ = 180f }
+                            )
+                        }
+                    }
+                }
+                if (filtered.isNotEmpty()) {
+                    item(key = "chats_header") {
+                        Text(
+                            "Чаты",
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = colors.textSecondary,
+                            modifier = Modifier.padding(start = 8.dp, top = 12.dp, bottom = 4.dp)
+                        )
+                    }
+                    items(filtered, key = { it.id }) { chat ->
+                        ChatRow(chat, colors, onClick = { onOpenChat(chat.id) })
+                    }
                 }
             }
         }

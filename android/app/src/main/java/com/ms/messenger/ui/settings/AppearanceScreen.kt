@@ -1,14 +1,14 @@
 package com.ms.messenger.ui.settings
 
+import android.app.Activity
+import android.os.Build
 import androidx.compose.animation.*
 import androidx.compose.animation.core.*
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -20,16 +20,15 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.lerp
 import androidx.compose.ui.unit.sp
+import com.ms.messenger.backdrop.components.LiquidCircleButton
+import com.ms.messenger.backdrop.components.LiquidToggle
 import com.ms.messenger.data.PrefsHolder
 import com.ms.messenger.theme.AppColors
 import com.ms.messenger.theme.ThemeManager
@@ -53,13 +52,9 @@ fun AppearanceScreen(onBack: () -> Unit) {
                     .padding(horizontal = 12.dp, vertical = 8.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Box(
-                    modifier = Modifier
-                        .size(44.dp)
-                        .clip(CircleShape)
-                        .background(colors.inputBg)
-                        .clickable { onBack() },
-                    contentAlignment = Alignment.Center
+                LiquidCircleButton(
+                    onClick = onBack,
+                    size = 44.dp,
                 ) {
                     Icon(
                         Icons.AutoMirrored.Filled.KeyboardArrowLeft,
@@ -150,7 +145,7 @@ fun AppearanceScreen(onBack: () -> Unit) {
 private fun NavigationTab() {
     val colors = AppColors.current()
     var showChats by remember { mutableStateOf(PrefsHolder.session.navChats) }
-    var showContacts by remember { mutableStateOf(PrefsHolder.session.navContacts) }
+    var showProfile by remember { mutableStateOf(PrefsHolder.session.navContacts) }
     var showSettings by remember { mutableStateOf(PrefsHolder.session.navSettings) }
 
     Column(
@@ -161,17 +156,17 @@ private fun NavigationTab() {
             .background(colors.card)
             .padding(horizontal = 16.dp)
     ) {
-        IOSToggleRow("Чаты", showChats) {
+        LiquidToggleRow("Чаты", showChats) {
             showChats = it
             PrefsHolder.session.navChats = it
         }
         NavDivider(colors)
-        IOSToggleRow("Контакты", showContacts) {
-            showContacts = it
+        LiquidToggleRow("Профиль", showProfile) {
+            showProfile = it
             PrefsHolder.session.navContacts = it
         }
         NavDivider(colors)
-        IOSToggleRow("Настройки", showSettings) {
+        LiquidToggleRow("Настройки", showSettings) {
             showSettings = it
             PrefsHolder.session.navSettings = it
         }
@@ -179,7 +174,7 @@ private fun NavigationTab() {
 }
 
 @Composable
-private fun IOSToggleRow(label: String, checked: Boolean, onToggle: (Boolean) -> Unit) {
+private fun LiquidToggleRow(label: String, checked: Boolean, onToggle: (Boolean) -> Unit) {
     val colors = AppColors.current()
     Row(
         modifier = Modifier
@@ -188,136 +183,10 @@ private fun IOSToggleRow(label: String, checked: Boolean, onToggle: (Boolean) ->
         verticalAlignment = Alignment.CenterVertically
     ) {
         Text(label, fontSize = 16.sp, color = colors.textPrimary, modifier = Modifier.weight(1f))
-        IOSSwitch(checked = checked, onCheckedChange = { onToggle(!checked) })
-    }
-}
-
-@Composable
-private fun IOSSwitch(checked: Boolean, onCheckedChange: () -> Unit) {
-    val colors = AppColors.current()
-    var isPressed by remember { mutableStateOf(false) }
-    var wasDragged by remember { mutableStateOf(false) }
-    var dragOffset by remember { mutableFloatStateOf(0f) }
-
-    val density = LocalDensity.current
-    val trackWidthPx = with(density) { 68.dp.toPx() }
-    val thumbWidthPx = with(density) { 40.dp.toPx() }
-    val maxDrag = trackWidthPx - thumbWidthPx - with(density) { 8.dp.toPx() }
-
-    val minOffset = 2.dp
-    val maxOffset = 26.dp
-
-    val rawProgress = if (checked) 1f else 0f
-    val animProgress = if (wasDragged) (dragOffset / maxDrag).coerceIn(0f, 1f) else rawProgress
-
-    val progress by animateFloatAsState(
-        targetValue = animProgress,
-        animationSpec = spring(
-            dampingRatio = Spring.DampingRatioMediumBouncy,
-            stiffness = Spring.StiffnessMedium
+        LiquidToggle(
+            selected = { checked },
+            onSelect = onToggle,
         )
-    )
-
-    val greenOn = if (colors.isDark) Color(0xFF8E8E93) else Color(0xFF34C759)
-    val grayOff = if (colors.isDark) Color(0xFF39393D) else Color(0xFFE9E9EA)
-
-    val trackColor by animateColorAsState(
-        targetValue = if (progress > 0.5f) greenOn else grayOff,
-        animationSpec = tween(250)
-    )
-
-    val lensScale by animateFloatAsState(
-        targetValue = if (isPressed) 1.1f else 1f,
-        animationSpec = spring(
-            dampingRatio = Spring.DampingRatioMediumBouncy,
-            stiffness = Spring.StiffnessMedium
-        )
-    )
-
-    Box(
-        modifier = Modifier
-            .width(68.dp)
-            .height(36.dp)
-            .clip(RoundedCornerShape(18.dp))
-            .background(trackColor)
-            .pointerInput(checked) {
-                detectHorizontalDragGestures(
-                    onDragStart = {
-                        isPressed = true
-                        wasDragged = false
-                        dragOffset = if (checked) maxDrag else 0f
-                    },
-                    onDragEnd = {
-                        isPressed = false
-                        val finalProgress = (dragOffset / maxDrag).coerceIn(0f, 1f)
-                        if (wasDragged && finalProgress > 0.3f && !checked) onCheckedChange()
-                        else if (wasDragged && finalProgress < 0.7f && checked) onCheckedChange()
-                        else if (!wasDragged) onCheckedChange()
-                        wasDragged = false
-                    },
-                    onDragCancel = {
-                        isPressed = false
-                        wasDragged = false
-                    },
-                    onHorizontalDrag = { change, dragAmount ->
-                        wasDragged = true
-                        dragOffset = (dragOffset + dragAmount).coerceIn(0f, maxDrag)
-                    }
-                )
-            },
-        contentAlignment = Alignment.CenterStart
-    ) {
-        Box(
-            modifier = Modifier
-                .offset(x = lerp(minOffset, maxOffset, progress))
-                .size(40.dp, 32.dp)
-                .graphicsLayer {
-                    scaleX = lensScale
-                    scaleY = lensScale
-                }
-                .shadow(3.dp, RoundedCornerShape(16.dp), ambientColor = Color.Black.copy(0.1f))
-                .clip(RoundedCornerShape(16.dp))
-                .background(
-                    brush = Brush.verticalGradient(
-                        colors = listOf(
-                            Color.White.copy(alpha = 0.95f),
-                            Color.White.copy(alpha = 0.8f)
-                        )
-                    )
-                )
-                .border(1.5.dp, Color.White.copy(alpha = 0.6f), RoundedCornerShape(16.dp)),
-            contentAlignment = Alignment.Center
-        ) {
-            if (isPressed) {
-                Box(
-                    modifier = Modifier
-                        .size(28.dp)
-                        .clip(CircleShape)
-                        .background(
-                            brush = Brush.radialGradient(
-                                colors = listOf(
-                                    Color.White.copy(alpha = 0.4f),
-                                    Color.White.copy(alpha = 0f)
-                                )
-                            )
-                        )
-                )
-            }
-            Box(
-                modifier = Modifier
-                    .padding(3.dp)
-                    .fillMaxSize()
-                    .clip(RoundedCornerShape(13.dp))
-                    .background(
-                        brush = Brush.verticalGradient(
-                            colors = listOf(
-                                greenOn.copy(alpha = 0.15f * progress),
-                                greenOn.copy(alpha = 0.05f * progress)
-                            )
-                        )
-                    )
-            )
-        }
     }
 }
 
@@ -334,7 +203,33 @@ private fun NavDivider(colors: com.ms.messenger.theme.AppThemeColors) {
 @Composable
 private fun ThemeTab() {
     val colors = AppColors.current()
+    val context = LocalContext.current
     var currentMode by remember { mutableStateOf(ThemeManager.themeMode) }
+    var is60fps by remember { mutableStateOf(PrefsHolder.session.is60fps) }
+    var isLiteMode by remember { mutableStateOf(PrefsHolder.session.isLiteMode) }
+
+    fun applyFps(enabled: Boolean) {
+        is60fps = enabled
+        PrefsHolder.session.is60fps = enabled
+        val activity = context as? Activity ?: return
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            val display = activity.display ?: return
+            val modes = display.supportedModes
+            if (enabled) {
+                val mode60 = modes.firstOrNull { it.refreshRate == 60f }
+                if (mode60 != null) {
+                    activity.window.attributes.preferredDisplayModeId = mode60.modeId
+                    activity.window.attributes = activity.window.attributes
+                }
+            } else {
+                val maxMode = modes.maxByOrNull { it.refreshRate }
+                if (maxMode != null) {
+                    activity.window.attributes.preferredDisplayModeId = maxMode.modeId
+                    activity.window.attributes = activity.window.attributes
+                }
+            }
+        }
+    }
 
     Column(
         modifier = Modifier
@@ -371,6 +266,29 @@ private fun ThemeTab() {
                 currentMode = "light"
                 ThemeManager.applyThemeMode("light")
                 PrefsHolder.session.themeMode = "light"
+            }
+        }
+
+        Spacer(Modifier.height(16.dp))
+
+        Text(
+            "Производительность",
+            fontSize = 13.sp,
+            fontWeight = FontWeight.Medium,
+            color = colors.accent,
+            modifier = Modifier.padding(start = 4.dp, bottom = 8.dp)
+        )
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(20.dp))
+                .background(colors.card)
+                .padding(horizontal = 16.dp)
+        ) {
+            LiquidToggleRow("60 FPS", is60fps) { applyFps(it) }
+            LiquidToggleRow("Лёгкий режим", isLiteMode) {
+                isLiteMode = it
+                PrefsHolder.session.isLiteMode = it
             }
         }
     }

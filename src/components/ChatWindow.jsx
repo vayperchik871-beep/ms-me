@@ -316,6 +316,8 @@ export default function ChatWindow({ chatId, onBack }) {
         editText={editId ? messages.find((m) => m.id === editId)?.text : ''}
         onCancelEdit={() => setEditId(null)}
         chatId={chatId}
+        peerName={peer?.name}
+        peerUserId={peer?.userId}
       />
 
       {contextMenu && (

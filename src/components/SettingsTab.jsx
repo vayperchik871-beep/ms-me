@@ -4,6 +4,7 @@ import { t } from '../i18n'
 import PrivacyPolicy from './PrivacyPolicy'
 import AccountScreen from './AccountScreen'
 import PremiumPage from './PremiumPage'
+import MCoinsPage from './MCoinsPage'
 import AdminPanel from './AdminPanel'
 
 export default function SettingsTab({ onLogout, onAddAccount }) {
@@ -13,6 +14,7 @@ export default function SettingsTab({ onLogout, onAddAccount }) {
   if (screen === 'privacy') return <PrivacyPolicy onBack={() => setScreen(null)} />
   if (screen === 'account') return <AccountScreen onBack={() => setScreen(null)} onLogout={onLogout} onAddAccount={onAddAccount} />
   if (screen === 'premium') return <PremiumPage onBack={() => setScreen(null)} />
+  if (screen === 'mcoins') return <MCoinsPage onBack={() => setScreen(null)} />
   if (screen === 'admin') return <AdminPanel onBack={() => setScreen(null)} />
 
   return (
@@ -55,6 +57,20 @@ export default function SettingsTab({ onLogout, onAddAccount }) {
             <span className="settings-card-label">{user?.premium ? '⭐ Premium' : 'Premium'}</span>
           </div>
           <span className="settings-card-value">{user?.premium ? `AI: ${user?.aiModel === 'pro' ? 'Pro' : 'Lite'}` : 'Подробнее'}</span>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.2)" strokeWidth="2" strokeLinecap="round"><path d="M9 18l6-6-6-6"/></svg>
+        </button>
+      </div>
+
+      <p className="settings-section-label">MCoins</p>
+      <div className="settings-card">
+        <button className="settings-card-row clickable" onClick={() => setScreen('mcoins')}>
+          <div className="settings-card-left">
+            <span className="settings-card-icon" style={{ color: '#FFD700' }}>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><circle cx="12" cy="12" r="10"/><text x="12" y="16" textAnchor="middle" fontSize="12" fill="currentColor" stroke="none">$</text></svg>
+            </span>
+            <span className="settings-card-label">MCoins</span>
+          </div>
+          <span className="settings-card-value">{user?.mcoins ?? 0}</span>
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.2)" strokeWidth="2" strokeLinecap="round"><path d="M9 18l6-6-6-6"/></svg>
         </button>
       </div>

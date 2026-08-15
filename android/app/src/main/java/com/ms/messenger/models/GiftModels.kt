@@ -24,13 +24,26 @@ data class Gift(
 data class GiftsResponse(val gifts: List<Gift>)
 
 @Serializable
+data class GiftLite(
+    val id: String,
+    val emoji: String = "🎁",
+    val title: String = "Подарок",
+    val price: Int = 0,
+)
+
+@Serializable
+data class GiftSender(
+    @SerialName("userId") val userId: String? = null,
+    val name: String? = null,
+)
+
+@Serializable
 data class ReceivedGift(
     val id: String,
-    @SerialName("giftId") val giftId: String,
-    @SerialName("fromUserId") val fromUserId: String? = null,
-    @SerialName("fromUserName") val fromUserName: String? = null,
-    val timestamp: Long = 0,
+    val gift: GiftLite? = null,
+    val sender: GiftSender? = null,
     val message: String? = null,
+    @SerialName("createdAt") val createdAt: Long = 0,
 )
 
 @Serializable
@@ -39,6 +52,7 @@ data class UserGiftsResponse(val gifts: List<ReceivedGift>)
 @Serializable
 data class SendGiftResponse(
     val gift: SendGiftInner? = null,
+    @SerialName("chatMessage") val chatMessage: Message? = null,
     val mcoins: Int? = null,
     val error: String? = null,
 )
@@ -52,3 +66,13 @@ data class SendGiftInner(
 
 @Serializable
 data class MCoinsResponse(val mcoins: Int = 0)
+
+@Serializable
+data class PromoCodeResponse(val earned: Int = 0, val mcoins: Int = 0, val error: String? = null)
+
+@Serializable
+data class SellGiftResponse(
+    val refunded: Int = 0,
+    val mcoins: Int = 0,
+    val error: String? = null,
+)

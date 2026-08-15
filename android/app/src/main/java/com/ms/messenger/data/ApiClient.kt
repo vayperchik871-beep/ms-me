@@ -267,6 +267,11 @@ object ApiClient {
     suspend fun getUserGifts(userId: String): UserGiftsResponse =
         execute(buildRequest("/users/$userId/gifts"), UserGiftsResponse.serializer())
 
+    suspend fun sellGift(giftInstanceId: String): SellGiftResponse {
+        val body = mapOf("giftInstanceId" to giftInstanceId)
+        return execute(buildRequest("/gifts/sell", "POST", body), SellGiftResponse.serializer())
+    }
+
     suspend fun getMCoins(): MCoinsResponse =
         execute(buildRequest("/user/mcoins"), MCoinsResponse.serializer())
 
